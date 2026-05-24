@@ -39,7 +39,7 @@ export const LOTTERY = [
 ];
 
 export const defaultState = {
-  points: 120,
+  points: 0,
   streak: 1,
   selectedTab: 'points',
   mySection: null,
@@ -51,6 +51,6 @@ export const defaultState = {
   pet: null,
   exchangedRewards: [],
   records: [
-    { text: '欢迎来到成长记录，初始获得 120 积分', delta: 120, time: Date.now() }
+    { text: '欢迎来到成长记录，初始积分为 0', delta: 0, time: Date.now() }
   ]
 };
