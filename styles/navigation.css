@@ -1,0 +1,44 @@
+/* Shared bottom navigation */
+.tabbar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 10;
+  width: min(720px, calc(100% - 28px));
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  background: var(--surface-container-lowest);
+  box-shadow: 0 6px 0 var(--surface-dim);
+}
+.tabbar button {
+  min-height: 64px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--on-surface-variant);
+  background: transparent;
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-weight: 700;
+}
+.tabbar button svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+  fill: currentColor;
+}
+.tabbar button span { display: block; font-size: 14px; line-height: 18px; }
+.tabbar button.active {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  background: var(--accent-blue-soft);
+  box-shadow: 0 4px 0 #b9d5f2;
+  transform: translateY(-3px);
+}

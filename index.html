@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f3f4f6" />
+  <title>成长记录</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@700&family=Nunito+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand-logo" type="button" data-action="home" aria-label="返回获取积分">
+        <img src="./assets/logo.png" alt="成长记录" />
+      </button>
+      <div id="headerSwitch" class="header-switch" aria-live="polite"></div>
+      <button class="points-pill" type="button" data-action="open-records" aria-label="查看积分记录详情" aria-live="polite">
+        <span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></span>
+        <strong id="pointsText">0</strong>
+      </button>
+    </header>
+
+    <main id="app" class="screen" aria-live="polite"></main>
+
+    <nav class="tabbar" aria-label="主导航">
+      <button data-tab="points" class="active">
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187z"/></svg>
+        <span>获取积分</span>
+      </button>
+      <button data-tab="shop">
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path d="M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A3 3 0 0 1 3 2.506zm1.068.5H7v-.5a1.5 1.5 0 1 0-3 0c0 .085.002.274.045.43zM9 3h2.932l.023-.07c.043-.156.045-.345.045-.43a1.5 1.5 0 0 0-3 0zm6 4v7.5a1.5 1.5 0 0 1-1.5 1.5H9V7zM2.5 16A1.5 1.5 0 0 1 1 14.5V7h6v9z"/></svg>
+        <span>兑换商城</span>
+      </button>
+      <button data-tab="pet">
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383"/></svg>
+        <span>宠物馆</span>
+      </button>
+      <button data-tab="my">
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 16 16"><path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/></svg>
+        <span>我的</span>
+      </button>
+    </nav>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="assertive" aria-atomic="true"></div>
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
