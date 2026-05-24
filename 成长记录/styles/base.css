@@ -1,0 +1,63 @@
+/* 1. Theme tokens and base elements */
+:root {
+  --surface: #faf9f9;
+  --surface-dim: #dadada;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f4f3f3;
+  --surface-container: #eeeeed;
+  --surface-container-high: #e9e8e8;
+  --surface-container-highest: #e3e2e2;
+  --on-surface: #1a1c1c;
+  --on-surface-variant: #3f4a36;
+  --inverse-surface: #2f3131;
+  --inverse-on-surface: #f1f0f0;
+  --outline: #6f7b64;
+  --outline-variant: #dedede;
+  --primary: #2b6c00;
+  --on-primary: #ffffff;
+  --primary-container: #58cc02;
+  --on-primary-container: #1e5000;
+  --inverse-primary: #6be026;
+  --secondary: #755b00;
+  --on-secondary: #ffffff;
+  --secondary-container: #fec700;
+  --on-secondary-container: #6e5400;
+  --tertiary: #8c5000;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #ff9c27;
+  --on-tertiary-container: #683a00;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+  --accent-blue: #1d7ed8;
+  --accent-blue-soft: #e8f3ff;
+  --radius-sm: 0.5rem;
+  --radius: 1rem;
+  --radius-md: 1.5rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+  --radius-full: 9999px;
+  --space-xs: 4px;
+  --space-sm: 12px;
+  --space-md: 24px;
+  --space-lg: 40px;
+  --space-xl: 64px;
+  --gutter: 16px;
+  --depth: 0 6px 0;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--on-surface);
+  font-family: "Nunito Sans", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  background: #f3f4f6;
+}
+
+button, input { font: inherit; }
+button { cursor: pointer; }

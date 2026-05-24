@@ -1,0 +1,54 @@
+@media (max-width: 820px) {
+  .app-shell { padding: 20px 20px 112px; }
+  .points-hero { grid-template-columns: 1fr; }
+  .points-summary { justify-self: start; width: 138px; }
+  .home-grid, .hero-content, .two-col, .pet-list, .my-overview-grid { grid-template-columns: 1fr; }
+  .topbar { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+  .header-switch {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    justify-self: stretch;
+  }
+  .header-switch .section-switch {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .section-switch {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .section-switch button { min-height: 44px; border-width: 2px; border-radius: 12px; font-size: 14px; }
+  .section-title-card { align-items: start; flex-direction: column; }
+  .reward-card,
+  .redeemed-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .reward-card .btn,
+  .redeemed-card .btn {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: stretch;
+    width: 100%;
+  }
+  .my-entry-card { min-height: 280px; }
+  .pet-main-row { grid-template-columns: 1fr; }
+  .pet-page-head, .pet-hall-head { align-items: start; flex-direction: column; }
+  .pet-interaction-panel { min-height: auto; }
+  .pet-portrait { min-height: 500px; }
+  .pet-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pet-detail-sheet { grid-template-columns: 1fr; max-height: calc(100vh - 36px); overflow: auto; }
+  .pet-detail-copy { padding-right: 0; }
+  .pet-detail-hero { min-height: 220px; }
+  .pet-detail-stats { grid-template-columns: 1fr; }
+  .pet-stage { min-height: 220px; }
+  .pet-emoji { width: 146px; height: 146px; font-size: 78px; }
+  .topbar { align-items: center; }
+  .points-pill { min-width: 92px; gap: 6px; padding: 9px 10px; font-size: 20px; }
+  .points-pill svg { width: 26px; height: 26px; }
+  h1 { font-size: 36px; }
+  .brand-logo img { height: 44px; }
+  h2 { font-size: 28px; line-height: 34px; }
+}
