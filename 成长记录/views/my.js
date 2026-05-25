@@ -1,3 +1,4 @@
+import { petView } from './pet.js';
 import { getPetStatus, iconSvg, recordTitle, statCard } from './shared.js';
 
 function myOverviewCard(section, icon, title, summary, meta) {
@@ -11,9 +12,9 @@ function myOverviewCard(section, icon, title, summary, meta) {
     </button>`;
 }
 
-function myDetailShell(title, subtitle, content) {
+function myDetailShell(title, subtitle, content, extraClass = '') {
   return `
-    <section class="card my-detail-card">
+    <section class="card my-detail-card ${extraClass}">
       <div class="section-head my-back-row">
         <div>
           <h2>${title}</h2>
@@ -51,6 +52,10 @@ export function myView(state) {
   const earned = state.records.reduce((sum, record) => sum + Math.max(record.delta || 0, 0), 0);
   const spent = Math.abs(state.records.reduce((sum, record) => sum + Math.min(record.delta || 0, 0), 0));
   const exchangedRewards = state.exchangedRewards || [];
+
+  if (state.mySection === 'pet') {
+    return myDetailShell('宠物馆', '云宠物和宠物图鉴搬到这里了，原来的领养、互动和详情逻辑保持不变。', petView(state), 'pet-detail-host');
+  }
 
   if (state.mySection === 'profile') {
     return myDetailShell('我的成长档案', '成长积分记录都放在这里，方便家长回看每一次获得和使用。', `
@@ -93,6 +98,7 @@ export function myView(state) {
     <section class="my-overview">
       <div class="my-overview-grid">
         ${myOverviewCard('profile', iconSvg('star'), '成长档案', '查看当前积分、累计获得、累计使用和宠物状态。', `${state.points} 当前积分`)}
+        ${myOverviewCard('pet', iconSvg('pets'), '宠物馆', '进入云宠物和宠物图鉴，继续领养、互动和查看详情。', status.label)}
         ${myOverviewCard('redeemed', iconSvg('gift'), '我的兑换', '查看兑换奖励、等待核销和已核销记录。', `${exchangedRewards.length} 个奖励`)}
         ${myOverviewCard('records', iconSvg('checklist'), '积分记录', '查看每一次获得、兑换、抽奖和照顾宠物的明细。', `${state.records.length} 条记录`)}
       </div>

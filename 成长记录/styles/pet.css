@@ -23,7 +23,7 @@
   border-radius: var(--radius-full);
   color: var(--on-primary-container);
   background: #e9ffd8;
-  box-shadow: 0 4px 0 var(--primary-container);
+  box-shadow: 0 4px 0 var(--shadow-green-soft);
   font-family: "Quicksand", system-ui, sans-serif;
   font-weight: 700;
 }
@@ -224,7 +224,7 @@
 .pet-avatar:hover { transform: translateY(-3px); }
 .pet-avatar.active {
   border-color: var(--primary);
-  box-shadow: 0 4px 0 var(--primary);
+  box-shadow: 0 4px 0 var(--shadow-green);
 }
 .pet-avatar img {
   width: 76px;

@@ -1,6 +1,6 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js';
-import { addRecord, loadState, resetState, saveState, spend } from './store.js';
-import { myView, petView, pointsView, sectionSwitch, shopView } from './views.js';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260525r';
+import { addRecord, loadState, resetState, saveState, spend } from './store.js?v=20260525r';
+import { calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260525r';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -11,12 +11,15 @@ const pointsPill = document.querySelector('.points-pill');
 const headerSwitch = document.querySelector('#headerSwitch');
 const toast = document.querySelector('#toast');
 const modal = document.querySelector('#modal');
+const moreNav = document.querySelector('.more-nav');
+const moreToggle = document.querySelector('.more-toggle');
 let pendingWriteOff = null;
 
 const views = {
   points: () => pointsView(state),
+  planning: () => planningView(state),
+  calendar: () => calendarView(state),
   shop: () => shopView(state),
-  pet: () => petView(state),
   my: () => myView(state)
 };
 
@@ -36,10 +39,10 @@ function renderHeaderSwitch(tab) {
       { value: 'exchange', label: '积分兑换' },
       { value: 'lottery', label: '积分抽奖' }
     ], state.shopSection || 'exchange', 'shop-section'),
-    pet: sectionSwitch([
-      { value: 'cloud', label: '云宠物' },
-      { value: 'hall', label: '宠物馆' }
-    ], state.petSection || 'cloud', 'pet-section')
+    planning: sectionSwitch([
+      { value: 'active', label: '规划中' },
+      { value: 'done', label: '已完成' }
+    ], state.planningSection || 'active', 'planning-section'),
   };
 
   headerSwitch.innerHTML = switchers[tab] || '';
@@ -174,11 +177,12 @@ function adoptPet(type) {
   if (!state.collectedPets.includes(type)) state.collectedPets.push(type);
   state.previewPet = type;
   state.petSection = 'cloud';
-  addRecord(state, `领养了${info.name}`, -info.adoptCost);
+  addRecord(state, `领养了${info.name}`, -info.adoptCost, { category: 'pet' });
   showToast(`恭喜你领养了${info.name}！`);
   closeModal();
   persist();
-  render('pet');
+  state.mySection = 'pet';
+  render('my');
 }
 
 function feedPet() {
@@ -191,7 +195,7 @@ function feedPet() {
   state.pet.growth += 10;
   state.pet.level = levelFromGrowth(state.pet.growth);
   state.pet.lastFedAt = Date.now();
-  addRecord(state, `喂养了${state.pet.name}，能量 +20`, -10);
+  addRecord(state, `喂养了${state.pet.name}，能量 +20`, -10, { category: 'pet' });
   showToast(`喂养成功，${state.pet.name}能量 +20！`);
   persist();
   render(state.selectedTab);
@@ -206,7 +210,7 @@ function playPet() {
   state.pet.growth += 8;
   state.pet.level = levelFromGrowth(state.pet.growth);
   state.pet.lastPlayedAt = Date.now();
-  addRecord(state, `陪${state.pet.name}玩耍，成长值 +8`, -8);
+  addRecord(state, `陪${state.pet.name}玩耍，成长值 +8`, -8, { category: 'pet' });
   showToast('你们玩得很开心，宠物心情变好啦！');
   persist();
   render(state.selectedTab);
@@ -220,7 +224,7 @@ function restPet() {
   state.pet.energy = Math.min(100, state.pet.energy + 12);
   state.pet.growth += 5;
   state.pet.level = levelFromGrowth(state.pet.growth);
-  addRecord(state, `陪${state.pet.name}好好睡觉，能量 +12`, -5);
+  addRecord(state, `陪${state.pet.name}好好睡觉，能量 +12`, -5, { category: 'pet' });
   showToast(`${state.pet.name}睡了一个好觉，精神回来啦。`);
   persist();
   render(state.selectedTab);
@@ -236,17 +240,18 @@ function revivePet() {
   state.pet.status = 'alive';
   state.pet.lastFedAt = Date.now();
   state.pet.lastPlayedAt = Date.now();
-  addRecord(state, `复活了${state.pet.name}，从 Lv.0 重新开始`, -state.pet.reviveCost);
+  addRecord(state, `复活了${state.pet.name}，从 Lv.0 重新开始`, -state.pet.reviveCost, { category: 'pet' });
   closeModal();
   showToast(`${state.pet.name}回来了，要重新开始成长啦。`);
   persist();
-  render('pet');
+  state.mySection = 'pet';
+  render('my');
 }
 
 function earnPoints(ruleIndex) {
-  const [name, points] = POINT_RULES[ruleIndex];
+  const [name, points, , category = 'points'] = POINT_RULES[ruleIndex];
   state.points += points;
-  addRecord(state, `${name}，获得 ${points} 积分`, points);
+  addRecord(state, `${name}，获得 ${points} 积分`, points, { category, source: 'points-rule' });
   showToast(`太棒了！获得 ${points} 积分。`);
   persist();
   render('points');
@@ -255,7 +260,7 @@ function earnPoints(ruleIndex) {
 function deductPoints(ruleIndex) {
   const [name, points] = DEDUCT_RULES[ruleIndex];
   state.points -= points;
-  addRecord(state, `${name}，扣减 ${points} 积分`, -points);
+  addRecord(state, `${name}，扣减 ${points} 积分`, -points, { category: 'deduct' });
   showToast(`已扣减 ${points} 积分。`);
   persist();
   render('points');
@@ -267,7 +272,7 @@ function exchangeReward(id) {
   if (!spendPoints(reward.cost)) return;
   const time = Date.now();
   state.exchangedRewards.unshift({ ...reward, exchangeId: `${reward.id}-${time}`, time, redeemedAt: null });
-  addRecord(state, `兑换了「${reward.name}」`, -reward.cost);
+  addRecord(state, `兑换了「${reward.name}」`, -reward.cost, { category: 'shop' });
   showToast(`兑换成功：${reward.name}，可在我的里查看。`);
   persist();
   render('shop');
@@ -335,7 +340,7 @@ function writeOffReward(exchangeId) {
   const reward = state.exchangedRewards.find(item => item.exchangeId === exchangeId);
   if (!reward || reward.redeemedAt) return;
   reward.redeemedAt = Date.now();
-  addRecord(state, `核销了「${reward.name}」`, 0);
+  addRecord(state, `核销了「${reward.name}」`, 0, { category: 'shop' });
   showToast(`算对啦，已核销：${reward.name}`);
   persist();
   render('my');
@@ -364,7 +369,7 @@ function drawLottery() {
     });
   }
 
-  addRecord(state, `积分抽奖：${reward.name}`, reward.points - 20);
+  addRecord(state, `积分抽奖：${reward.name}`, reward.points - 20, { category: 'shop' });
   showToast(reward.points ? `抽到了：${reward.name}` : `抽到了：${reward.name}，已放入我的兑换。`);
   persist();
   render('shop');
@@ -374,7 +379,7 @@ function render(tab = state.selectedTab) {
   state.selectedTab = tab;
   syncPetTime();
   persist();
-  document.querySelectorAll('.tabbar button').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+  document.querySelectorAll('.tabbar button, .more-menu button').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
   renderHeaderSwitch(tab);
   app.innerHTML = (views[tab] || views.points)();
 }
@@ -401,7 +406,9 @@ function closeModal() {
 }
 
 function goToTab(tab) {
-  if (tab === 'my') state.mySection = null;
+  if (tab !== 'my') state.mySection = null;
+  moreNav?.classList.remove('open');
+  moreToggle?.setAttribute('aria-expanded', 'false');
   render(tab);
 }
 
@@ -423,6 +430,60 @@ function openRecordsDetail() {
   render('my');
 }
 
+function openMy() {
+  state.mySection = null;
+  persist();
+  render('my');
+}
+
+function toggleMore() {
+  const isOpen = moreNav?.classList.toggle('open');
+  moreToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+}
+
+function completePlan(planId) {
+  const plan = state.plans.find(item => item.id === planId);
+  if (!plan || plan.done) return;
+  plan.done = true;
+  plan.completedAt = Date.now();
+  state.points += plan.points;
+  addRecord(state, `${plan.title}，获得 ${plan.points} 积分`, plan.points, { category: 'study', source: 'planning' });
+  showToast(`学习任务完成，获得 ${plan.points} 积分。`);
+  persist();
+  render('planning');
+}
+
+
+function deletePlan(planId) {
+  const beforeCount = state.plans.length;
+  state.plans = state.plans.filter(item => item.id !== planId);
+  if (state.plans.length === beforeCount) return;
+  showToast('学习任务已删除。');
+  persist();
+  render('planning');
+}
+
+function addPlan(form) {
+  const data = new FormData(form);
+  const title = String(data.get('title') || '').trim();
+  const points = Math.max(1, Math.min(50, Number(data.get('points')) || 5));
+  if (!title) return;
+  state.plans.unshift({
+    id: `plan-${Date.now()}`,
+    title,
+    points,
+    category: 'study',
+    done: false,
+    createdAt: Date.now(),
+    completedAt: null
+  });
+  form.reset();
+  form.elements.points.value = points;
+  showToast('学习任务已添加。');
+  persist();
+  render('planning');
+}
+
 const actions = {
   feed: feedPet,
   play: playPet,
@@ -431,6 +492,8 @@ const actions = {
   lottery: drawLottery,
   home: goHome,
   'open-records': openRecordsDetail,
+  'open-my': openMy,
+  'toggle-more': toggleMore,
   'close-modal': closeModal,
   'my-back': () => {
     state.mySection = null;
@@ -459,6 +522,9 @@ document.addEventListener('click', event => {
     return;
   }
 
+  const speakTarget = event.target.closest('[data-speak]');
+  if (speakTarget && !event.target.closest('button')) speakToast(speakTarget.dataset.speak);
+
   const target = event.target.closest('button');
   if (!target) return;
 
@@ -474,10 +540,16 @@ document.addEventListener('click', event => {
     persist();
     render('shop');
   }
+  if (target.dataset.planningSection) {
+    state.planningSection = target.dataset.planningSection;
+    persist();
+    render('planning');
+  }
   if (target.dataset.petSection) {
     state.petSection = target.dataset.petSection;
     persist();
-    render('pet');
+    state.mySection = 'pet';
+    render('my');
   }
   if (target.dataset.adopt) adoptPet(target.dataset.adopt);
   if (target.dataset.petPick) selectPreviewPet(target.dataset.petPick);
@@ -485,8 +557,14 @@ document.addEventListener('click', event => {
   if (target.dataset.earn) earnPoints(Number(target.dataset.earn));
   if (target.dataset.deduct) deductPoints(Number(target.dataset.deduct));
   if (target.dataset.exchange) exchangeReward(target.dataset.exchange);
+  if (target.dataset.completePlan) completePlan(target.dataset.completePlan);
+  if (target.dataset.deletePlan) deletePlan(target.dataset.deletePlan);
   if (target.dataset.writeOff) requestWriteOffVerification(target.dataset.writeOff);
   if (target.dataset.mySection) {
+    if (target.dataset.mySection === 'pet') {
+      showToast('宠物馆还在装修哦');
+      return;
+    }
     state.mySection = target.dataset.mySection;
     persist();
     render('my');
@@ -495,9 +573,29 @@ document.addEventListener('click', event => {
 });
 
 document.addEventListener('submit', event => {
+  if (event.target.matches('[data-plan-form]')) {
+    event.preventDefault();
+    addPlan(event.target);
+    return;
+  }
   if (!event.target.matches('[data-write-off-form]')) return;
   event.preventDefault();
   submitWriteOffVerification();
 });
+
+document.addEventListener('keydown', event => {
+  const target = event.target.closest('[data-speak]');
+  if (!target || !['Enter', ' '].includes(event.key)) return;
+  event.preventDefault();
+  speakToast(target.dataset.speak);
+});
+
+let lastScrollY = window.scrollY;
+window.addEventListener('scroll', () => {
+  if (!moreNav) return;
+  const currentY = window.scrollY;
+  moreNav.classList.toggle('nav-hidden', currentY > lastScrollY && currentY > 80);
+  lastScrollY = currentY;
+}, { passive: true });
 
 goHome();

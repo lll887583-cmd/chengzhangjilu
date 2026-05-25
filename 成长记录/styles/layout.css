@@ -68,7 +68,7 @@ p { color: var(--on-surface-variant); }
   border-radius: var(--radius-full);
   color: var(--on-secondary-container);
   background: var(--secondary-container);
-  box-shadow: var(--depth) var(--secondary);
+  box-shadow: var(--depth) var(--shadow-yellow);
   font-family: "Quicksand", system-ui, sans-serif;
   font-size: 28px;
   font-weight: 700;
@@ -80,7 +80,7 @@ p { color: var(--on-surface-variant); }
 }
 .points-pill:active {
   transform: translateY(2px);
-  box-shadow: 0 3px 0 var(--secondary);
+  box-shadow: 0 3px 0 var(--shadow-yellow);
 }
 .points-pill:focus-visible {
   outline: 4px solid rgba(255, 193, 7, 0.35);
@@ -132,7 +132,7 @@ p { color: var(--on-surface-variant); }
   border-color: var(--accent-blue);
   color: var(--accent-blue);
   background: var(--accent-blue-soft);
-  box-shadow: 0 5px 0 #b9d5f2;
+  box-shadow: 0 5px 0 var(--shadow-blue);
 }
 .section-switch button:active {
   transform: translateY(5px);
@@ -145,4 +145,32 @@ p { color: var(--on-surface-variant); }
   grid-template-columns: 1fr minmax(220px, 300px);
   gap: var(--space-md);
   align-items: center;
+}
+
+.top-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: end;
+  gap: 14px;
+}
+.avatar-btn {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--primary);
+  border-radius: 22px;
+  color: var(--on-primary-container);
+  background: #bdf58b;
+  box-shadow: 0 6px 0 var(--shadow-green);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.avatar-btn:active {
+  transform: translateY(5px);
+  box-shadow: 0 1px 0 var(--shadow-green);
+}
+.avatar-btn svg {
+  width: 34px;
+  height: 34px;
+  fill: currentColor;
 }

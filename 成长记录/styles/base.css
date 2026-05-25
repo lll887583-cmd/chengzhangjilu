@@ -15,7 +15,7 @@
   --outline-variant: #dedede;
   --primary: #2b6c00;
   --on-primary: #ffffff;
-  --primary-container: #58cc02;
+  --primary-container: #c9f5ad;
   --on-primary-container: #1e5000;
   --inverse-primary: #6be026;
   --secondary: #755b00;
@@ -32,6 +32,14 @@
   --on-error-container: #93000a;
   --accent-blue: #1d7ed8;
   --accent-blue-soft: #e8f3ff;
+  --shadow-blue: hsl(209 54% 76%);
+  --shadow-green: hsl(101 45% 57%);
+  --shadow-green-soft: hsl(100 55% 76%);
+  --shadow-yellow: hsl(47 70% 42%);
+  --shadow-orange: hsl(30 68% 45%);
+  --shadow-pink: hsl(349 50% 79%);
+  --shadow-pink-soft: hsl(324 52% 81%);
+  --shadow-red: hsl(0 58% 31%);
   --radius-sm: 0.5rem;
   --radius: 1rem;
   --radius-md: 1.5rem;

@@ -52,3 +52,50 @@
   .brand-logo img { height: 44px; }
   h2 { font-size: 28px; line-height: 34px; }
 }
+
+@media (max-width: 1100px) {
+  .my-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .app-shell { padding-bottom: 32px; }
+  .topbar { grid-template-columns: minmax(0, 1fr) auto; }
+  .top-actions { gap: 8px; }
+  .avatar-btn { width: 48px; height: 48px; border-radius: 16px; box-shadow: 0 4px 0 var(--shadow-green); }
+  .avatar-btn svg { width: 27px; height: 27px; }
+  .tabbar { display: none; }
+  .more-nav { display: grid; }
+  .my-overview-grid { grid-template-columns: 1fr; }
+  .plan-form,
+  .plan-card,
+  .redeemed-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .plan-card .btn,
+  .redeemed-card .btn {
+    grid-column: 1;
+    width: 100%;
+  }
+  .calendar-weekdays,
+  .calendar-grid { gap: 1px; }
+  .calendar-cell {
+    min-height: 58px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .calendar-cell strong { font-size: 17px; }
+  .calendar-dots i,
+  .calendar-legend span {
+    width: 8px;
+    height: 8px;
+  }
+  .calendar-dots .study-dot,
+  .calendar-legend .study-dot {
+    box-shadow: 0 0 0 4px var(--accent-blue-soft);
+  }
+  .calendar-dots .english-dot,
+  .calendar-legend .english-dot {
+    box-shadow: 0 0 0 4px #ffe1f0;
+  }
+}
