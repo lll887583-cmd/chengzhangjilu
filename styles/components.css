@@ -15,9 +15,9 @@
   border: 2px solid var(--primary);
   border-radius: var(--radius-md);
   padding: 14px 20px;
-  color: var(--on-primary);
+  color: var(--primary);
   background: var(--primary-container);
-  box-shadow: var(--depth) var(--primary);
+  box-shadow: var(--depth) var(--shadow-green);
   font-family: "Quicksand", system-ui, sans-serif;
   font-size: 16px;
   font-weight: 700;
@@ -25,29 +25,29 @@
   transform: translateY(0);
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
-.btn:hover { filter: brightness(1.03); }
-.btn:active { transform: translateY(6px); box-shadow: 0 0 0 var(--primary); }
+.btn:hover { filter: none; }
+.btn:active { transform: translateY(6px); box-shadow: 0 0 0 var(--shadow-green); }
 .btn.secondary {
-  border-color: var(--tertiary);
-  color: var(--on-tertiary);
-  background: var(--tertiary-container);
-  box-shadow: var(--depth) var(--tertiary);
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-container);
+  box-shadow: var(--depth) var(--shadow-green);
 }
-.btn.secondary:active { box-shadow: 0 0 0 var(--tertiary); }
+.btn.secondary:active { box-shadow: 0 0 0 var(--shadow-green); }
 .btn.ghost {
   border-color: var(--accent-blue);
   color: var(--accent-blue);
   background: var(--accent-blue-soft);
-  box-shadow: var(--depth) #b9d5f2;
+  box-shadow: var(--depth) var(--shadow-blue);
 }
-.btn.ghost:active { box-shadow: 0 0 0 #b9d5f2; }
+.btn.ghost:active { box-shadow: 0 0 0 var(--shadow-blue); }
 .btn.danger {
   border-color: var(--error);
   color: var(--on-error);
   background: var(--error);
-  box-shadow: var(--depth) #7f1010;
+  box-shadow: var(--depth) var(--shadow-red);
 }
-.btn.danger:active { box-shadow: 0 0 0 #7f1010; }
+.btn.danger:active { box-shadow: 0 0 0 var(--shadow-red); }
 .btn:disabled { cursor: not-allowed; opacity: 0.55; filter: grayscale(0.35); }
 
 .stat-row { display: grid; gap: var(--space-sm); }
@@ -91,3 +91,22 @@
 }
 .stat-icon svg { width: 34px; height: 34px; }
 .stat-card small { color: var(--on-surface-variant); font-weight: 700; }
+
+button,
+.btn,
+.btn.secondary,
+.btn.ghost,
+.btn.danger,
+.care-card,
+.more-toggle,
+.more-menu button,
+.section-switch button,
+.points-pill,
+.avatar-btn,
+.redeemed-btn,
+.writeoff-btn {
+  border-color: transparent !important;
+}
+.plan-delete {
+  border: 0 !important;
+}

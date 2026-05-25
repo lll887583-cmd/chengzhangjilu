@@ -43,7 +43,7 @@
   border-radius: 50%;
   color: var(--on-secondary-container);
   background: var(--secondary-container);
-  box-shadow: 0 8px 0 var(--secondary);
+  box-shadow: 0 8px 0 var(--shadow-yellow);
   font-family: "Quicksand", system-ui, sans-serif;
   transform: rotate(3deg);
 }
@@ -64,11 +64,10 @@
 .rule-score {
   width: fit-content;
   padding: 8px 12px;
-  border: 2px solid var(--primary);
+  border: 2px solid transparent;
   border-radius: var(--radius-full);
   color: var(--on-primary-container);
   background: #e9ffd8;
-  box-shadow: 0 3px 0 var(--primary-container);
   font-family: "Quicksand", system-ui, sans-serif;
   font-weight: 700;
 }
@@ -77,18 +76,17 @@
   background: var(--surface-container-lowest);
 }
 .rule-card.deduct .rule-score {
-  border-color: hsl(325 64% 56%);
+  border-color: transparent;
   color: hsl(322 70% 38%);
   background: hsl(323 100% 96%);
-  box-shadow: 0 3px 0 hsl(324 72% 86%);
 }
 .rule-card.deduct .btn.danger {
   border-color: hsl(349 65% 55%);
   color: hsl(350 79% 37%);
   background: hsl(349 100% 95%);
-  box-shadow: var(--depth) hsl(349 69% 84%);
+  box-shadow: var(--depth) var(--shadow-pink);
 }
-.rule-card.deduct .btn.danger:active { box-shadow: 0 0 0 hsl(349 69% 84%); }
+.rule-card.deduct .btn.danger:active { box-shadow: 0 0 0 var(--shadow-pink); }
 
 .pet-list, .reward-list, .rule-list, .records-list, .redeemed-list { display: grid; gap: var(--space-sm); }
 .pet-list { grid-template-columns: repeat(3, 1fr); }
@@ -130,7 +128,7 @@
   text-align: left;
   transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
 }
-.pet-choice:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: 0 6px 0 var(--primary-container); }
+.pet-choice:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: 0 6px 0 var(--shadow-green-soft); }
 .pet-choice:active { transform: translateY(4px); box-shadow: 0 0 0 var(--surface-dim); }
 .pet-choice .icon { font-size: 72px; }
 .pet-choice p, .reward-card p, .rule-card p { color: var(--on-surface-variant); margin-bottom: 0; }
@@ -167,11 +165,11 @@
 }
 .my-overview-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-md);
 }
 .my-entry-card {
-  min-height: 360px;
+  min-height: 300px;
   display: grid;
   align-content: space-between;
   justify-items: start;
@@ -188,19 +186,19 @@
 .my-entry-card:hover {
   transform: translateY(-3px);
   border-color: var(--accent-blue);
-  box-shadow: 0 10px 0 #b9d5f2;
+  box-shadow: 0 10px 0 var(--shadow-blue);
 }
 .my-entry-card:active { transform: translateY(6px); box-shadow: 0 0 0 var(--surface-dim); }
 .my-entry-card strong {
   color: var(--on-surface);
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: clamp(30px, 4vw, 42px);
+  font-size: clamp(24px, 3vw, 34px);
   line-height: 1;
 }
 .my-entry-card p {
   margin-bottom: 0;
   color: var(--on-surface-variant);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.45;
 }
@@ -211,38 +209,38 @@
   color: var(--accent-blue);
   background: var(--accent-blue-soft);
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   text-align: center;
 }
 .my-card-icon {
-  width: 92px;
-  height: 92px;
+  width: 76px;
+  height: 76px;
   display: grid;
   place-items: center;
-  border-radius: 28px;
+  border-radius: 24px;
   color: var(--on-secondary-container);
   background: var(--secondary-container);
-  box-shadow: 0 6px 0 var(--secondary);
+  box-shadow: none;
 }
 .my-card-icon.profile {
   color: #245c00;
   background: #bdf58b;
-  box-shadow: 0 6px 0 #2b6c00;
+  box-shadow: none;
 }
 .my-card-icon.redeemed {
   color: #6e5400;
   background: #fec700;
-  box-shadow: 0 6px 0 #755b00;
+  box-shadow: none;
 }
 .my-card-icon.records {
   color: #164d86;
   background: #bfe1ff;
-  box-shadow: 0 6px 0 #1d7ed8;
+  box-shadow: none;
 }
 .my-card-icon svg {
-  width: 54px;
-  height: 54px;
+  width: 44px;
+  height: 44px;
   display: block;
   fill: currentColor;
 }
@@ -293,7 +291,7 @@
   place-items: center;
   border-radius: 18px;
   background: var(--secondary-container);
-  box-shadow: 0 4px 0 var(--secondary);
+  box-shadow: 0 4px 0 var(--shadow-yellow);
   font-size: 30px;
 }
 .redeemed-icon svg { width: 34px; height: 34px; }
@@ -346,5 +344,244 @@
   border-color: var(--primary);
   color: var(--on-primary-container);
   background: #e9ffd8;
-  box-shadow: 0 4px 0 var(--primary-container);
+  box-shadow: 0 4px 0 var(--shadow-green-soft);
+}
+
+.rule-card[role="button"] { cursor: pointer; }
+.rule-card[role="button"]:focus-visible {
+  outline: 4px solid rgba(29, 126, 216, .28);
+  outline-offset: 4px;
+}
+.my-card-icon.pet {
+  color: #8c2d10;
+  background: #ffb38f;
+  box-shadow: none;
+}
+.my-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pet-detail-host {
+  overflow: visible;
+  padding: 20px;
+}
+.pet-detail-host > .pet-console {
+  min-height: auto;
+  padding-inline: 0;
+  padding-bottom: 0;
+}
+.planning-page,
+.calendar-page {
+  display: grid;
+  gap: var(--space-md);
+}
+.planning-hero,
+.calendar-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #e8f3ff 52%, #e9ffd8 100%);
+}
+.planning-hero h2,
+.calendar-hero h2 { margin-bottom: 8px; }
+.plan-form-card {
+  display: grid;
+  gap: 16px;
+}
+.plan-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px minmax(130px, auto);
+  gap: 12px;
+}
+.plan-form input {
+  min-height: 56px;
+  width: 100%;
+  border: 2px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  padding: 0 16px;
+  color: var(--on-surface);
+  background: var(--surface-container-lowest);
+  font-weight: 800;
+}
+.plan-list {
+  display: grid;
+  gap: var(--space-sm);
+}
+.plan-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(126px, auto);
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border: 2px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
+  box-shadow: 0 4px 0 var(--surface-dim);
+}
+.plan-card.done {
+  background: #f2f2f2;
+  border-color: #d8d8d8;
+  color: #777;
+}
+.plan-complete-btn {
+  border-color: var(--tertiary);
+  color: var(--tertiary);
+  background: var(--tertiary-container);
+  box-shadow: var(--depth) var(--shadow-orange);
+}
+.plan-complete-btn:active {
+  box-shadow: 0 0 0 var(--shadow-orange);
+}
+.plan-status {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  color: var(--accent-blue);
+  background: var(--accent-blue-soft);
+  box-shadow: 0 4px 0 var(--shadow-blue);
+}
+.plan-card.done .plan-status {
+  color: #777;
+  background: #e2e2e2;
+  box-shadow: 0 4px 0 #c9c9c9;
+}
+.plan-status svg { width: 34px; height: 34px; }
+.plan-card h3 { margin-bottom: 4px; }
+.plan-card p { margin-bottom: 0; font-weight: 800; }
+.calendar-card { display: grid; gap: 14px; }
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+.calendar-grid {
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--outline-variant);
+  border-radius: 22px;
+  background: var(--outline-variant);
+}
+.calendar-weekdays span {
+  color: var(--on-surface-variant);
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-weight: 800;
+  text-align: center;
+}
+.calendar-cell {
+  min-height: 92px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  border: 0 !important;
+  border-radius: 0;
+  color: var(--on-surface);
+  background: var(--surface-container-lowest);
+  box-shadow: none;
+}
+.calendar-cell.muted {
+  pointer-events: none;
+}
+.calendar-cell.today {
+  border-color: #5f5f5f;
+  background: #f7f7f7;
+}
+.calendar-cell strong {
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 22px;
+}
+.calendar-dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.calendar-dots i,
+.calendar-legend span {
+  width: 11px;
+  height: 11px;
+  display: block;
+  border-radius: 999px;
+}
+.calendar-dots .study-dot,
+.calendar-legend .study-dot {
+  background: var(--accent-blue);
+  box-shadow: 0 0 0 5px var(--accent-blue-soft);
+}
+.calendar-dots .english-dot,
+.calendar-legend .english-dot {
+  background: #ff5aa5;
+  box-shadow: 0 0 0 5px #ffe1f0;
+}
+.calendar-legend {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 10px 0 0;
+  font-weight: 800;
+}
+
+.shop-panel:not(.lottery-panel) {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.shop-panel:not(.lottery-panel) > h2 { display: none; }
+
+.plan-card {
+  grid-template-columns: auto minmax(0, 1fr) 58px minmax(126px, auto);
+}
+.plan-delete {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  border: 0;
+  border-radius: 0;
+  color: var(--error);
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  transition: transform .12s ease, color .12s ease;
+}
+.plan-delete svg {
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
+}
+.plan-delete:active {
+  transform: scale(.92);
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .plan-card .plan-delete {
+    grid-column: 1;
+    width: 100%;
+  }
+}
+
+.my-entry-card {
+  border-color: var(--outline-variant);
+  box-shadow: 0 4px 0 var(--surface-dim) !important;
+}
+.my-entry-card:hover {
+  border-color: var(--outline-variant);
+  box-shadow: 0 4px 0 var(--surface-dim) !important;
+  transform: none;
+}
+.my-entry-card:active {
+  transform: none;
+  box-shadow: 0 4px 0 var(--surface-dim) !important;
+}
+
+.my-entry-card {
+  border: 2px solid var(--outline-variant) !important;
+  box-shadow: 0 4px 0 var(--surface-dim) !important;
+}
+.my-entry-card:hover,
+.my-entry-card:active {
+  border: 2px solid var(--outline-variant) !important;
+  box-shadow: 0 4px 0 var(--surface-dim) !important;
 }

@@ -3,14 +3,14 @@
 export { PETS } from './pets.js';
 
 export const POINT_RULES = [
-  ['画画', 3, ''],
-  ['粘土手工', 5, ''],
-  ['11点入睡', 6, ''],
-  ['学习汉字', 8, ''],
-  ['学习数学', 8, ''],
-  ['完成学校作业', 8, ''],
-  ['打卡英语', 10, ''],
-  ['练字', 10, '']
+  ['画画', 3, '', 'creative'],
+  ['粘土手工', 5, '', 'creative'],
+  ['11点入睡', 6, '', 'habit'],
+  ['学习汉字', 8, '', 'study'],
+  ['学习数学', 8, '', 'study'],
+  ['完成学校作业', 8, '', 'study'],
+  ['打卡英语', 10, '', 'study'],
+  ['练字', 10, '', 'study']
 ];
 
 export const DEDUCT_RULES = [
@@ -38,6 +38,16 @@ export const LOTTERY = [
   { name: '神秘奖励', weight: 5, points: 0, icon: 'celebration' }
 ];
 
+export const DEFAULT_PLANS = [
+  { title: '读 15 分钟中文', points: 6, category: 'study' },
+  { title: '口算 10 题', points: 8, category: 'study' },
+  { title: '英语听读打卡', points: 8, category: 'study' }
+];
+
+export const STUDY_RULE_NAMES = POINT_RULES
+  .filter(rule => rule[3] === 'study')
+  .map(rule => rule[0]);
+
 export const defaultState = {
   points: 0,
   streak: 1,
@@ -45,12 +55,20 @@ export const defaultState = {
   mySection: null,
   pointsSection: 'earn',
   shopSection: 'exchange',
+  planningSection: 'active',
   petSection: 'cloud',
+  calendarMonth: null,
   previewPet: 'sonicHummingbird',
   collectedPets: [],
   pet: null,
+  plans: DEFAULT_PLANS.map((plan, index) => ({
+    ...plan,
+    id: `default-plan-${index + 1}`,
+    done: false,
+    createdAt: Date.now()
+  })),
   exchangedRewards: [],
   records: [
-    { text: '欢迎来到成长记录，初始积分为 0', delta: 0, time: Date.now() }
+    { text: '欢迎来到成长记录，初始积分为 0', delta: 0, time: Date.now(), category: 'system' }
   ]
 };

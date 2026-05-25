@@ -6,8 +6,7 @@ export function shopView(state) {
   return `
     <section class="shop-page">
       ${shopSection === 'exchange' ? `
-      <section class="card shop-panel">
-        <h2>积分兑换</h2>
+      <section class="shop-panel">
         <div class="reward-list">${REWARDS.map(reward => `
           <div class="reward-card">
             <h3><span class="inline-title-icon">${iconSvg(reward.icon)}</span>${reward.name}</h3>
