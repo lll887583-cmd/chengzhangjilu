@@ -1,5 +1,5 @@
 import { PETS } from '../pets.js';
-import { iconSvg } from '../icons.js';
+import { iconSvg } from '../icons.js?v=20260526g';
 
 export function getPetStatus(pet) {
   if (!pet) return { label: '还没有领养宠物', tone: 'normal' };

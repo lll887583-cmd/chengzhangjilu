@@ -9,11 +9,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@700&family=Nunito+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260525r" />
+  <link rel="stylesheet" href="./styles.css?v=20260526g" />
 </head>
 <body>
   <div class="app-shell">
-    <header class="topbar">
+    <header class="topbar" hidden>
       <button class="brand-logo" type="button" data-action="home" aria-label="返回获取积分">
         <img src="./assets/logo.png" alt="成长记录" />
       </button>
@@ -31,14 +31,14 @@
 
     <main id="app" class="screen" aria-live="polite"></main>
 
-    <nav class="tabbar" aria-label="主导航">
+    <nav class="tabbar" aria-label="主导航" hidden>
       <button data-tab="points" class="active">
         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-        <span>积分</span>
+        <span>记录</span>
       </button>
       <button data-tab="planning">
         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2.1 8.6-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/></svg>
-        <span>规划</span>
+        <span>任务</span>
       </button>
       <button data-tab="calendar">
         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
@@ -50,10 +50,10 @@
       </button>
     </nav>
 
-    <div class="more-nav" aria-label="更多导航">
+    <div class="more-nav" aria-label="更多导航" hidden>
       <div class="more-menu" id="moreMenu">
-        <button data-tab="points"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg><span>积分</span></button>
-        <button data-tab="planning"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2.1 8.6-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/></svg><span>规划</span></button>
+        <button data-tab="points"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg><span>记录</span></button>
+        <button data-tab="planning"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2.1 8.6-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/></svg><span>任务</span></button>
         <button data-tab="calendar"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg><span>日历</span></button>
         <button data-tab="shop"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/></svg><span>商城</span></button>
       </div>
@@ -67,6 +67,6 @@
   <div id="toast" class="toast" role="status" aria-live="assertive" aria-atomic="true"></div>
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
 
-  <script type="module" src="./app.js?v=20260525r"></script>
+  <script type="module" src="./app.js?v=20260526g"></script>
 </body>
 </html>

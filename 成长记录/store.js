@@ -1,11 +1,11 @@
-import { PETS, defaultState } from './data.js';
+import { DEMO_ACCOUNT, PETS, defaultState } from './data.js';
 
 const STORAGE_KEY = 'growth-record-demo';
 const memoryStorage = new Map();
 const DEFAULT_PLAN_ITEMS = [
-  { title: '读 15 分钟中文', points: 6, category: 'study' },
-  { title: '口算 10 题', points: 8, category: 'study' },
-  { title: '英语听读打卡', points: 8, category: 'study' }
+  { title: '读 15 分钟中文', points: 6, category: 'study', planType: 'single' },
+  { title: '口算 10 题', points: 8, category: 'study', planType: 'single' },
+  { title: '英语听读打卡', points: 8, category: 'study', planType: 'single' }
 ];
 
 function clone(value) {
@@ -64,6 +64,7 @@ export function normalizeState(state) {
   state.records ||= [];
   state.exchangedRewards ||= [];
   state.collectedPets ||= [];
+  state.currentUser ??= null;
   if (!Array.isArray(state.plans) || state.plans.length === 0) {
     state.plans = DEFAULT_PLAN_ITEMS.map((plan, index) => ({
       ...plan,
@@ -76,9 +77,17 @@ export function normalizeState(state) {
   state.pointsSection ||= 'earn';
   state.shopSection ||= 'exchange';
   state.planningSection ||= 'active';
+  state.planningDraftType = state.planningDraftType === 'longTerm' ? 'longTerm' : 'single';
+  state.customPointRules = Array.isArray(state.customPointRules) ? state.customPointRules : [];
+  state.customDeductRules = Array.isArray(state.customDeductRules) ? state.customDeductRules : [];
+  state.hiddenPointRuleIds = Array.isArray(state.hiddenPointRuleIds) ? state.hiddenPointRuleIds : [];
+  state.hiddenDeductRuleIds = Array.isArray(state.hiddenDeductRuleIds) ? state.hiddenDeductRuleIds : [];
   state.petSection ||= 'cloud';
   state.calendarMonth ||= null;
   if (state.selectedTab === 'pet') state.selectedTab = 'points';
+  if (state.currentUser && state.currentUser.id !== DEMO_ACCOUNT.id) {
+    state.currentUser = null;
+  }
   if (!PETS[state.previewPet]) state.previewPet = defaultState.previewPet;
   state.collectedPets = state.collectedPets.filter(type => PETS[type]);
   if (state.pet?.type && !PETS[state.pet.type]) state.pet = null;
@@ -89,10 +98,23 @@ export function normalizeState(state) {
     title: plan.title || '学习任务',
     points: Number(plan.points) || 0,
     category: plan.category || 'study',
+    planType: plan.planType === 'longTerm' ? 'longTerm' : 'single',
     id: plan.id || `plan-${plan.createdAt || Date.now()}-${index}`,
     done: Boolean(plan.done),
     createdAt: plan.createdAt || Date.now(),
     completedAt: plan.completedAt || null
+  }));
+  state.customPointRules = state.customPointRules.map((rule, index) => ({
+    id: rule.id || `custom-point-${Date.now()}-${index}`,
+    title: rule.title || '自定义任务',
+    points: Math.max(1, Number(rule.points) || 1),
+    description: rule.description || ''
+  }));
+  state.customDeductRules = state.customDeductRules.map((rule, index) => ({
+    id: rule.id || `custom-deduct-${Date.now()}-${index}`,
+    title: rule.title || '自定义扣减',
+    points: Math.max(1, Number(rule.points) || 1),
+    description: rule.description || ''
   }));
   state.exchangedRewards = state.exchangedRewards.map((reward, index) => ({
     ...reward,

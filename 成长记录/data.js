@@ -26,8 +26,10 @@ export const REWARDS = [
   { id: 'snacks', icon: 'cookie', name: '买 2 个零食', cost: 40 },
   { id: 'toy', icon: 'toys', name: '买 1 个玩具', cost: 60 },
   { id: 'kfc', icon: 'restaurant', name: '吃肯德基', cost: 80 },
+  { id: 'aeon', icon: 'celebration', name: '去永旺玩', cost: 90 },
   { id: 'tv', icon: 'tv', name: '看 40 分钟电视', cost: 100 },
-  { id: 'game', icon: 'game', name: '玩 30 分钟游戏', cost: 120 }
+  { id: 'game', icon: 'game', name: '玩 30 分钟游戏', cost: 120 },
+  { id: 'rainbow-park', icon: 'celebration', name: '去彩虹乐园玩', cost: 150 }
 ];
 
 export const LOTTERY = [
@@ -39,23 +41,36 @@ export const LOTTERY = [
 ];
 
 export const DEFAULT_PLANS = [
-  { title: '读 15 分钟中文', points: 6, category: 'study' },
-  { title: '口算 10 题', points: 8, category: 'study' },
-  { title: '英语听读打卡', points: 8, category: 'study' }
+  { title: '读 15 分钟中文', points: 6, category: 'study', planType: 'single' },
+  { title: '口算 10 题', points: 8, category: 'study', planType: 'single' },
+  { title: '英语听读打卡', points: 8, category: 'study', planType: 'single' }
 ];
 
 export const STUDY_RULE_NAMES = POINT_RULES
   .filter(rule => rule[3] === 'study')
   .map(rule => rule[0]);
 
+export const DEMO_ACCOUNT = {
+  id: 'a',
+  account: 'a',
+  displayName: '成长记录',
+  password: '111111'
+};
+
 export const defaultState = {
   points: 0,
   streak: 1,
+  currentUser: null,
   selectedTab: 'points',
   mySection: null,
   pointsSection: 'earn',
   shopSection: 'exchange',
   planningSection: 'active',
+  planningDraftType: 'single',
+  customPointRules: [],
+  customDeductRules: [],
+  hiddenPointRuleIds: [],
+  hiddenDeductRuleIds: [],
   petSection: 'cloud',
   calendarMonth: null,
   previewPet: 'sonicHummingbird',

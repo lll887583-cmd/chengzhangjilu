@@ -2,7 +2,8 @@
   .app-shell { padding: 20px 20px 112px; }
   .points-hero { grid-template-columns: 1fr; }
   .points-summary { justify-self: start; width: 138px; }
-  .home-grid, .hero-content, .two-col, .pet-list, .my-overview-grid { grid-template-columns: 1fr; }
+  .home-grid, .hero-content, .two-col, .pet-list, .my-overview-grid, .reward-list { grid-template-columns: 1fr; }
+  .stat-row.compact { grid-template-columns: 1fr; }
   .topbar { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
   .header-switch {
     grid-column: 1 / -1;
@@ -16,6 +17,7 @@
   }
   .section-switch {
     width: 100%;
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
@@ -61,10 +63,12 @@
   .app-shell { padding-bottom: 32px; }
   .topbar { grid-template-columns: minmax(0, 1fr) auto; }
   .top-actions { gap: 8px; }
+  .logout-btn { min-height: 42px; padding: 0 14px; font-size: 14px; }
   .avatar-btn { width: 48px; height: 48px; border-radius: 16px; box-shadow: 0 4px 0 var(--shadow-green); }
   .avatar-btn svg { width: 27px; height: 27px; }
   .tabbar { display: none; }
   .more-nav { display: grid; }
+  .reward-list { grid-template-columns: 1fr; }
   .my-overview-grid { grid-template-columns: 1fr; }
   .plan-form,
   .plan-card,
