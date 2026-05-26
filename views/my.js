@@ -5,7 +5,6 @@ function myOverviewCard(section, icon, title, summary, meta) {
   return `
     <button class="my-entry-card" data-my-section="${section}">
       <span class="my-card-icon ${section}">${icon}</span>
-      <span class="card-kicker">我的</span>
       <strong>${title}</strong>
       <p>${summary}</p>
       <small>${meta}</small>
@@ -30,7 +29,7 @@ function redemptionCard(reward) {
   const isWrittenOff = Boolean(reward.redeemedAt);
   const statusText = isWrittenOff
     ? ` · ${new Date(reward.redeemedAt).toLocaleString('zh-CN')} 已核销`
-    : ' · 等待家长核销';
+    : ' · 待核销';
 
   const sourceText = reward.source === 'lottery'
     ? '抽奖获得'
@@ -66,7 +65,7 @@ export function myView(state) {
         ${statCard('sparkles', `-${spent}`, '累计使用')}
         ${statCard('pets', status.label, '宠物馆状态')}
       </div>
-      <div class="actions"><button class="btn ghost" data-action="export">导出备份</button><button class="btn ghost" data-action="reset">重置 Demo</button></div>
+      <div class="actions"><button class="btn ghost" data-action="export">导出备份</button><button class="btn ghost" data-action="reset">重置 Demo</button><button class="btn danger-soft" data-action="logout">退出登录</button></div>
     `);
   }
 

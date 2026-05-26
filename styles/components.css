@@ -48,13 +48,25 @@
   box-shadow: var(--depth) var(--shadow-red);
 }
 .btn.danger:active { box-shadow: 0 0 0 var(--shadow-red); }
+.btn.danger-soft {
+  border-color: hsl(349 65% 55%);
+  color: hsl(350 79% 37%);
+  background: hsl(349 100% 95%);
+  box-shadow: var(--depth) var(--shadow-pink);
+}
+.btn.danger-soft:active { box-shadow: 0 0 0 var(--shadow-pink); }
 .btn:disabled { cursor: not-allowed; opacity: 0.55; filter: grayscale(0.35); }
 
 .stat-row { display: grid; gap: var(--space-sm); }
+.stat-row.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
 .stat-card {
   display: flex;
   align-items: center;
   gap: 14px;
+  min-height: 132px;
   padding: 16px;
   border: 2px solid var(--outline-variant);
   border-radius: var(--radius-md);
@@ -97,9 +109,11 @@ button,
 .btn.secondary,
 .btn.ghost,
 .btn.danger,
+.btn.danger-soft,
 .care-card,
 .more-toggle,
 .more-menu button,
+.logout-btn,
 .section-switch button,
 .points-pill,
 .avatar-btn,

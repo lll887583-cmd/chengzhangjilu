@@ -1,6 +1,6 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260525r';
-import { addRecord, loadState, resetState, saveState, spend } from './store.js?v=20260525r';
-import { calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260525r';
+import { DEDUCT_RULES, DEMO_ACCOUNT, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260526g';
+import { addRecord, loadState, resetState, saveState, spend } from './store.js?v=20260526g';
+import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260526g';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -11,9 +11,14 @@ const pointsPill = document.querySelector('.points-pill');
 const headerSwitch = document.querySelector('#headerSwitch');
 const toast = document.querySelector('#toast');
 const modal = document.querySelector('#modal');
+const appShell = document.querySelector('.app-shell');
+const topbar = document.querySelector('.topbar');
+const tabbar = document.querySelector('.tabbar');
+const moreMenu = document.querySelector('#moreMenu');
 const moreNav = document.querySelector('.more-nav');
 const moreToggle = document.querySelector('.more-toggle');
 let pendingWriteOff = null;
+let loginError = '';
 
 const views = {
   points: () => pointsView(state),
@@ -23,7 +28,43 @@ const views = {
   my: () => myView(state)
 };
 
+const NAV_ITEMS = [
+  { value: 'points', label: '记录', icon: '<path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>' },
+  { value: 'planning', label: '任务', icon: '<path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2.1 8.6-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/>' },
+  { value: 'calendar', label: '打卡日历', icon: '<path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>' },
+  { value: 'shop', label: '商城', icon: '<path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/>' }
+];
+
+function navButton(item, activeTab) {
+  return `
+    <button data-tab="${item.value}" class="${item.value === activeTab ? 'active' : ''}">
+      <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">${item.icon}</svg>
+      <span>${item.label}</span>
+    </button>`;
+}
+
+function renderNavigation(activeTab) {
+  tabbar.innerHTML = NAV_ITEMS.map(item => navButton(item, activeTab)).join('');
+  moreMenu.innerHTML = NAV_ITEMS.map(item => navButton(item, activeTab)).join('');
+}
+
+function syncShellVisibility() {
+  const isLoggedIn = Boolean(state.currentUser);
+  appShell.classList.toggle('logged-out', !isLoggedIn);
+  topbar.hidden = !isLoggedIn;
+  tabbar.hidden = !isLoggedIn;
+  moreNav.hidden = !isLoggedIn;
+}
+
+function normalizeUiState() {
+  if (!state.currentUser) return;
+  if (!NAV_ITEMS.some(item => item.value === state.selectedTab)) {
+    state.selectedTab = NAV_ITEMS[0]?.value || 'points';
+  }
+}
+
 function persist() {
+  normalizeUiState();
   saveState(state);
   pointsText.textContent = state.points;
   pointsPill.classList.toggle('negative', state.points < 0);
@@ -47,6 +88,7 @@ function renderHeaderSwitch(tab) {
 
   headerSwitch.innerHTML = switchers[tab] || '';
   headerSwitch.hidden = !switchers[tab];
+  topbar.classList.toggle('no-switch', !switchers[tab]);
 }
 
 function showToast(message) {
@@ -266,6 +308,85 @@ function deductPoints(ruleIndex) {
   render('points');
 }
 
+function earnCustomPoints(ruleId) {
+  const rule = (state.customPointRules || []).find(item => item.id === ruleId);
+  if (!rule) return;
+  state.points += rule.points;
+  addRecord(state, `${rule.title}，获得 ${rule.points} 积分`, rule.points, { category: 'points', source: 'custom-points-rule' });
+  showToast(`太棒了！获得 ${rule.points} 积分。`);
+  persist();
+  render('points');
+}
+
+function deductCustomPoints(ruleId) {
+  const rule = (state.customDeductRules || []).find(item => item.id === ruleId);
+  if (!rule) return;
+  state.points -= rule.points;
+  addRecord(state, `${rule.title}，扣减 ${rule.points} 积分`, -rule.points, { category: 'deduct', source: 'custom-deduct-rule' });
+  showToast(`已扣减 ${rule.points} 积分。`);
+  persist();
+  render('points');
+}
+
+function showCustomRuleModal(ruleType, errorMessage = '') {
+  const isDeduct = ruleType === 'deduct';
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <form class="modal-card custom-rule-modal" data-custom-rule-form="${ruleType}">
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <div class="custom-rule-head">
+        <h2>${isDeduct ? '新增扣减项目' : '新增获得项目'}</h2>
+      </div>
+      <label class="custom-rule-field">
+        <span>内容</span>
+        <input name="title" type="text" maxlength="24" autocomplete="off" placeholder="${isDeduct ? '例如：顶嘴' : '例如：主动整理书包'}" aria-label="内容" required>
+      </label>
+      <label class="custom-rule-field">
+        <span>积分数</span>
+        <input name="points" type="number" min="1" max="99" inputmode="numeric" placeholder="请输入积分数" aria-label="积分数" required>
+      </label>
+      ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
+      <div class="actions">
+        <button class="btn secondary" type="submit">提交</button>
+        <button class="btn ghost" type="button" data-action="close-modal">取消</button>
+      </div>
+    </form>`;
+  setTimeout(() => modal.querySelector('input[name="title"]')?.focus(), 0);
+}
+
+function submitCustomRuleForm(form) {
+  const ruleType = form.dataset.customRuleForm === 'deduct' ? 'deduct' : 'earn';
+  const data = new FormData(form);
+  const title = String(data.get('title') || '').trim();
+  const pointsValue = Number(data.get('points'));
+  const points = Math.max(1, Math.min(99, pointsValue || 0));
+
+  if (!title) {
+    showCustomRuleModal(ruleType, '请先填写内容。');
+    return;
+  }
+  if (!Number.isFinite(pointsValue) || pointsValue < 1) {
+    showCustomRuleModal(ruleType, '请输入正确的积分数。');
+    return;
+  }
+
+  const nextRule = {
+    id: `custom-${ruleType}-${Date.now()}`,
+    title,
+    points,
+    description: ''
+  };
+  if (ruleType === 'deduct') {
+    state.customDeductRules.unshift(nextRule);
+  } else {
+    state.customPointRules.unshift(nextRule);
+  }
+  closeModal();
+  showToast(ruleType === 'deduct' ? '新的扣减项目已添加。' : '新的获得项目已添加。');
+  persist();
+  render('points');
+}
+
 function exchangeReward(id) {
   const reward = REWARDS.find(item => item.id === id);
   if (!reward) return;
@@ -301,7 +422,7 @@ function showWriteOffModal(errorMessage = '') {
   modal.classList.remove('hidden');
   modal.innerHTML = `
     <form class="modal-card math-verify-card" data-write-off-form>
-      <h2>家长验证</h2>
+      <h2>核销验证</h2>
       <p class="big-copy">答对 10 以内加减法后，才可以核销「${reward.name}」。</p>
       <label class="math-question">
         <span>${a} ${op} ${b} = ?</span>
@@ -375,11 +496,58 @@ function drawLottery() {
   render('shop');
 }
 
+function login(form) {
+  const formData = new FormData(form);
+  const account = String(formData.get('account') || '').trim();
+  const password = String(formData.get('password') || '').trim();
+
+  if (account !== DEMO_ACCOUNT.account || password !== DEMO_ACCOUNT.password) {
+    loginError = '账号或密码不对，请重新输入。';
+    renderAuth();
+    return;
+  }
+
+  state.currentUser = {
+    id: DEMO_ACCOUNT.id,
+    account: DEMO_ACCOUNT.account,
+    displayName: DEMO_ACCOUNT.displayName
+  };
+  state.selectedTab = 'points';
+  state.mySection = null;
+  state.pointsSection = 'earn';
+  loginError = '';
+  persist();
+  render('points');
+  showToast('已登录');
+}
+
+function logout() {
+  closeModal();
+  state.currentUser = null;
+  state.mySection = null;
+  state.selectedTab = 'points';
+  state.pointsSection = 'earn';
+  loginError = '';
+  persist();
+  renderAuth();
+}
+
+function renderAuth() {
+  syncShellVisibility();
+  headerSwitch.hidden = true;
+  app.innerHTML = authView(loginError);
+}
+
 function render(tab = state.selectedTab) {
+  if (!state.currentUser) {
+    renderAuth();
+    return;
+  }
   state.selectedTab = tab;
   syncPetTime();
   persist();
-  document.querySelectorAll('.tabbar button, .more-menu button').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+  syncShellVisibility();
+  renderNavigation(tab);
   renderHeaderSwitch(tab);
   app.innerHTML = (views[tab] || views.points)();
 }
@@ -406,6 +574,7 @@ function closeModal() {
 }
 
 function goToTab(tab) {
+  if (!state.currentUser || !NAV_ITEMS.some(item => item.value === tab)) return;
   if (tab !== 'my') state.mySection = null;
   moreNav?.classList.remove('open');
   moreToggle?.setAttribute('aria-expanded', 'false');
@@ -425,12 +594,14 @@ function goHome() {
 }
 
 function openRecordsDetail() {
+  if (!state.currentUser) return;
   state.mySection = 'records';
   persist();
   render('my');
 }
 
 function openMy() {
+  if (!state.currentUser) return;
   state.mySection = null;
   persist();
   render('my');
@@ -441,16 +612,24 @@ function toggleMore() {
   moreToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 }
 
-function completePlan(planId) {
+function closePlanTypeMenus() {
+  document.querySelectorAll('[data-plan-type-menu]').forEach(menu => menu.classList.add('hidden'));
+  document.querySelectorAll('[data-plan-type-trigger]').forEach(trigger => trigger.setAttribute('aria-expanded', 'false'));
+}
+
+function completePlan(planId, sourceTab = 'planning') {
   const plan = state.plans.find(item => item.id === planId);
   if (!plan || plan.done) return;
-  plan.done = true;
-  plan.completedAt = Date.now();
+  const isLongTerm = plan.planType === 'longTerm';
+  if (!isLongTerm) {
+    plan.done = true;
+    plan.completedAt = Date.now();
+  }
   state.points += plan.points;
   addRecord(state, `${plan.title}，获得 ${plan.points} 积分`, plan.points, { category: 'study', source: 'planning' });
   showToast(`学习任务完成，获得 ${plan.points} 积分。`);
   persist();
-  render('planning');
+  render(sourceTab);
 }
 
 
@@ -463,25 +642,59 @@ function deletePlan(planId) {
   render('planning');
 }
 
+function deleteRuleCard(kind, id) {
+  if (!kind || !id) return;
+  if (kind === 'plan') {
+    const beforeCount = state.plans.length;
+    state.plans = state.plans.filter(item => item.id !== id);
+    if (state.plans.length === beforeCount) return;
+  } else if (kind === 'point') {
+    state.hiddenPointRuleIds ||= [];
+    if (state.hiddenPointRuleIds.includes(id)) return;
+    state.hiddenPointRuleIds.push(id);
+  } else if (kind === 'point-custom') {
+    const beforeCount = state.customPointRules.length;
+    state.customPointRules = state.customPointRules.filter(item => item.id !== id);
+    if (state.customPointRules.length === beforeCount) return;
+  } else if (kind === 'deduct') {
+    state.hiddenDeductRuleIds ||= [];
+    if (state.hiddenDeductRuleIds.includes(id)) return;
+    state.hiddenDeductRuleIds.push(id);
+  } else if (kind === 'deduct-custom') {
+    const beforeCount = state.customDeductRules.length;
+    state.customDeductRules = state.customDeductRules.filter(item => item.id !== id);
+    if (state.customDeductRules.length === beforeCount) return;
+  } else {
+    return;
+  }
+  showToast('卡片项目已删除。');
+  persist();
+  render('points');
+}
+
 function addPlan(form) {
   const data = new FormData(form);
   const title = String(data.get('title') || '').trim();
   const points = Math.max(1, Math.min(50, Number(data.get('points')) || 5));
+  const planType = data.get('planType') === 'longTerm' ? 'longTerm' : 'single';
   if (!title) return;
   state.plans.unshift({
     id: `plan-${Date.now()}`,
     title,
     points,
     category: 'study',
+    planType,
     done: false,
     createdAt: Date.now(),
     completedAt: null
   });
   form.reset();
   form.elements.points.value = points;
-  showToast('学习任务已添加。');
+  form.elements.planType.value = 'single';
+  state.planningDraftType = 'single';
+  showToast(planType === 'longTerm' ? '长期任务已添加到积分-获得。' : '单次任务已添加到规划中。');
   persist();
-  render('planning');
+  render(planType === 'longTerm' ? 'points' : 'planning');
 }
 
 const actions = {
@@ -494,6 +707,7 @@ const actions = {
   'open-records': openRecordsDetail,
   'open-my': openMy,
   'toggle-more': toggleMore,
+  logout,
   'close-modal': closeModal,
   'my-back': () => {
     state.mySection = null;
@@ -501,7 +715,10 @@ const actions = {
     render('my');
   },
   reset: () => {
+    const currentUser = state.currentUser;
     state = resetState();
+    state.currentUser = currentUser;
+    persist();
     showToast('Demo 已重置');
     render('my');
   },
@@ -512,6 +729,7 @@ const actions = {
 };
 
 pointsPill.addEventListener('click', event => {
+  if (!state.currentUser) return;
   event.stopPropagation();
   openRecordsDetail();
 });
@@ -522,11 +740,45 @@ document.addEventListener('click', event => {
     return;
   }
 
+  if (!event.target.closest('[data-plan-type]')) {
+    closePlanTypeMenus();
+  }
+
   const speakTarget = event.target.closest('[data-speak]');
   if (speakTarget && !event.target.closest('button')) speakToast(speakTarget.dataset.speak);
 
   const target = event.target.closest('button');
   if (!target) return;
+
+  if (target.dataset.planTypeTrigger !== undefined) {
+    const root = target.closest('[data-plan-type]');
+    const menu = root?.querySelector('[data-plan-type-menu]');
+    const willOpen = menu?.classList.contains('hidden');
+    closePlanTypeMenus();
+    if (menu && willOpen) {
+      menu.classList.remove('hidden');
+      target.setAttribute('aria-expanded', 'true');
+    }
+    return;
+  }
+
+  if (target.dataset.planTypeOption) {
+    const root = target.closest('[data-plan-type]');
+    const hiddenInput = root?.querySelector('input[name="planType"]');
+    const label = root?.querySelector('[data-plan-type-label]');
+    const nextValue = target.dataset.planTypeOption;
+    if (hiddenInput) hiddenInput.value = nextValue;
+    if (label) label.textContent = nextValue === 'longTerm' ? '长期' : '单次';
+    root?.querySelectorAll('[data-plan-type-option]').forEach(option => {
+      const active = option.dataset.planTypeOption === nextValue;
+      option.classList.toggle('is-active', active);
+      option.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    state.planningDraftType = nextValue;
+    persist();
+    closePlanTypeMenus();
+    return;
+  }
 
   if (target.dataset.tab) goToTab(target.dataset.tab);
   if (target.dataset.tabJump) jumpToTab(target.dataset.tabJump);
@@ -555,9 +807,14 @@ document.addEventListener('click', event => {
   if (target.dataset.petPick) selectPreviewPet(target.dataset.petPick);
   if (target.dataset.petDetail) showPetDetailModal(target.dataset.petDetail);
   if (target.dataset.earn) earnPoints(Number(target.dataset.earn));
+  if (target.dataset.earnCustom) earnCustomPoints(target.dataset.earnCustom);
   if (target.dataset.deduct) deductPoints(Number(target.dataset.deduct));
+  if (target.dataset.deductCustom) deductCustomPoints(target.dataset.deductCustom);
+  if (target.dataset.openCustomRule) showCustomRuleModal(target.dataset.openCustomRule);
   if (target.dataset.exchange) exchangeReward(target.dataset.exchange);
+  if (target.dataset.deleteRuleKind) deleteRuleCard(target.dataset.deleteRuleKind, target.dataset.deleteRuleId);
   if (target.dataset.completePlan) completePlan(target.dataset.completePlan);
+  if (target.dataset.completePlanEarn) completePlan(target.dataset.completePlanEarn, 'points');
   if (target.dataset.deletePlan) deletePlan(target.dataset.deletePlan);
   if (target.dataset.writeOff) requestWriteOffVerification(target.dataset.writeOff);
   if (target.dataset.mySection) {
@@ -573,9 +830,19 @@ document.addEventListener('click', event => {
 });
 
 document.addEventListener('submit', event => {
+  if (event.target.matches('[data-login-form]')) {
+    event.preventDefault();
+    login(event.target);
+    return;
+  }
   if (event.target.matches('[data-plan-form]')) {
     event.preventDefault();
     addPlan(event.target);
+    return;
+  }
+  if (event.target.matches('[data-custom-rule-form]')) {
+    event.preventDefault();
+    submitCustomRuleForm(event.target);
     return;
   }
   if (!event.target.matches('[data-write-off-form]')) return;
@@ -598,4 +865,8 @@ window.addEventListener('scroll', () => {
   lastScrollY = currentY;
 }, { passive: true });
 
-goHome();
+if (state.currentUser) {
+  goHome();
+} else {
+  renderAuth();
+}

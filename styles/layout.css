@@ -1,9 +1,14 @@
 /* 2. App shell, topbar, navigation, and shared components */
 .app-shell {
-  width: min(1120px, 100%);
+  width: min(1000px, 100%);
   min-height: 100vh;
   margin: 0 auto;
-  padding: var(--space-md) var(--space-md) 112px;
+  padding: var(--space-md) 20px 112px;
+}
+
+.app-shell.logged-out {
+  width: min(1000px, 100%);
+  padding-bottom: var(--space-md);
 }
 
 .topbar {
@@ -13,6 +18,19 @@
   justify-content: space-between;
   gap: var(--gutter);
   margin-bottom: var(--space-md);
+}
+
+.topbar.no-switch {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.topbar.no-switch .brand-logo {
+  grid-column: 1;
+}
+
+.topbar.no-switch .top-actions {
+  grid-column: 3;
+  justify-self: end;
 }
 
 .brand-logo {
@@ -109,7 +127,7 @@ p { color: var(--on-surface-variant); }
 }
 .header-switch:empty { display: block; }
 .section-switch {
-  width: max-content;
+  width: 418px;
   display: grid;
   grid-template-columns: repeat(2, 200px);
   gap: 18px;
@@ -152,6 +170,22 @@ p { color: var(--on-surface-variant); }
   align-items: center;
   justify-content: end;
   gap: 14px;
+}
+.logout-btn {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 2px solid var(--outline-variant);
+  border-radius: 999px;
+  color: var(--on-surface-variant);
+  background: var(--surface-container-lowest);
+  box-shadow: 0 4px 0 var(--surface-dim);
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+}
+.logout-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--surface-dim);
 }
 .avatar-btn {
   width: 62px;

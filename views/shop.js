@@ -8,9 +8,9 @@ export function shopView(state) {
       ${shopSection === 'exchange' ? `
       <section class="shop-panel">
         <div class="reward-list">${REWARDS.map(reward => `
-          <div class="reward-card">
+          <div class="reward-card" role="button" tabindex="0" data-speak="${reward.name}，需要 ${reward.cost} 积分">
             <h3><span class="inline-title-icon">${iconSvg(reward.icon)}</span>${reward.name}</h3>
-            <p>需要 ${reward.cost} 积分，兑换后请家长确认。</p>
+            <p>需要 ${reward.cost} 积分，兑换后可以在我的里查看并核销。</p>
             <button class="btn secondary" data-exchange="${reward.id}">兑换</button>
           </div>
         `).join('')}</div>
