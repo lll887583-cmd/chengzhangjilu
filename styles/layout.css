@@ -118,6 +118,10 @@ p { color: var(--on-surface-variant); }
 }
 
 .screen { animation: rise 0.28s ease both; }
+.app-shell.skip-render-animation .screen,
+.app-shell.skip-render-animation .my-detail-card {
+  animation: none !important;
+}
 .grid { display: grid; gap: var(--space-md); }
 .home-grid { grid-template-columns: 1.08fr 0.92fr; align-items: stretch; }
 

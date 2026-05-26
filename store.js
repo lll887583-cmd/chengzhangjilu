@@ -1,4 +1,4 @@
-import { DEMO_ACCOUNT, PETS, defaultState } from './data.js';
+import { DEMO_ACCOUNTS, PETS, defaultState } from './data.js';
 
 const STORAGE_KEY = 'growth-record-demo';
 const memoryStorage = new Map();
@@ -77,6 +77,7 @@ export function normalizeState(state) {
   state.pointsSection ||= 'earn';
   state.shopSection ||= 'exchange';
   state.planningSection ||= 'active';
+  state.pointsBoardView = ['week', 'month', 'year'].includes(state.pointsBoardView) ? state.pointsBoardView : 'week';
   state.planningDraftType = state.planningDraftType === 'longTerm' ? 'longTerm' : 'single';
   state.customPointRules = Array.isArray(state.customPointRules) ? state.customPointRules : [];
   state.customDeductRules = Array.isArray(state.customDeductRules) ? state.customDeductRules : [];
@@ -85,7 +86,7 @@ export function normalizeState(state) {
   state.petSection ||= 'cloud';
   state.calendarMonth ||= null;
   if (state.selectedTab === 'pet') state.selectedTab = 'points';
-  if (state.currentUser && state.currentUser.id !== DEMO_ACCOUNT.id) {
+  if (state.currentUser && !DEMO_ACCOUNTS.some(account => account.id === state.currentUser.id)) {
     state.currentUser = null;
   }
   if (!PETS[state.previewPet]) state.previewPet = defaultState.previewPet;

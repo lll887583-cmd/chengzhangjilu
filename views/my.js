@@ -1,5 +1,5 @@
 import { petView } from './pet.js';
-import { getPetStatus, iconSvg, recordTitle, statCard } from './shared.js';
+import { getPetStatus, iconSvg, recordTitle, sectionSwitch, statCard } from './shared.js';
 
 function myOverviewCard(section, icon, title, summary, meta) {
   return `
@@ -23,6 +23,155 @@ function myDetailShell(title, subtitle, content, extraClass = '') {
       </div>
       ${content}
     </section>`;
+}
+
+function startOfDay(time) {
+  const date = new Date(time);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function formatBucketLabel(view, date) {
+  if (view === 'year') return `${date.getMonth() + 1}月`;
+  if (view === 'month') return `${date.getDate()}日`;
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function buildPointsBoard(state, view = 'week') {
+  const today = startOfDay(Date.now());
+  const buckets = [];
+  const earnedRecords = (state.records || []).filter(record => (record.delta || 0) > 0);
+
+  if (view === 'year') {
+    const year = today.getFullYear();
+    for (let month = 0; month < 12; month += 1) {
+      const date = new Date(year, month, 1);
+      buckets.push({
+        key: `${year}-${month + 1}`,
+        label: formatBucketLabel(view, date),
+        total: 0,
+        year,
+        month
+      });
+    }
+    earnedRecords.forEach(record => {
+      const date = new Date(record.time);
+      if (date.getFullYear() !== year) return;
+      buckets[date.getMonth()].total += record.delta || 0;
+    });
+  } else if (view === 'month') {
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const date = new Date(year, month, day);
+      buckets.push({
+        key: `${year}-${month + 1}-${day}`,
+        label: formatBucketLabel(view, date),
+        total: 0,
+        year,
+        month,
+        day
+      });
+    }
+    earnedRecords.forEach(record => {
+      const date = new Date(record.time);
+      if (date.getFullYear() !== year || date.getMonth() !== month) return;
+      buckets[date.getDate() - 1].total += record.delta || 0;
+    });
+  } else {
+    const start = new Date(today);
+    start.setDate(today.getDate() - 6);
+    for (let offset = 0; offset < 7; offset += 1) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + offset);
+      buckets.push({
+        key: date.toISOString().slice(0, 10),
+        label: formatBucketLabel('week', date),
+        total: 0,
+        date
+      });
+    }
+    earnedRecords.forEach(record => {
+      const date = startOfDay(record.time);
+      if (date < start || date > today) return;
+      const index = Math.round((date.getTime() - start.getTime()) / 86400000);
+      if (buckets[index]) buckets[index].total += record.delta || 0;
+    });
+  }
+
+  const maxTotal = Math.max(...buckets.map(item => item.total), 0);
+  const chartWidth = Math.max(640, buckets.length * 56);
+  const chartHeight = 220;
+  const padX = 28;
+  const padY = 24;
+  const usableWidth = chartWidth - padX * 2;
+  const usableHeight = chartHeight - padY * 2;
+  const stepX = buckets.length > 1 ? usableWidth / (buckets.length - 1) : 0;
+  const points = buckets.map((item, index) => {
+    const x = padX + stepX * index;
+    const y = chartHeight - padY - (maxTotal > 0 ? (item.total / maxTotal) * usableHeight : 0);
+    return { ...item, x, y };
+  });
+  const polyline = points.map(point => `${point.x},${point.y}`).join(' ');
+  const totalEarned = buckets.reduce((sum, item) => sum + item.total, 0);
+  const topBucket = buckets.reduce((best, item) => item.total > best.total ? item : best, buckets[0] || { label: '-', total: 0 });
+  const activeDays = buckets.filter(item => item.total > 0).length;
+  const viewText = view === 'year' ? '年视图' : view === 'month' ? '月视图' : '周视图';
+
+  return {
+    viewText,
+    buckets,
+    points,
+    polyline,
+    maxTotal,
+    totalEarned,
+    topBucket,
+    activeDays
+  };
+}
+
+function pointsBoardSection(state) {
+  const boardView = state.pointsBoardView || 'week';
+  const board = buildPointsBoard(state, boardView);
+  const switchHtml = sectionSwitch([
+    { value: 'week', label: '周视图' },
+    { value: 'month', label: '月视图' },
+    { value: 'year', label: '年视图' }
+  ], boardView, 'points-board-view');
+
+  return myDetailShell('积分看板', '查看积分获得总数的折线趋势。', `
+    <div class="points-board-head">
+      ${switchHtml}
+    </div>
+    <div class="points-board-summary">
+      ${statCard('trendingUp', `+${board.totalEarned}`, `${board.viewText}获得总数`)}
+      ${statCard('star', board.maxTotal ? `+${board.topBucket.total}` : '+0', `峰值：${board.topBucket.label}`)}
+      ${statCard('checklist', board.activeDays, '有积分的时间点')}
+    </div>
+    <section class="points-board-chart card">
+      <div class="points-board-chart-head">
+        <strong>${board.viewText}</strong>
+        <span>只统计获得积分</span>
+      </div>
+      <div class="points-board-scroll">
+        <div class="points-board-track" style="width:${board.points.at(-1)?.x + 28 || 640}px;">
+          <svg viewBox="0 0 ${board.points.at(-1)?.x + 28 || 640} 220" class="points-board-svg" aria-label="${board.viewText}积分折线图" role="img">
+            <line x1="28" y1="196" x2="${board.points.at(-1)?.x + 28 || 612}" y2="196" class="points-board-axis"></line>
+            ${board.points.map(point => `<line x1="${point.x}" y1="196" x2="${point.x}" y2="${point.y}" class="points-board-guide"></line>`).join('')}
+            <polyline points="${board.polyline}" class="points-board-line"></polyline>
+            ${board.points.map(point => `<circle cx="${point.x}" cy="${point.y}" r="6" class="points-board-dot"></circle>`).join('')}
+          </svg>
+          <div class="points-board-labels" style="grid-template-columns: repeat(${board.buckets.length}, minmax(44px, 1fr));">
+            ${board.buckets.map(bucket => `<span>${bucket.label}</span>`).join('')}
+          </div>
+          <div class="points-board-values" style="grid-template-columns: repeat(${board.buckets.length}, minmax(44px, 1fr));">
+            ${board.buckets.map(bucket => `<span>+${bucket.total}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    </section>
+  `, 'points-board-detail');
 }
 
 function redemptionCard(reward) {
@@ -92,14 +241,19 @@ export function myView(state) {
     `);
   }
 
+  if (state.mySection === 'dashboard') {
+    return pointsBoardSection(state);
+  }
+
   state.mySection = null;
   return `
     <section class="my-overview">
       <div class="my-overview-grid">
         ${myOverviewCard('profile', iconSvg('star'), '成长档案', '查看当前积分、累计获得、累计使用和宠物状态。', `${state.points} 当前积分`)}
-        ${myOverviewCard('pet', iconSvg('pets'), '宠物馆', '进入云宠物和宠物图鉴，继续领养、互动和查看详情。', status.label)}
         ${myOverviewCard('redeemed', iconSvg('gift'), '我的兑换', '查看兑换奖励、等待核销和已核销记录。', `${exchangedRewards.length} 个奖励`)}
+        ${myOverviewCard('dashboard', iconSvg('trendingUp'), '积分看板', '查看积分获得总数的年/月/周折线趋势。', '年 / 月 / 周')}
         ${myOverviewCard('records', iconSvg('checklist'), '积分记录', '查看每一次获得、兑换、抽奖和照顾宠物的明细。', `${state.records.length} 条记录`)}
+        ${myOverviewCard('pet', iconSvg('pets'), '宠物馆', '进入云宠物和宠物图鉴，继续领养、互动和查看详情。', status.label)}
       </div>
     </section>`;
 }

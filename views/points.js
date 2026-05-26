@@ -1,5 +1,5 @@
-import { DEDUCT_RULES, POINT_RULES } from '../data.js?v=20260526g';
-import { iconSvg } from './shared.js?v=20260526g';
+import { DEDUCT_RULES, POINT_RULES } from '../data.js?v=20260526h';
+import { iconSvg } from './shared.js?v=20260526h';
 
 export function pointsView(state) {
   const pointsSection = state.pointsSection || 'earn';

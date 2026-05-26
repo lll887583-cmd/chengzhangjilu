@@ -1,6 +1,6 @@
-import { DEDUCT_RULES, DEMO_ACCOUNT, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260526g';
-import { addRecord, loadState, resetState, saveState, spend } from './store.js?v=20260526g';
-import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260526g';
+import { DEDUCT_RULES, DEMO_ACCOUNTS, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260526j';
+import { addRecord, loadState, resetState, saveState, spend } from './store.js?v=20260526j';
+import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260526j';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -19,6 +19,7 @@ const moreNav = document.querySelector('.more-nav');
 const moreToggle = document.querySelector('.more-toggle');
 let pendingWriteOff = null;
 let loginError = '';
+let skipNextRenderAnimation = false;
 
 const views = {
   points: () => pointsView(state),
@@ -501,16 +502,17 @@ function login(form) {
   const account = String(formData.get('account') || '').trim();
   const password = String(formData.get('password') || '').trim();
 
-  if (account !== DEMO_ACCOUNT.account || password !== DEMO_ACCOUNT.password) {
+  const matchedAccount = DEMO_ACCOUNTS.find(item => item.account === account && item.password === password);
+  if (!matchedAccount) {
     loginError = '账号或密码不对，请重新输入。';
     renderAuth();
     return;
   }
 
   state.currentUser = {
-    id: DEMO_ACCOUNT.id,
-    account: DEMO_ACCOUNT.account,
-    displayName: DEMO_ACCOUNT.displayName
+    id: matchedAccount.id,
+    account: matchedAccount.account,
+    displayName: matchedAccount.displayName
   };
   state.selectedTab = 'points';
   state.mySection = null;
@@ -533,9 +535,12 @@ function logout() {
 }
 
 function renderAuth() {
+  appShell.classList.toggle('skip-render-animation', skipNextRenderAnimation);
   syncShellVisibility();
   headerSwitch.hidden = true;
   app.innerHTML = authView(loginError);
+  skipNextRenderAnimation = false;
+  requestAnimationFrame(() => appShell.classList.remove('skip-render-animation'));
 }
 
 function render(tab = state.selectedTab) {
@@ -546,10 +551,13 @@ function render(tab = state.selectedTab) {
   state.selectedTab = tab;
   syncPetTime();
   persist();
+  appShell.classList.toggle('skip-render-animation', skipNextRenderAnimation);
   syncShellVisibility();
   renderNavigation(tab);
   renderHeaderSwitch(tab);
   app.innerHTML = (views[tab] || views.points)();
+  skipNextRenderAnimation = false;
+  requestAnimationFrame(() => appShell.classList.remove('skip-render-animation'));
 }
 
 function showPlanetModal() {
@@ -796,6 +804,12 @@ document.addEventListener('click', event => {
     state.planningSection = target.dataset.planningSection;
     persist();
     render('planning');
+  }
+  if (target.dataset.pointsBoardView) {
+    state.pointsBoardView = target.dataset.pointsBoardView;
+    persist();
+    skipNextRenderAnimation = true;
+    render('my');
   }
   if (target.dataset.petSection) {
     state.petSection = target.dataset.petSection;

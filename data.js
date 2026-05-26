@@ -50,12 +50,22 @@ export const STUDY_RULE_NAMES = POINT_RULES
   .filter(rule => rule[3] === 'study')
   .map(rule => rule[0]);
 
-export const DEMO_ACCOUNT = {
-  id: 'a',
-  account: 'a',
-  displayName: '成长记录',
-  password: '111111'
-};
+export const DEMO_ACCOUNTS = [
+  {
+    id: 'a',
+    account: 'a',
+    displayName: '成长记录',
+    password: '111111'
+  },
+  {
+    id: 't',
+    account: 't',
+    displayName: '测试账号',
+    password: '111111'
+  }
+];
+
+export const DEMO_ACCOUNT = DEMO_ACCOUNTS[0];
 
 export const defaultState = {
   points: 0,
@@ -66,6 +76,7 @@ export const defaultState = {
   pointsSection: 'earn',
   shopSection: 'exchange',
   planningSection: 'active',
+  pointsBoardView: 'week',
   planningDraftType: 'single',
   customPointRules: [],
   customDeductRules: [],
