@@ -70,6 +70,15 @@
   .more-nav { display: grid; }
   .reward-list { grid-template-columns: 1fr; }
   .my-overview-grid { grid-template-columns: 1fr; }
+  .points-board-summary { grid-template-columns: 1fr; }
+  .points-board-head .section-switch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .points-board-chart { padding: 18px 16px; }
+  .points-board-chart-head { align-items: start; flex-direction: column; }
+  .points-board-labels,
+  .points-board-values {
+    grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+    font-size: 12px;
+  }
   .plan-form,
   .plan-card,
   .redeemed-card {

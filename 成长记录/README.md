@@ -2,6 +2,14 @@
 
 一个 iPad 友好的儿童积分宠物养成 Demo。
 
+## 线上预览
+
+GitHub Pages 地址：
+
+```text
+https://lll887583-cmd.github.io/chengzhangjilu/
+```
+
 ## 本地预览
 
 localhost 地址：

@@ -118,15 +118,15 @@
   align-items: center;
   justify-content: center;
   border-style: dashed;
-  border-color: #dddddd;
-  color: #a3a3a3;
-  background: transparent;
+  border-color: var(--outline-variant);
+  color: #989898;
+  background: var(--surface-container-low);
   box-shadow: none !important;
   text-align: center;
 }
 .rule-card-add:hover {
-  border-color: #d2d2d2;
-  color: #969696;
+  border-color: #cfcfcf;
+  color: #8f8f8f;
   transform: translateY(-2px);
 }
 .rule-card-add:active { transform: translateY(2px); }
@@ -318,6 +318,11 @@
   background: #bfe1ff;
   box-shadow: none;
 }
+.my-card-icon.dashboard {
+  color: #5b2fb0;
+  background: #e4d6ff;
+  box-shadow: none;
+}
 .my-card-icon svg {
   width: 44px;
   height: 44px;
@@ -332,6 +337,97 @@
   letter-spacing: .08em;
 }
 .my-detail-card { animation: rise 0.22s ease both; }
+.points-board-head {
+  margin-bottom: 18px;
+}
+.points-board-head .section-switch {
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.points-board-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.points-board-chart {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #fffdf7 0%, #f6fbff 100%);
+}
+.points-board-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.points-board-chart-head strong {
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 22px;
+}
+.points-board-chart-head span {
+  color: var(--on-surface-variant);
+  font-weight: 800;
+}
+.points-board-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.points-board-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.points-board-track {
+  min-width: 100%;
+  display: grid;
+  gap: 12px;
+}
+.points-board-axis {
+  stroke: #d5dde9;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.points-board-guide {
+  stroke: rgba(125, 157, 198, 0.18);
+  stroke-width: 2;
+}
+.points-board-line {
+  fill: none;
+  stroke: #3f9f05;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.points-board-dot {
+  fill: #ffffff;
+  stroke: #3f9f05;
+  stroke-width: 4;
+}
+.points-board-labels,
+.points-board-values {
+  display: grid;
+  gap: 8px;
+}
+.points-board-labels {
+  color: #667085;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+.points-board-values {
+  color: var(--primary);
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
 .my-back-row .btn { flex: 0 0 auto; }
 .my-grid .redeemed-section { grid-column: 1 / -1; }
 .section-head {
