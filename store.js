@@ -1,6 +1,7 @@
-import { DEMO_ACCOUNTS, PETS, defaultState } from './data.js';
+import { PETS, defaultState } from './data.js';
 
-const STORAGE_KEY = 'growth-record-demo';
+const LEGACY_STORAGE_KEY = 'growth-record-demo';
+const USER_STORAGE_PREFIX = 'growth-record-demo-user:';
 const memoryStorage = new Map();
 const DEFAULT_PLAN_ITEMS = [
   { title: '读 15 分钟中文', points: 6, category: 'study', planType: 'single' },
@@ -23,26 +24,58 @@ function storage() {
   };
 }
 
+function accountStorageKey(account) {
+  return account ? `${USER_STORAGE_PREFIX}${account}` : LEGACY_STORAGE_KEY;
+}
+
+function parseStoredState(raw) {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function serializeState(state) {
+  const snapshot = clone(state);
+  snapshot.currentUser = null;
+  return snapshot;
+}
+
 // Persistence and state-normalization helpers only.
 // UI rendering lives in views.js; user interactions live in app.js.
-export function loadState() {
-  const saved = storage().getItem(STORAGE_KEY);
-  if (!saved) return clone(defaultState);
+export function createDefaultState() {
+  return clone(defaultState);
+}
 
-  try {
-    return normalizeState({ ...clone(defaultState), ...JSON.parse(saved) });
-  } catch {
-    return clone(defaultState);
-  }
+export function loadState() {
+  const saved = parseStoredState(storage().getItem(LEGACY_STORAGE_KEY));
+  if (!saved) return clone(defaultState);
+  return normalizeState({ ...clone(defaultState), ...saved });
+}
+
+export function loadCachedUserState(account) {
+  const saved = parseStoredState(storage().getItem(accountStorageKey(account)));
+  if (!saved) return null;
+  return normalizeState({ ...clone(defaultState), ...saved });
+}
+
+export function hydrateStateForUser(userProfile, savedState = null) {
+  const baseState = savedState ? { ...clone(defaultState), ...savedState } : clone(defaultState);
+  const nextState = normalizeState(baseState);
+  nextState.currentUser = clone(userProfile);
+  return normalizeState(nextState);
 }
 
 export function saveState(state) {
   normalizeState(state);
-  storage().setItem(STORAGE_KEY, JSON.stringify(state));
+  const account = state.currentUser?.account || null;
+  storage().setItem(accountStorageKey(account), JSON.stringify(serializeState(state)));
 }
 
-export function resetState() {
-  storage().removeItem(STORAGE_KEY);
+export function resetState(account = null) {
+  storage().removeItem(accountStorageKey(account));
   return clone(defaultState);
 }
 
@@ -86,9 +119,6 @@ export function normalizeState(state) {
   state.petSection ||= 'cloud';
   state.calendarMonth ||= null;
   if (state.selectedTab === 'pet') state.selectedTab = 'points';
-  if (state.currentUser && !DEMO_ACCOUNTS.some(account => account.id === state.currentUser.id)) {
-    state.currentUser = null;
-  }
   if (!PETS[state.previewPet]) state.previewPet = defaultState.previewPet;
   state.collectedPets = state.collectedPets.filter(type => PETS[type]);
   if (state.pet?.type && !PETS[state.pet.type]) state.pet = null;
@@ -122,4 +152,9 @@ export function normalizeState(state) {
     exchangeId: reward.exchangeId || `${reward.id || 'reward'}-${reward.time || Date.now()}-${index}`
   }));
   return state;
+}
+
+export function exportPersistedState(state) {
+  normalizeState(state);
+  return serializeState(state);
 }

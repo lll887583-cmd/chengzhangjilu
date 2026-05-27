@@ -52,15 +52,21 @@ export const STUDY_RULE_NAMES = POINT_RULES
 
 export const DEMO_ACCOUNTS = [
   {
-    id: 'a',
-    account: 'a',
-    displayName: '成长记录',
+    id: 's',
+    account: 's',
+    authEmail: 's@growth-record.demo',
+    role: 'student',
+    displayName: '学生 1',
+    roleLabel: '学生 1',
     password: '111111'
   },
   {
-    id: 't',
-    account: 't',
-    displayName: '测试账号',
+    id: 'st',
+    account: 'st',
+    authEmail: 'st@growth-record.demo',
+    role: 'student',
+    displayName: '学生 2',
+    roleLabel: '学生 2 / 调试',
     password: '111111'
   }
 ];
