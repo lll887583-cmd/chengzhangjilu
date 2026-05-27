@@ -22,6 +22,13 @@
     gap: 8px;
   }
   .section-switch button { min-height: 44px; border-width: 2px; border-radius: 12px; font-size: 14px; }
+  .section-switch--header { gap: 0; }
+  .section-switch--header {
+    width: 248px;
+    grid-template-columns: repeat(2, 124px);
+    justify-self: center;
+  }
+  .section-switch--header button { min-height: 44px; border-width: 0; border-radius: 0; font-size: 20px; }
   .section-title-card { align-items: start; flex-direction: column; }
   .reward-card,
   .redeemed-card {

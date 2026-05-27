@@ -14,9 +14,10 @@ export function getPetInfo(state, type = state.pet?.type || state.previewPet || 
   return PETS[type] || PETS.sonicHummingbird;
 }
 
-export function sectionSwitch(items, activeValue, dataName) {
+export function sectionSwitch(items, activeValue, dataName, extraClass = '') {
+  const className = ['section-switch', extraClass].filter(Boolean).join(' ');
   return `
-    <div class="section-switch" role="tablist" aria-label="页面切换">
+    <div class="${className}" role="tablist" aria-label="页面切换">
       ${items.map(item => `
         <button class="${activeValue === item.value ? 'active' : ''}" data-${dataName}="${item.value}" role="tab" aria-selected="${activeValue === item.value}">
           ${item.label}
