@@ -70,13 +70,38 @@ export function observeSession(callback) {
   });
 }
 
+function mapAuthError(error) {
+  const code = error?.code || error?.message || '';
+  const messages = {
+    'auth/network-request-failed': '网络连接失败，先检查手机网络或关闭内容拦截后再试。',
+    'auth/too-many-requests': '尝试次数太多了，请过几分钟再试。',
+    'auth/invalid-credential': '账号或密码不对，请重新输入。',
+    'auth/invalid-login-credentials': '账号或密码不对，请重新输入。',
+    'auth/user-not-found': '这个账号还没有在 Firebase 里创建。',
+    'auth/user-disabled': '这个账号已被停用。',
+    'auth/invalid-api-key': 'Firebase 配置无效，请检查站点配置。',
+    'auth/app-deleted': 'Firebase 应用初始化失败，请刷新页面重试。',
+    'auth/operation-not-allowed': 'Firebase 还没开启邮箱密码登录。',
+    'auth/invalid-email': '账号映射的邮箱格式不正确。'
+  };
+  return messages[code] || '登录失败，请稍后再试。';
+}
+
+export function getAuthErrorMessage(error) {
+  return mapAuthError(error);
+}
+
 export async function signInDemoAccount(account, password) {
   const matchedAccount = accountByName(account);
   if (!matchedAccount || matchedAccount.password !== password) {
     throw new Error('invalid-credentials');
   }
   const { auth } = ensureFirebase();
-  return signInWithEmailAndPassword(auth, matchedAccount.authEmail, password);
+  try {
+    return await signInWithEmailAndPassword(auth, matchedAccount.authEmail, password);
+  } catch (error) {
+    throw new Error(mapAuthError(error));
+  }
 }
 
 export async function signOutSession() {
