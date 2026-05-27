@@ -34,7 +34,7 @@ export function pointsView(state) {
   return `
     <section class="points-page">
       <div class="rule-list adaptive">${rules.map(rule => `
-        <article class="rule-card ${isDeduct ? 'deduct' : ''}" role="button" tabindex="0" data-speak="${rule.title}，${isDeduct ? '会扣减' : '完成后可以获得'} ${rule.points} 积分">
+        <article class="rule-card ${isDeduct ? 'deduct' : ''}" role="button" tabindex="0" data-speak="${rule.title}，${isDeduct ? '会减分' : '完成后可以加分'} ${rule.points} 积分">
           <button class="rule-delete" type="button" data-delete-rule-kind="${rule.kind}" data-delete-rule-id="${rule.deleteId || rule.id}" aria-label="删除${rule.title}">${iconSvg('close')}</button>
           <div class="rule-score">${isDeduct ? '-' : '+'}${rule.points}</div>
           <h3>${rule.title}</h3>
@@ -44,11 +44,11 @@ export function pointsView(state) {
             : (rule.kind === 'plan'
               ? `data-complete-plan-earn="${rule.id}"`
               : (rule.kind === 'point-custom' ? `data-earn-custom="${rule.id}"` : `data-earn="${rule.index}"`))}>
-            ${isDeduct ? '扣减' : '完成'}
+            ${isDeduct ? '减分' : '完成'}
           </button>
         </article>
       `).join('')}
-        <button class="rule-card rule-card-add" type="button" data-open-custom-rule="${isDeduct ? 'deduct' : 'earn'}" aria-label="${isDeduct ? '新增扣减项目' : '新增获得项目'}">
+        <button class="rule-card rule-card-add" type="button" data-open-custom-rule="${isDeduct ? 'deduct' : 'earn'}" aria-label="${isDeduct ? '新增减分项目' : '新增加分项目'}">
           <span class="rule-card-add-icon">${iconSvg('add')}</span>
         </button>
       </div>

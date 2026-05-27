@@ -140,19 +140,19 @@ function pointsBoardSection(state) {
     { value: 'year', label: '年视图' }
   ], boardView, 'points-board-view');
 
-  return myDetailShell('积分看板', '查看积分获得总数的折线趋势。', `
+  return myDetailShell('积分看板', '查看积分加分总数的折线趋势。', `
     <div class="points-board-head">
       ${switchHtml}
     </div>
     <div class="points-board-summary">
-      ${statCard('trendingUp', `+${board.totalEarned}`, `${board.viewText}获得总数`)}
+      ${statCard('trendingUp', `+${board.totalEarned}`, `${board.viewText}加分总数`)}
       ${statCard('star', board.maxTotal ? `+${board.topBucket.total}` : '+0', `峰值：${board.topBucket.label}`)}
       ${statCard('checklist', board.activeDays, '有积分的时间点')}
     </div>
     <section class="points-board-chart card">
       <div class="points-board-chart-head">
         <strong>${board.viewText}</strong>
-        <span>只统计获得积分</span>
+        <span>只统计加分记录</span>
       </div>
       <div class="points-board-scroll">
         <div class="points-board-track" style="width:${board.points.at(-1)?.x + 28 || 640}px;">
@@ -181,7 +181,7 @@ function redemptionCard(reward) {
     : ' · 待核销';
 
   const sourceText = reward.source === 'lottery'
-    ? '抽奖获得'
+    ? '抽奖加分'
     : `使用 ${reward.cost} 积分`;
 
   return `
@@ -206,15 +206,15 @@ export function myView(state) {
   }
 
   if (state.mySection === 'profile') {
-    return myDetailShell('我的成长档案', '成长积分记录都放在这里，方便家长回看每一次获得和使用。', `
+    return myDetailShell('我的成长档案', '成长积分记录都放在这里，方便家长回看每一次加分和使用。', `
       <div class="stat-row compact">
         ${statCard('star', state.points, '当前积分')}
-        ${statCard('trendingUp', `+${earned}`, '累计获得')}
+        ${statCard('trendingUp', `+${earned}`, '累计加分')}
         ${statCard('gift', exchangedRewards.length, '兑换奖励')}
         ${statCard('sparkles', `-${spent}`, '累计使用')}
         ${statCard('pets', status.label, '宠物馆状态')}
       </div>
-      <div class="actions"><button class="btn ghost" data-action="export">导出备份</button><button class="btn ghost" data-action="reset">重置 Demo</button><button class="btn danger-soft" data-action="logout">退出登录</button></div>
+      <div class="actions"><button class="btn ghost" data-action="export">导出备份</button><button class="btn ghost" data-action="reset">重置 Demo</button></div>
     `);
   }
 
@@ -231,7 +231,7 @@ export function myView(state) {
   }
 
   if (state.mySection === 'records') {
-    return myDetailShell('成长积分记录', '每一次获得和使用积分，都会按时间放在这里。', `
+    return myDetailShell('成长积分记录', '每一次加分和使用积分，都会按时间放在这里。', `
       <div class="records-list">${state.records.map(record => `
         <div class="record-card">
           <h3>${recordTitle(record.text)}</h3>
@@ -249,10 +249,10 @@ export function myView(state) {
   return `
     <section class="my-overview">
       <div class="my-overview-grid">
-        ${myOverviewCard('profile', iconSvg('star'), '成长档案', '查看当前积分、累计获得、累计使用和宠物状态。', `${state.points} 当前积分`)}
+        ${myOverviewCard('profile', iconSvg('star'), '成长档案', '查看当前积分、累计加分、累计使用和宠物状态。', `${state.points} 当前积分`)}
         ${myOverviewCard('redeemed', iconSvg('gift'), '我的兑换', '查看兑换奖励、等待核销和已核销记录。', `${exchangedRewards.length} 个奖励`)}
-        ${myOverviewCard('dashboard', iconSvg('trendingUp'), '积分看板', '查看积分获得总数的年/月/周折线趋势。', '年 / 月 / 周')}
-        ${myOverviewCard('records', iconSvg('checklist'), '积分记录', '查看每一次获得、兑换、抽奖和照顾宠物的明细。', `${state.records.length} 条记录`)}
+        ${myOverviewCard('dashboard', iconSvg('trendingUp'), '积分看板', '查看积分加分总数的年/月/周折线趋势。', '年 / 月 / 周')}
+        ${myOverviewCard('records', iconSvg('checklist'), '积分记录', '查看每一次加分、兑换、抽奖和照顾宠物的明细。', `${state.records.length} 条记录`)}
         ${myOverviewCard('pet', iconSvg('pets'), '宠物馆', '进入云宠物和宠物图鉴，继续领养、互动和查看详情。', status.label)}
       </div>
     </section>`;

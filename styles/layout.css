@@ -46,6 +46,20 @@
   display: block;
 }
 
+.calendar-month-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  min-height: 52px;
+  margin: 0 auto;
+  color: var(--on-surface);
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .eyebrow {
   margin: 0 0 var(--space-xs);
   color: var(--primary);

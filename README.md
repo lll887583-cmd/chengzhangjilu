@@ -35,43 +35,10 @@ python3 -m http.server 5173
 ## 当前版本
 
 - 静态网页，可部署到 GitHub Pages
-- 已预留 Firebase Auth + Firestore 接入层
-- `s` / `st` 两个账号会分别读取并保存自己的成长数据
+- 当前数据仅保存在浏览器 `localStorage`
+- 刷新页面不会丢失；更换浏览器、清空浏览器站点数据后会重置
 - 图片素材位置预留在 `assets/`
 - UI/UX 基础规范在 `docs/Duolingo-inspired UI-UX.md`
-
-## Firebase 接入说明
-
-项目为了尽量不改现有 UI，采用了最小化云端结构：
-
-```text
-users/{uid}
-  account
-  displayName
-  role
-  roleLabel
-  state
-  createdAt
-  updatedAt
-```
-
-其中 `state` 保存当前账号完整的成长记录状态；对你现在的双账号自用场景，这样改造最少，也最容易维护。
-
-需要你在 Firebase 控制台补完这几步：
-
-1. 创建 Web App，并把配置填入 `firebase-config.js`
-2. 开启 Authentication -> Email/Password
-3. 创建两个账号：
-   - `s@growth-record.demo` / `111111`
-   - `st@growth-record.demo` / `111111`
-4. 在 Firestore 规则页粘贴仓库根目录的 `firestore.rules`
-
-完成后，登录页仍然输入：
-
-- `s` / `111111`
-- `st` / `111111`
-
-前端会自动映射到对应 Firebase 账号。
 
 ## Codex 快速修改地图
 
@@ -95,9 +62,8 @@ users/{uid}
 - 调整页面文案：优先改 `views/` 对应页面模块
 - 调整颜色、间距、按钮、卡片：优先改 `styles/` 对应样式模块
 
-## 推荐正式方案
+## 当前存储说明
 
-- GitHub Pages：托管网页和固定图片素材
-- Firebase Auth：邮箱登录
-- Firestore Spark：按账号保存积分、宠物、兑换、抽奖和成长记录
-- 不使用 Firebase Storage、Cloud Functions、手机号登录、Blaze 付费计划
+- 数据读写统一在 `store.js`
+- 默认使用浏览器 `localStorage`
+- “导出备份”会把当前本地 JSON 复制到剪贴板，便于手动备份
