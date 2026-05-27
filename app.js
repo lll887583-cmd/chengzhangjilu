@@ -1,7 +1,7 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260527b';
-import { addRecord, createDefaultState, loadState, resetState, saveState, spend } from './store.js?v=20260527b';
-import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260527b';
-import { firebaseReady, getAuthErrorMessage, getFirebaseSetupMessage, loadUserCloudState, observeSession, saveUserCloudState, signInDemoAccount, signOutSession } from './firebase.js?v=20260527b';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260527c';
+import { addRecord, createDefaultState, loadState, resetState, saveState, spend } from './store.js?v=20260527c';
+import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260527c';
+import { firebaseReady, getAuthErrorMessage, getFirebaseSetupMessage, loadUserCloudState, observeSession, saveUserCloudState, signInDemoAccount, signOutSession } from './firebase.js?v=20260527c';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.

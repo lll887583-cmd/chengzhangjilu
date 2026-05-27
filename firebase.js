@@ -94,14 +94,12 @@ export function getAuthErrorMessage(error) {
 export async function signInDemoAccount(account, password) {
   const matchedAccount = accountByName(account);
   if (!matchedAccount || matchedAccount.password !== password) {
-    throw new Error('invalid-credentials');
+    const error = new Error('invalid-credentials');
+    error.code = 'auth/invalid-credential';
+    throw error;
   }
   const { auth } = ensureFirebase();
-  try {
-    return await signInWithEmailAndPassword(auth, matchedAccount.authEmail, password);
-  } catch (error) {
-    throw new Error(mapAuthError(error));
-  }
+  return signInWithEmailAndPassword(auth, matchedAccount.authEmail, password);
 }
 
 export async function signOutSession() {
