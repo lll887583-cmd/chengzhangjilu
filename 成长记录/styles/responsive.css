@@ -112,3 +112,27 @@
     box-shadow: 0 0 0 4px #ffe1f0;
   }
 }
+
+@media (max-width: 640px) {
+  .literacy-preview-arrow {
+    display: grid;
+    width: 32px;
+    height: 32px;
+  }
+  .literacy-preview-arrow-left {
+    left: -44px;
+  }
+  .literacy-preview-arrow-right {
+    right: -44px;
+  }
+  .literacy-preview-arrow svg {
+    width: 14px;
+    height: 14px;
+  }
+  .literacy-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .literacy-card {
+    min-height: 132px;
+  }
+}

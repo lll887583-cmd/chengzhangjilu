@@ -1,6 +1,8 @@
 import { REWARDS } from '../data.js';
 import { iconSvg } from './shared.js';
 
+const LOTTERY_QUESTION = '<svg aria-hidden="true" focusable="false" viewBox="0 0 1024 1024"><path d="M800.9 361.7c0 22.5-3.3 43.5-9.7 63.1s-13.8 35.5-21.8 47.9c-8.2 12.4-19.6 24.7-34.5 37.2-14.9 12.5-26.8 21.6-35.9 27.2-9.2 5.7-21.8 13-38.1 22.2-17.1 9.6-31.4 23.1-42.9 40.6-11.4 17.5-17.2 31.4-17.2 42 0 7.1-2.5 13.8-7.5 20.4-5 6.4-10.8 9.7-17.5 9.7h-150c-6.3 0-11.6-3.8-15.9-11.6-4.3-7.8-6.6-15.5-6.6-23.4v-28c0-34.6 13.5-67.2 40.6-97.8 27.1-30.6 56.9-53.3 89.4-67.9 24.6-11.3 42.1-22.9 52.5-35s15.7-27.9 15.7-47.5c0-17.5-9.7-32.9-29.1-46.3-19.3-13.3-41.8-20-67.2-20-27.1 0-49.6 6-67.6 18.1-14.6 10.4-37 34.5-66.9 71.9-5.4 6.7-11.8 10-19.3 10-5 0-10.3-1.7-15.7-5l-102.6-78.1c-5.4-4.2-8.7-9.3-9.7-15.7-1.1-6.3 0.1-12.1 3.4-17.5C293.5 167.5 390.3 112 517 112c33.4 0 66.9 6.4 100.7 19.3s64.2 30.2 91.3 51.9c27.1 21.7 49.2 48.3 66.3 79.7 17.1 31.2 25.6 64.3 25.6 98.8zM603.4 737v150c0 6.7-2.5 12.5-7.5 17.5s-10.8 7.5-17.5 7.5H428.3c-6.7 0-12.5-2.5-17.5-7.5s-7.5-10.8-7.5-17.5V737c0-6.7 2.5-12.5 7.5-17.5s10.8-7.5 17.5-7.5h150.1c6.7 0 12.5 2.5 17.5 7.5s7.5 10.7 7.5 17.5z" fill="currentColor"></path></svg>';
+
 export function shopView(state) {
   const shopSection = state.shopSection || 'exchange';
   return `
@@ -9,16 +11,22 @@ export function shopView(state) {
       <section class="shop-panel">
         <div class="reward-list">${REWARDS.map(reward => `
           <div class="reward-card" role="button" tabindex="0" data-speak="${reward.name}，需要 ${reward.cost} 积分">
+            <div class="reward-cost-badge"><strong>${reward.cost}</strong></div>
             <h3><span class="inline-title-icon">${iconSvg(reward.icon)}</span>${reward.name}</h3>
-            <p>需要 ${reward.cost} 积分，兑换后可以在我的里查看并核销。</p>
             <button class="btn secondary" data-exchange="${reward.id}">兑换</button>
           </div>
         `).join('')}</div>
       </section>` : `
       <section class="card shop-panel lottery-panel">
-        <h2>积分抽奖</h2>
-        <p class="big-copy">每次 20 积分，可能抽到小奖励，也可能只是收获一颗勇敢的心。</p>
-        <div class="pet-stage" style="min-height:220px"><div class="pet-emoji"><img class="lottery-icon" src="./assets/rewards/gift_flat.svg" alt="积分抽奖" /></div></div>
+        <div class="pet-stage" style="min-height:220px">
+          <div class="pet-emoji lottery-hero">
+            <span class="lottery-question left top">${LOTTERY_QUESTION}</span>
+            <span class="lottery-question left bottom">${LOTTERY_QUESTION}</span>
+            <img class="lottery-icon" src="./assets/rewards/gift_flat.svg" alt="积分抽奖" />
+            <span class="lottery-question right top">${LOTTERY_QUESTION}</span>
+            <span class="lottery-question right bottom">${LOTTERY_QUESTION}</span>
+          </div>
+        </div>
         <button class="btn" data-action="lottery" style="width:100%;margin-top:18px">开始抽奖 20 积分</button>
       </section>`}
     </section>`;

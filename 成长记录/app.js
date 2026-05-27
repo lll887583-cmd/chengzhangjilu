@@ -1,7 +1,6 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260527c';
-import { addRecord, createDefaultState, loadState, resetState, saveState, spend } from './store.js?v=20260527c';
-import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260527c';
-import { firebaseReady, getAuthErrorMessage, getFirebaseSetupMessage, loadUserCloudState, observeSession, saveUserCloudState, signInDemoAccount, signOutSession } from './firebase.js?v=20260527c';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260528b';
+import { addRecord, loadState, resetState, saveState, spend } from './store.js?v=20260528b';
+import { calendarView, literacyView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260528b';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -19,30 +18,29 @@ const moreMenu = document.querySelector('#moreMenu');
 const moreNav = document.querySelector('.more-nav');
 const moreToggle = document.querySelector('.more-toggle');
 let pendingWriteOff = null;
-let loginError = '';
 let skipNextRenderAnimation = false;
-let authHydrationToken = 0;
-let persistQueue = Promise.resolve();
 
 const views = {
   points: () => pointsView(state),
   planning: () => planningView(state),
   calendar: () => calendarView(state),
+  literacy: () => literacyView(state),
   shop: () => shopView(state),
   my: () => myView(state)
 };
 
 const NAV_ITEMS = [
-  { value: 'points', label: '记录', icon: '<path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>' },
-  { value: 'planning', label: '任务', icon: '<path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2.1 8.6-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6z"/>' },
-  { value: 'calendar', label: '打卡日历', icon: '<path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>' },
-  { value: 'shop', label: '商城', icon: '<path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/>' }
+  { value: 'points', label: '记录', viewBox: '0 0 24 24', icon: '<path d="M3 5.25A2.25 2.25 0 0 1 5.25 3h3.5A2.25 2.25 0 0 1 11 5.25v3.5A2.25 2.25 0 0 1 8.75 11h-3.5A2.25 2.25 0 0 1 3 8.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 3h3.5A2.25 2.25 0 0 1 21 5.25v3.5A2.25 2.25 0 0 1 18.75 11h-3.5A2.25 2.25 0 0 1 13 8.75v-3.5Zm-10 10A2.25 2.25 0 0 1 5.25 13h3.5A2.25 2.25 0 0 1 11 15.25v3.5A2.25 2.25 0 0 1 8.75 21h-3.5A2.25 2.25 0 0 1 3 18.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 13h3.5A2.25 2.25 0 0 1 21 15.25v3.5A2.25 2.25 0 0 1 18.75 21h-3.5A2.25 2.25 0 0 1 13 18.75v-3.5Z"/>' },
+  { value: 'planning', label: '任务', viewBox: '0 0 1024 1024', icon: '<path d="M730.896 49C832.574 49 915 131.426 915 233.104v517.792C915 852.574 832.574 935 730.896 935H213.104C111.426 935 29 852.574 29 750.896V233.104C29 131.426 111.426 49 213.104 49h517.792zM282.143 516.164c-53.381 0-96.655 43.273-96.655 96.654 0 53.381 43.274 96.655 96.655 96.655 53.38 0 96.654-43.274 96.654-96.655 0-53.38-43.273-96.654-96.654-96.654z m0 46.026c27.961 0 50.628 22.667 50.628 50.628 0 27.962-22.667 50.629-50.628 50.629-27.962 0-50.629-22.667-50.629-50.629 0-27.961 22.667-50.628 50.629-50.628zM770.018 582.9h-266.95c-16.523 0-29.917 13.395-29.917 29.917 0 16.523 13.394 29.917 29.917 29.917h266.95c16.523 0 29.917-13.394 29.917-29.917 0-16.522-13.394-29.917-29.917-29.917zM395.23 260.114c-8.585-9.052-22.882-9.43-31.934-0.845l-94.88 89.987-48.192-48.192c-8.937-8.936-23.426-8.936-32.362 0-8.937 8.937-8.937 23.426 0 32.362l59.546 59.546a22.966 22.966 0 0 0 3.245 2.7 23.701 23.701 0 0 0 1.25 1.43c8.584 9.051 22.882 9.43 31.934 0.845l110.51-104.812c9.25-8.774 9.76-23.344 1.143-32.742a22.58 22.58 0 0 0-0.26-0.279z m374.788 39.728h-266.95c-16.523 0-29.917 13.394-29.917 29.916 0 16.523 13.394 29.917 29.917 29.917h266.95c16.523 0 29.917-13.394 29.917-29.917 0-16.522-13.394-29.916-29.917-29.916z"/>' },
+  { value: 'literacy', label: '识字', viewBox: '0 0 1024 1024', icon: '<path d="M124.917811 807.146348c0 84.278766 68.256478 148.556418 152.530149 148.556418h582.492975a41.571343 41.571343 0 0 0 41.591722-41.591721 41.571343 41.571343 0 0 0-41.591722-41.591722c-38.208955 0-69.351801-27.16402-69.351801-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975 21.692498 0 38.805015-16.720239 40.796975-37.913473h0.794747V141.475025c0-38.310846-31.04605-69.356896-69.351801-69.356896H194.269612c-38.310846 0-69.351801 31.04605-69.351801 73.335722v637.911244m207.958607-530.951642h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.407761 0 17.35196-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.050706-41.591721-31.402667 0-17.357055 18.605214-31.402667 41.591721-31.402667z m0 196.521393h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.402666 0 17.357055-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.045612-41.591721-31.402667 0-17.35196 18.605214-31.402667 41.591721-31.402666z m-55.428458 423.584477c-38.208955 0-69.346706-27.16402-69.346706-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975h447.263841c-10.749453 20.892657-17.316299 40.195821-17.316299 65.372975 0 25.17206 6.673831 44.475224 17.316299 65.372975H277.44796z" fill="currentColor"></path>' },
+  { value: 'calendar', label: '打卡日历', viewBox: '0 0 1024 1024', icon: '<path d="M896 405.333333v426.666667a85.333333 85.333333 0 0 1-85.333333 85.333333H213.333333a85.333333 85.333333 0 0 1-85.333333-85.333333v-426.666667h768z m-272.213333 96.597334l-3.712 3.84-147.925334 175.061333-55.808-64.853333-3.754666-3.84a42.666667 42.666667 0 0 0-64.170667 55.296l3.242667 4.266666 88.533333 102.741334 3.626667 3.712a42.666667 42.666667 0 0 0 57.472 0l3.84-4.053334 180.138666-213.248 3.2-4.266666a42.666667 42.666667 0 0 0-64.682666-54.656zM725.333333 106.666667a42.666667 42.666667 0 0 1 42.666667 42.666666v42.666667h42.666667a85.333333 85.333333 0 0 1 85.333333 85.333333V341.333333H128V277.333333a85.333333 85.333333 0 0 1 85.333333-85.333333h42.666667v-42.666667a42.666667 42.666667 0 1 1 85.333333 0v42.666667h341.333334v-42.666667a42.666667 42.666667 0 0 1 42.666666-42.666666z"/>' },
+  { value: 'shop', label: '商城', viewBox: '0 0 24 24', icon: '<path d="M6.25 5A3.25 3.25 0 0 1 9.5 1.75h5A3.25 3.25 0 0 1 17.75 5V6h.75A2.75 2.75 0 0 1 21.25 8.75v9.5A2.75 2.75 0 0 1 18.5 21H5.5a2.75 2.75 0 0 1-2.75-2.75v-9.5A2.75 2.75 0 0 1 5.5 6h.75V5Zm10 0A1.75 1.75 0 0 0 14.5 3.25h-5A1.75 1.75 0 0 0 7.75 5V6h8.5V5Zm-8 4a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Zm9 0a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Z"/>' }
 ];
 
 function navButton(item, activeTab) {
   return `
     <button data-tab="${item.value}" class="${item.value === activeTab ? 'active' : ''}">
-      <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">${item.icon}</svg>
+      <svg aria-hidden="true" focusable="false" viewBox="${item.viewBox || '0 0 24 24'}">${item.icon}</svg>
       <span>${item.label}</span>
     </button>`;
 }
@@ -53,36 +51,16 @@ function renderNavigation(activeTab) {
 }
 
 function syncShellVisibility() {
-  const isLoggedIn = Boolean(state.currentUser);
-  appShell.classList.toggle('logged-out', !isLoggedIn);
-  topbar.hidden = !isLoggedIn;
-  tabbar.hidden = !isLoggedIn;
-  moreNav.hidden = !isLoggedIn;
+  appShell.classList.remove('logged-out');
+  topbar.hidden = false;
+  tabbar.hidden = false;
+  moreNav.hidden = false;
 }
 
 function normalizeUiState() {
-  if (!state.currentUser) return;
   if (!NAV_ITEMS.some(item => item.value === state.selectedTab)) {
     state.selectedTab = NAV_ITEMS[0]?.value || 'points';
   }
-}
-
-function snapshotState(value) {
-  return typeof structuredClone === 'function'
-    ? structuredClone(value)
-    : JSON.parse(JSON.stringify(value));
-}
-
-function queueCloudPersist() {
-  if (!firebaseReady() || !state.currentUser) return;
-  const nextState = snapshotState(state);
-  persistQueue = persistQueue
-    .catch(() => {})
-    .then(() => saveUserCloudState(nextState))
-    .catch(error => {
-      console.error('Failed to save growth record state:', error);
-      showToast('云端保存失败，请稍后再试。');
-    });
 }
 
 function persist() {
@@ -90,23 +68,28 @@ function persist() {
   saveState(state);
   pointsText.textContent = state.points;
   pointsPill.classList.toggle('negative', state.points < 0);
-  queueCloudPersist();
+}
+
+function currentCalendarMonthLabel() {
+  const monthBase = state.calendarMonth ? new Date(`${state.calendarMonth}T00:00:00`) : new Date();
+  return `${monthBase.getMonth() + 1}月`;
 }
 
 function renderHeaderSwitch(tab) {
   const switchers = {
     points: sectionSwitch([
-      { value: 'earn', label: '获得' },
-      { value: 'deduct', label: '扣减' }
+      { value: 'earn', label: '加分' },
+      { value: 'deduct', label: '减分' }
     ], state.pointsSection || 'earn', 'points-section'),
     shop: sectionSwitch([
       { value: 'exchange', label: '积分兑换' },
       { value: 'lottery', label: '积分抽奖' }
     ], state.shopSection || 'exchange', 'shop-section'),
     planning: sectionSwitch([
-      { value: 'active', label: '规划中' },
+      { value: 'active', label: '任务中' },
       { value: 'done', label: '已完成' }
     ], state.planningSection || 'active', 'planning-section'),
+    calendar: `<div class="calendar-month-badge" aria-live="polite">${currentCalendarMonthLabel()}</div>`,
   };
 
   headerSwitch.innerHTML = switchers[tab] || '';
@@ -220,6 +203,18 @@ function spendPoints(cost, failMessage) {
   return spend(state, cost, showToast, failMessage);
 }
 
+function normalizeLiteracyColor(color) {
+  return ['red', 'yellow', 'green'].includes(color) ? color : 'red';
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function adoptPet(type) {
   const info = PETS[type];
   if (state.pet && state.pet.status !== 'planet') {
@@ -316,8 +311,8 @@ function revivePet() {
 function earnPoints(ruleIndex) {
   const [name, points, , category = 'points'] = POINT_RULES[ruleIndex];
   state.points += points;
-  addRecord(state, `${name}，获得 ${points} 积分`, points, { category, source: 'points-rule' });
-  showToast(`太棒了！获得 ${points} 积分。`);
+  addRecord(state, `${name}，加分 ${points} 积分`, points, { category, source: 'points-rule' });
+  showToast(`太棒了！加分 ${points} 积分。`);
   persist();
   render('points');
 }
@@ -325,8 +320,8 @@ function earnPoints(ruleIndex) {
 function deductPoints(ruleIndex) {
   const [name, points] = DEDUCT_RULES[ruleIndex];
   state.points -= points;
-  addRecord(state, `${name}，扣减 ${points} 积分`, -points, { category: 'deduct' });
-  showToast(`已扣减 ${points} 积分。`);
+  addRecord(state, `${name}，减分 ${points} 积分`, -points, { category: 'deduct' });
+  showToast(`已减分 ${points} 积分。`);
   persist();
   render('points');
 }
@@ -335,8 +330,8 @@ function earnCustomPoints(ruleId) {
   const rule = (state.customPointRules || []).find(item => item.id === ruleId);
   if (!rule) return;
   state.points += rule.points;
-  addRecord(state, `${rule.title}，获得 ${rule.points} 积分`, rule.points, { category: 'points', source: 'custom-points-rule' });
-  showToast(`太棒了！获得 ${rule.points} 积分。`);
+  addRecord(state, `${rule.title}，加分 ${rule.points} 积分`, rule.points, { category: 'points', source: 'custom-points-rule' });
+  showToast(`太棒了！加分 ${rule.points} 积分。`);
   persist();
   render('points');
 }
@@ -345,8 +340,8 @@ function deductCustomPoints(ruleId) {
   const rule = (state.customDeductRules || []).find(item => item.id === ruleId);
   if (!rule) return;
   state.points -= rule.points;
-  addRecord(state, `${rule.title}，扣减 ${rule.points} 积分`, -rule.points, { category: 'deduct', source: 'custom-deduct-rule' });
-  showToast(`已扣减 ${rule.points} 积分。`);
+  addRecord(state, `${rule.title}，减分 ${rule.points} 积分`, -rule.points, { category: 'deduct', source: 'custom-deduct-rule' });
+  showToast(`已减分 ${rule.points} 积分。`);
   persist();
   render('points');
 }
@@ -358,7 +353,7 @@ function showCustomRuleModal(ruleType, errorMessage = '') {
     <form class="modal-card custom-rule-modal" data-custom-rule-form="${ruleType}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
       <div class="custom-rule-head">
-        <h2>${isDeduct ? '新增扣减项目' : '新增获得项目'}</h2>
+        <h2>${isDeduct ? '新增减分项目' : '新增加分项目'}</h2>
       </div>
       <label class="custom-rule-field">
         <span>内容</span>
@@ -405,9 +400,168 @@ function submitCustomRuleForm(form) {
     state.customPointRules.unshift(nextRule);
   }
   closeModal();
-  showToast(ruleType === 'deduct' ? '新的扣减项目已添加。' : '新的获得项目已添加。');
+  showToast(ruleType === 'deduct' ? '新的减分项目已添加。' : '新的加分项目已添加。');
   persist();
   render('points');
+}
+
+function showLiteracyPreviewModal(itemId) {
+  const items = state.literacyItems || [];
+  const index = items.findIndex(entry => entry.id === itemId);
+  const item = index >= 0 ? items[index] : null;
+  if (!item) return;
+  const safeText = escapeHtml(item.text);
+  const total = items.length;
+  const dotIndex = total <= 1 ? 0 : Math.min(2, Math.floor((index / (total - 1)) * 3));
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <div class="modal-card literacy-preview-modal" role="dialog" aria-label="字卡详情">
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <button class="literacy-preview-arrow literacy-preview-arrow-left" type="button" data-literacy-preview-move="prev" data-literacy-preview-id="${item.id}" aria-label="查看上一个字卡" ${index <= 0 ? 'disabled' : ''}>
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M14.71 6.71a1 1 0 0 1 0 1.41L10.83 12l3.88 3.88a1 1 0 0 1-1.42 1.41l-4.58-4.58a1 1 0 0 1 0-1.42l4.58-4.58a1 1 0 0 1 1.42 0Z" fill="currentColor"></path></svg>
+      </button>
+      <button class="literacy-preview-arrow literacy-preview-arrow-right" type="button" data-literacy-preview-move="next" data-literacy-preview-id="${item.id}" aria-label="查看下一个字卡" ${index >= total - 1 ? 'disabled' : ''}>
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M9.29 6.71a1 1 0 0 0 0 1.41L13.17 12l-3.88 3.88a1 1 0 1 0 1.42 1.41l4.58-4.58a1 1 0 0 0 0-1.42l-4.58-4.58a1 1 0 0 0-1.42 0Z" fill="currentColor"></path></svg>
+      </button>
+      <div class="literacy-preview-char" aria-hidden="true">${safeText}</div>
+      <div class="literacy-preview-footer">
+        <div class="literacy-preview-dots" aria-label="字卡浏览进度">
+          ${[0, 1, 2].map(dot => `<span class="literacy-preview-dot ${dot === dotIndex ? 'active' : ''}"></span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function moveLiteracyPreview(itemId, direction) {
+  const items = state.literacyItems || [];
+  const index = items.findIndex(item => item.id === itemId);
+  if (index < 0) return;
+  const nextIndex = direction === 'prev' ? index - 1 : index + 1;
+  if (nextIndex < 0 || nextIndex >= items.length) return;
+  showLiteracyPreviewModal(items[nextIndex].id);
+}
+
+function showLiteracyModal(itemId, errorMessage = '') {
+  const item = (state.literacyItems || []).find(entry => entry.id === itemId);
+  if (!item) return;
+  const activeColor = normalizeLiteracyColor(item.color);
+  const safeText = escapeHtml(item.text);
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <form class="modal-card literacy-modal" data-literacy-edit-form="${item.id}">
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <div class="custom-rule-head">
+        <h2>修改字卡</h2>
+      </div>
+      <label class="custom-rule-field">
+        <span>汉字</span>
+        <input name="text" type="text" maxlength="1" autocomplete="off" value="${safeText}" aria-label="修改汉字" required>
+      </label>
+      <div class="literacy-color-picker" role="radiogroup" aria-label="选择颜色">
+        ${['red', 'yellow', 'green'].map(color => `
+          <button class="literacy-color-option ${color} ${activeColor === color ? 'active' : ''}" type="button" data-literacy-color="${color}" aria-pressed="${activeColor === color}">
+            <span></span>
+          </button>
+        `).join('')}
+      </div>
+      <input type="hidden" name="color" value="${activeColor}">
+      ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
+      <div class="actions">
+        <button class="btn secondary" type="submit">提交</button>
+        <button class="btn ghost" type="button" data-action="close-modal">取消</button>
+      </div>
+  </form>`;
+  setTimeout(() => modal.querySelector('input[name="text"]')?.focus(), 0);
+}
+
+function showCreateLiteracyModal(errorMessage = '', currentValue = '') {
+  const safeText = escapeHtml(currentValue);
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <form class="modal-card literacy-modal" data-literacy-create-form>
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <div class="custom-rule-head">
+        <h2>新增识字卡</h2>
+      </div>
+      <label class="custom-rule-field">
+        <span>汉字</span>
+        <input name="text" type="text" maxlength="1" autocomplete="off" value="${safeText}" placeholder="输入 1 个字" aria-label="输入待巩固字" required>
+      </label>
+      ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
+      <div class="actions">
+        <button class="btn secondary" type="submit">提交</button>
+        <button class="btn ghost" type="button" data-action="close-modal">取消</button>
+      </div>
+    </form>`;
+  setTimeout(() => modal.querySelector('input[name="text"]')?.focus(), 0);
+}
+
+function addLiteracyItem(form) {
+  const data = new FormData(form);
+  const text = String(data.get('text') || '').trim();
+  const char = Array.from(text)[0] || '';
+  if (!char) {
+    showCreateLiteracyModal('请先输入一个字。', text);
+    return;
+  }
+  if (Array.from(text).length !== 1) {
+    showCreateLiteracyModal('一次只能添加 1 个字。', text);
+    return;
+  }
+  if ((state.literacyItems || []).some(item => item.text === char)) {
+    showCreateLiteracyModal('这个字已经添加过了。', text);
+    return;
+  }
+  const now = Date.now();
+  state.literacyItems ||= [];
+  state.literacyItems.unshift({
+    id: `literacy-${now}`,
+    text: char,
+    color: 'red',
+    createdAt: now,
+    updatedAt: now
+  });
+  closeModal();
+  showToast(`已添加：${char}`);
+  persist();
+  render('literacy');
+}
+
+function submitLiteracyEdit(form) {
+  const itemId = form.dataset.literacyEditForm;
+  const item = (state.literacyItems || []).find(entry => entry.id === itemId);
+  if (!item) {
+    closeModal();
+    return;
+  }
+  const data = new FormData(form);
+  const text = String(data.get('text') || '').trim();
+  const char = Array.from(text)[0] || '';
+  const color = normalizeLiteracyColor(String(data.get('color') || 'red'));
+  if (!char || Array.from(text).length !== 1) {
+    showLiteracyModal(itemId, '请只输入 1 个字。');
+    return;
+  }
+  if ((state.literacyItems || []).some(entry => entry.id !== itemId && entry.text === char)) {
+    showLiteracyModal(itemId, '这个字已经存在了。');
+    return;
+  }
+  item.text = char;
+  item.color = color;
+  item.updatedAt = Date.now();
+  closeModal();
+  showToast('字卡已更新。');
+  persist();
+  render('literacy');
+}
+
+function deleteLiteracyItem(itemId) {
+  const beforeCount = (state.literacyItems || []).length;
+  state.literacyItems = (state.literacyItems || []).filter(item => item.id !== itemId);
+  if (state.literacyItems.length === beforeCount) return;
+  showToast('字卡已删除。');
+  persist();
+  render('literacy');
 }
 
 function exchangeReward(id) {
@@ -519,61 +673,7 @@ function drawLottery() {
   render('shop');
 }
 
-async function login(form) {
-  const formData = new FormData(form);
-  const account = String(formData.get('account') || '').trim();
-  const password = String(formData.get('password') || '').trim();
-
-  if (!firebaseReady()) {
-    loginError = getFirebaseSetupMessage();
-    renderAuth();
-    return;
-  }
-
-  try {
-    renderLoading('正在登录并读取成长数据...');
-    await signInDemoAccount(account, password);
-    loginError = '';
-  } catch (error) {
-    loginError = error.message === 'missing-config'
-      ? getFirebaseSetupMessage()
-      : getAuthErrorMessage(error);
-    renderAuth();
-  }
-}
-
-async function logout() {
-  closeModal();
-  renderLoading('正在退出账号...');
-  loginError = '';
-  await signOutSession();
-}
-
-function renderAuth() {
-  appShell.classList.toggle('skip-render-animation', skipNextRenderAnimation);
-  syncShellVisibility();
-  headerSwitch.hidden = true;
-  app.innerHTML = authView(loginError);
-  skipNextRenderAnimation = false;
-  requestAnimationFrame(() => appShell.classList.remove('skip-render-animation'));
-}
-
-function renderLoading(message) {
-  syncShellVisibility();
-  headerSwitch.hidden = true;
-  app.innerHTML = `
-    <section class="auth-page">
-      <section class="card auth-card">
-        <p class="auth-hint">${message}</p>
-      </section>
-    </section>`;
-}
-
 function render(tab = state.selectedTab) {
-  if (!state.currentUser) {
-    renderAuth();
-    return;
-  }
   state.selectedTab = tab;
   syncPetTime();
   persist();
@@ -608,7 +708,7 @@ function closeModal() {
 }
 
 function goToTab(tab) {
-  if (!state.currentUser || !NAV_ITEMS.some(item => item.value === tab)) return;
+  if (!NAV_ITEMS.some(item => item.value === tab)) return;
   if (tab !== 'my') state.mySection = null;
   moreNav?.classList.remove('open');
   moreToggle?.setAttribute('aria-expanded', 'false');
@@ -628,14 +728,12 @@ function goHome() {
 }
 
 function openRecordsDetail() {
-  if (!state.currentUser) return;
   state.mySection = 'records';
   persist();
   render('my');
 }
 
 function openMy() {
-  if (!state.currentUser) return;
   state.mySection = null;
   persist();
   render('my');
@@ -651,6 +749,45 @@ function closePlanTypeMenus() {
   document.querySelectorAll('[data-plan-type-trigger]').forEach(trigger => trigger.setAttribute('aria-expanded', 'false'));
 }
 
+function showPlanModal() {
+  const draftPlanType = state.planningDraftType === 'longTerm' ? 'longTerm' : 'single';
+  const draftPlanTypeLabel = draftPlanType === 'longTerm' ? '长期' : '单次';
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <form class="modal-card plan-modal" data-plan-form>
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <div class="custom-rule-head">
+        <h2>新增学习任务</h2>
+      </div>
+      <div class="plan-form plan-form-modal">
+        <input name="title" type="text" maxlength="24" placeholder="例如：背 5 个单词" aria-label="任务名称" required>
+        <input name="points" type="number" min="1" max="50" value="5" aria-label="任务积分" required>
+        <div class="plan-type-select" data-plan-type>
+          <input type="hidden" name="planType" value="${draftPlanType}">
+          <button class="plan-type-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" data-plan-type-trigger>
+            <span data-plan-type-label>${draftPlanTypeLabel}</span>
+            <span class="plan-type-arrow" aria-hidden="true"></span>
+          </button>
+          <div class="plan-type-menu hidden" role="listbox" aria-label="任务类型" data-plan-type-menu>
+            <button class="plan-type-option ${draftPlanType === 'single' ? 'is-active' : ''}" type="button" role="option" aria-selected="${draftPlanType === 'single' ? 'true' : 'false'}" data-plan-type-option="single">
+              <span class="plan-type-check" aria-hidden="true">✓</span>
+              <span>单次</span>
+            </button>
+            <button class="plan-type-option ${draftPlanType === 'longTerm' ? 'is-active' : ''}" type="button" role="option" aria-selected="${draftPlanType === 'longTerm' ? 'true' : 'false'}" data-plan-type-option="longTerm">
+              <span class="plan-type-check" aria-hidden="true">✓</span>
+              <span>长期</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" type="submit">提交</button>
+        <button class="btn ghost" type="button" data-action="close-modal">取消</button>
+      </div>
+    </form>`;
+  setTimeout(() => modal.querySelector('input[name="title"]')?.focus(), 0);
+}
+
 function completePlan(planId, sourceTab = 'planning') {
   const plan = state.plans.find(item => item.id === planId);
   if (!plan || plan.done) return;
@@ -660,8 +797,8 @@ function completePlan(planId, sourceTab = 'planning') {
     plan.completedAt = Date.now();
   }
   state.points += plan.points;
-  addRecord(state, `${plan.title}，获得 ${plan.points} 积分`, plan.points, { category: 'study', source: 'planning' });
-  showToast(`学习任务完成，获得 ${plan.points} 积分。`);
+  addRecord(state, `${plan.title}，加分 ${plan.points} 积分`, plan.points, { category: 'study', source: 'planning' });
+  showToast(`学习任务完成，加分 ${plan.points} 积分。`);
   persist();
   render(sourceTab);
 }
@@ -722,11 +859,9 @@ function addPlan(form) {
     createdAt: Date.now(),
     completedAt: null
   });
-  form.reset();
-  form.elements.points.value = points;
-  form.elements.planType.value = 'single';
   state.planningDraftType = 'single';
-  showToast(planType === 'longTerm' ? '长期任务已添加到积分-获得。' : '单次任务已添加到规划中。');
+  closeModal();
+  showToast(planType === 'longTerm' ? '长期任务已添加到积分-加分。' : '单次任务已添加到任务中。');
   persist();
   render(planType === 'longTerm' ? 'points' : 'planning');
 }
@@ -741,7 +876,6 @@ const actions = {
   'open-records': openRecordsDetail,
   'open-my': openMy,
   'toggle-more': toggleMore,
-  logout,
   'close-modal': closeModal,
   'my-back': () => {
     state.mySection = null;
@@ -749,9 +883,7 @@ const actions = {
     render('my');
   },
   reset: () => {
-    const currentUser = state.currentUser;
-    state = resetState(currentUser?.account);
-    state.currentUser = currentUser;
+    state = resetState();
     persist();
     showToast('Demo 已重置');
     render('my');
@@ -763,7 +895,6 @@ const actions = {
 };
 
 pointsPill.addEventListener('click', event => {
-  if (!state.currentUser) return;
   event.stopPropagation();
   openRecordsDetail();
 });
@@ -780,6 +911,12 @@ document.addEventListener('click', event => {
 
   const speakTarget = event.target.closest('[data-speak]');
   if (speakTarget && !event.target.closest('button')) speakToast(speakTarget.dataset.speak);
+
+  const literacyCard = event.target.closest('[data-literacy-preview]');
+  if (literacyCard && !event.target.closest('button')) {
+    showLiteracyPreviewModal(literacyCard.dataset.literacyPreview);
+    return;
+  }
 
   const target = event.target.closest('button');
   if (!target) return;
@@ -843,9 +980,30 @@ document.addEventListener('click', event => {
     state.mySection = 'pet';
     render('my');
   }
+  if (target.dataset.openPlanModal !== undefined) {
+    showPlanModal();
+    return;
+  }
   if (target.dataset.adopt) adoptPet(target.dataset.adopt);
   if (target.dataset.petPick) selectPreviewPet(target.dataset.petPick);
   if (target.dataset.petDetail) showPetDetailModal(target.dataset.petDetail);
+  if (target.dataset.literacyCreate !== undefined) showCreateLiteracyModal();
+  if (target.dataset.literacyDelete) deleteLiteracyItem(target.dataset.literacyDelete);
+  if (target.dataset.literacyPreviewMove) moveLiteracyPreview(target.dataset.literacyPreviewId, target.dataset.literacyPreviewMove);
+  if (target.dataset.literacyPreview) showLiteracyPreviewModal(target.dataset.literacyPreview);
+  if (target.dataset.literacyEdit) showLiteracyModal(target.dataset.literacyEdit);
+  if (target.dataset.literacyMore) showLiteracyModal(target.dataset.literacyMore);
+  if (target.dataset.literacyColor) {
+    const form = target.closest('[data-literacy-edit-form]');
+    form?.querySelectorAll('[data-literacy-color]').forEach(option => {
+      const active = option.dataset.literacyColor === target.dataset.literacyColor;
+      option.classList.toggle('active', active);
+      option.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    const colorInput = form?.querySelector('input[name="color"]');
+    if (colorInput) colorInput.value = target.dataset.literacyColor;
+    return;
+  }
   if (target.dataset.earn) earnPoints(Number(target.dataset.earn));
   if (target.dataset.earnCustom) earnCustomPoints(target.dataset.earnCustom);
   if (target.dataset.deduct) deductPoints(Number(target.dataset.deduct));
@@ -876,15 +1034,6 @@ document.addEventListener('click', event => {
 });
 
 document.addEventListener('submit', event => {
-  if (event.target.matches('[data-login-form]')) {
-    event.preventDefault();
-    login(event.target).catch(error => {
-      console.error('Login failed:', error);
-      loginError = '登录失败，请稍后再试。';
-      renderAuth();
-    });
-    return;
-  }
   if (event.target.matches('[data-plan-form]')) {
     event.preventDefault();
     addPlan(event.target);
@@ -895,12 +1044,28 @@ document.addEventListener('submit', event => {
     submitCustomRuleForm(event.target);
     return;
   }
+  if (event.target.matches('[data-literacy-create-form]')) {
+    event.preventDefault();
+    addLiteracyItem(event.target);
+    return;
+  }
+  if (event.target.matches('[data-literacy-edit-form]')) {
+    event.preventDefault();
+    submitLiteracyEdit(event.target);
+    return;
+  }
   if (!event.target.matches('[data-write-off-form]')) return;
   event.preventDefault();
   submitWriteOffVerification();
 });
 
 document.addEventListener('keydown', event => {
+  const literacyCard = event.target.closest('[data-literacy-preview]');
+  if (literacyCard && ['Enter', ' '].includes(event.key)) {
+    event.preventDefault();
+    showLiteracyPreviewModal(literacyCard.dataset.literacyPreview);
+    return;
+  }
   const target = event.target.closest('[data-speak]');
   if (!target || !['Enter', ' '].includes(event.key)) return;
   event.preventDefault();
@@ -915,53 +1080,7 @@ window.addEventListener('scroll', () => {
   lastScrollY = currentY;
 }, { passive: true });
 
-function resetSignedOutState() {
-  state = createDefaultState();
-  state.currentUser = null;
-  state.selectedTab = 'points';
-  state.mySection = null;
-  state.pointsSection = 'earn';
-  pointsText.textContent = state.points;
-  pointsPill.classList.remove('negative');
-}
-
-function bootstrapSession() {
-  if (!firebaseReady()) {
-    resetSignedOutState();
-    renderAuth();
-    return;
-  }
-
-  renderLoading('正在连接成长记录...');
-  observeSession(async session => {
-    const hydrationId = ++authHydrationToken;
-
-    if (!session) {
-      resetSignedOutState();
-      if (hydrationId !== authHydrationToken) return;
-      renderAuth();
-      return;
-    }
-
-    renderLoading('正在同步你的成长数据...');
-    try {
-      const hydratedState = await loadUserCloudState(session.profile);
-      if (hydrationId !== authHydrationToken) return;
-      state = hydratedState;
-      loginError = '';
-      pointsText.textContent = state.points;
-      pointsPill.classList.toggle('negative', state.points < 0);
-      render(state.selectedTab || 'points');
-      showToast('已登录');
-    } catch (error) {
-      console.error('Failed to hydrate session:', error);
-      loginError = '读取云端数据失败，请检查 Firebase 配置。';
-      await signOutSession();
-      if (hydrationId !== authHydrationToken) return;
-      resetSignedOutState();
-      renderAuth();
-    }
-  });
-}
-
-bootstrapSession();
+pointsText.textContent = state.points;
+pointsPill.classList.toggle('negative', state.points < 0);
+syncShellVisibility();
+render(state.selectedTab || 'points');

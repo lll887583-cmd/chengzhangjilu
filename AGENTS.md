@@ -90,6 +90,7 @@
 - 改 JS 交互逻辑时，至少做静态语法/关键路径检查；必要时启动本地预览。
 - 因项目使用 ES module 且无 `package.json`，本地 JS 语法检查可临时复制为 `.mjs` 后执行 `node --check`，不要直接对 `.js` 使用 `node --check`。
 - 改 CSS 结构或关键布局时，优先用本地预览地址做浏览器视觉检查。
+- 每次完成可视化或交互改动后，回复中都附上 localhost 预览地址：`http://localhost:5173/成长记录/`。
 - 用户明确说无需验证时，按最小检查执行。
 - 如果用户反馈 `ERR_CONNECTION_REFUSED`，先检查 `lsof -nP -iTCP:5173 -sTCP:LISTEN`，再启动持续运行的 `python3 -m http.server 5173`。
 

@@ -1,7 +1,6 @@
 import { PETS, defaultState } from './data.js';
 
 const LEGACY_STORAGE_KEY = 'growth-record-demo';
-const USER_STORAGE_PREFIX = 'growth-record-demo-user:';
 const memoryStorage = new Map();
 const DEFAULT_PLAN_ITEMS = [
   { title: '读 15 分钟中文', points: 6, category: 'study', planType: 'single' },
@@ -24,10 +23,6 @@ function storage() {
   };
 }
 
-function accountStorageKey(account) {
-  return account ? `${USER_STORAGE_PREFIX}${account}` : LEGACY_STORAGE_KEY;
-}
-
 function parseStoredState(raw) {
   if (!raw) return null;
   try {
@@ -38,9 +33,11 @@ function parseStoredState(raw) {
 }
 
 function serializeState(state) {
-  const snapshot = clone(state);
-  snapshot.currentUser = null;
-  return snapshot;
+  return clone(state);
+}
+
+function normalizeLiteracyColor(color) {
+  return ['red', 'yellow', 'green'].includes(color) ? color : 'red';
 }
 
 // Persistence and state-normalization helpers only.
@@ -55,27 +52,13 @@ export function loadState() {
   return normalizeState({ ...clone(defaultState), ...saved });
 }
 
-export function loadCachedUserState(account) {
-  const saved = parseStoredState(storage().getItem(accountStorageKey(account)));
-  if (!saved) return null;
-  return normalizeState({ ...clone(defaultState), ...saved });
-}
-
-export function hydrateStateForUser(userProfile, savedState = null) {
-  const baseState = savedState ? { ...clone(defaultState), ...savedState } : clone(defaultState);
-  const nextState = normalizeState(baseState);
-  nextState.currentUser = clone(userProfile);
-  return normalizeState(nextState);
-}
-
 export function saveState(state) {
   normalizeState(state);
-  const account = state.currentUser?.account || null;
-  storage().setItem(accountStorageKey(account), JSON.stringify(serializeState(state)));
+  storage().setItem(LEGACY_STORAGE_KEY, JSON.stringify(serializeState(state)));
 }
 
-export function resetState(account = null) {
-  storage().removeItem(accountStorageKey(account));
+export function resetState() {
+  storage().removeItem(LEGACY_STORAGE_KEY);
   return clone(defaultState);
 }
 
@@ -97,7 +80,6 @@ export function normalizeState(state) {
   state.records ||= [];
   state.exchangedRewards ||= [];
   state.collectedPets ||= [];
-  state.currentUser ??= null;
   if (!Array.isArray(state.plans) || state.plans.length === 0) {
     state.plans = DEFAULT_PLAN_ITEMS.map((plan, index) => ({
       ...plan,
@@ -113,6 +95,7 @@ export function normalizeState(state) {
   state.pointsBoardView = ['week', 'month', 'year'].includes(state.pointsBoardView) ? state.pointsBoardView : 'week';
   state.planningDraftType = state.planningDraftType === 'longTerm' ? 'longTerm' : 'single';
   state.customPointRules = Array.isArray(state.customPointRules) ? state.customPointRules : [];
+  state.literacyItems = Array.isArray(state.literacyItems) ? state.literacyItems : [];
   state.customDeductRules = Array.isArray(state.customDeductRules) ? state.customDeductRules : [];
   state.hiddenPointRuleIds = Array.isArray(state.hiddenPointRuleIds) ? state.hiddenPointRuleIds : [];
   state.hiddenDeductRuleIds = Array.isArray(state.hiddenDeductRuleIds) ? state.hiddenDeductRuleIds : [];
@@ -141,9 +124,16 @@ export function normalizeState(state) {
     points: Math.max(1, Number(rule.points) || 1),
     description: rule.description || ''
   }));
+  state.literacyItems = state.literacyItems.map((item, index) => ({
+    id: item.id || `literacy-${item.createdAt || Date.now()}-${index}`,
+    text: String(item.text || '').trim().slice(0, 1),
+    color: normalizeLiteracyColor(item.color),
+    createdAt: item.createdAt || Date.now(),
+    updatedAt: item.updatedAt || item.createdAt || Date.now()
+  })).filter(item => item.text);
   state.customDeductRules = state.customDeductRules.map((rule, index) => ({
     id: rule.id || `custom-deduct-${Date.now()}-${index}`,
-    title: rule.title || '自定义扣减',
+    title: rule.title || '自定义减分',
     points: Math.max(1, Number(rule.points) || 1),
     description: rule.description || ''
   }));

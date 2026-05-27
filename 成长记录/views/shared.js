@@ -38,8 +38,8 @@ export function statCard(icon, value, label) {
 }
 
 export function recordTitle(text) {
-  return text.replace(/(获得|扣减)\s*(\d+)\s*积分/g, (_, action, points) => {
-    const tone = action === '获得' ? 'positive' : 'negative';
+  return text.replace(/(加分|减分)\s*(\d+)\s*积分/g, (_, action, points) => {
+    const tone = action === '加分' ? 'positive' : 'negative';
     return `<span class="record-delta ${tone}">${action} ${points} 积分</span>`;
   });
 }

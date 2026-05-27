@@ -117,15 +117,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-style: dashed;
-  border-color: var(--outline-variant);
+  border: 2px dashed #d8dadd !important;
   color: #989898;
-  background: var(--surface-container-low);
+  background: #f1f2f4 !important;
   box-shadow: none !important;
   text-align: center;
 }
 .rule-card-add:hover {
-  border-color: #cfcfcf;
+  border-color: #cdced2 !important;
   color: #8f8f8f;
   transform: translateY(-2px);
 }
@@ -137,6 +136,7 @@
   place-items: center;
   border: 2px dashed currentColor;
   border-radius: 50%;
+  background: transparent;
 }
 .rule-card-add-icon svg {
   width: 30px;
@@ -180,6 +180,7 @@
 .record-delta.positive { color: #3f9f05; }
 .record-delta.negative { color: #e14f86; }
 .reward-card {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr;
   align-content: start;
@@ -187,21 +188,43 @@
   min-height: 220px;
   padding: 24px 28px;
 }
-.reward-card h3,
-.reward-card p {
-  grid-column: 1;
-}
 .reward-card h3 {
+  grid-column: 1;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  min-height: 66px;
+  padding-right: 84px;
 }
 .reward-card .btn {
   grid-column: 1;
   grid-row: auto;
   justify-self: stretch;
   width: 100%;
+  margin-top: auto;
+}
+.reward-cost-badge {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 62px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  color: hsl(322 70% 38%);
+  background: hsl(323 100% 96%);
+  box-shadow: none;
+  text-align: center;
+  pointer-events: none;
+}
+.reward-cost-badge strong {
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
 }
 .pet-choice {
   min-height: 220px;
@@ -238,6 +261,62 @@
 }
 .lottery-panel {
   width: 100%;
+}
+.lottery-panel .pet-stage {
+  min-height: 220px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.lottery-panel .pet-emoji {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  animation: none;
+}
+.lottery-panel .lottery-hero {
+  position: relative;
+  min-width: 320px;
+  min-height: 180px;
+}
+.lottery-panel .lottery-icon {
+  width: 132px;
+  height: 132px;
+}
+.lottery-question {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  color: #c9c9c9;
+  opacity: 0.92;
+}
+.lottery-question svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: currentColor;
+}
+.lottery-question.left.top {
+  left: 12px;
+  top: 6px;
+  transform: rotate(-18deg);
+}
+.lottery-question.left.bottom {
+  left: 30px;
+  bottom: 8px;
+  transform: rotate(-8deg);
+}
+.lottery-question.right.top {
+  right: 12px;
+  top: 8px;
+  transform: rotate(16deg);
+}
+.lottery-question.right.bottom {
+  right: 34px;
+  bottom: 4px;
+  transform: rotate(8deg);
 }
 .my-overview {
   display: grid;
@@ -438,6 +517,10 @@
   margin-bottom: var(--space-sm);
 }
 .section-head h2 { margin-bottom: 6px; }
+.my-detail-card .section-head h2 {
+  font-size: 30px;
+  line-height: 38px;
+}
 .section-head p { margin-bottom: 0; }
 .redeemed-list { grid-template-columns: 1fr; }
 .redeemed-card {
@@ -548,53 +631,6 @@
   display: grid;
   gap: var(--space-md);
 }
-.auth-page {
-  min-height: calc(100vh - 40px);
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  gap: 22px;
-}
-.auth-logo {
-  width: min(420px, calc(100vw - 32px));
-  display: flex;
-  justify-content: center;
-}
-.auth-logo img {
-  width: min(100%, 260px);
-  height: auto;
-  display: block;
-}
-.auth-card {
-  width: min(420px, calc(100vw - 32px));
-  padding: 28px;
-}
-.auth-form {
-  display: grid;
-  gap: 14px;
-}
-.auth-form input {
-  min-height: 58px;
-  border: 2px solid var(--outline-variant);
-  border-radius: var(--radius-md);
-  padding: 0 16px;
-  background: var(--surface-container-lowest);
-  color: var(--on-surface);
-  font-size: 17px;
-  font-weight: 800;
-}
-.auth-hint {
-  margin-bottom: 0;
-  color: var(--on-surface-variant);
-  font-size: 14px;
-  font-weight: 800;
-  text-align: center;
-}
-.auth-error {
-  margin-bottom: 0;
-  color: var(--error);
-  font-weight: 800;
-}
 .account-card {
   margin-top: 18px;
 }
@@ -604,15 +640,34 @@
 }
 .planning-hero h2,
 .calendar-hero h2 { margin-bottom: 8px; }
-.plan-form-card {
-  display: grid;
-  gap: 16px;
-  overflow: visible;
-}
 .plan-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 120px 140px minmax(130px, auto);
   gap: 12px;
+}
+.plan-form-modal {
+  grid-template-columns: 1fr;
+}
+.plan-list.active {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: stretch;
+}
+.plan-list.active .plan-card {
+  grid-column: 1 / -1;
+}
+.plan-list.active .empty-card {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+.plan-add-card {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 136px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  border-radius: var(--radius-md) !important;
 }
 .plan-form input,
 .plan-type-trigger {
@@ -885,4 +940,104 @@
 .my-entry-card:active {
   border: 2px solid var(--outline-variant) !important;
   box-shadow: 0 4px 0 var(--surface-dim) !important;
+}
+
+.literacy-page {
+  display: grid;
+  gap: var(--space-md);
+}
+.literacy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.literacy-card {
+  position: relative;
+  min-height: 156px;
+  display: grid;
+  align-content: space-between;
+  place-items: center;
+  padding: 18px 16px;
+  border: 2px solid var(--outline-variant);
+  border-radius: 24px;
+  background: var(--surface-container-lowest);
+  box-shadow: 0 4px 0 var(--surface-dim);
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.literacy-card:hover {
+  transform: translateY(-2px);
+  border-color: #bcc4cf;
+  box-shadow: 0 6px 0 #dbe1e8;
+}
+.literacy-card:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #dbe1e8;
+}
+.literacy-card strong {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #243041;
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: clamp(44px, 7vw, 56px);
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
+}
+.literacy-dot {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+.literacy-dot.red { background: #ef4444; }
+.literacy-dot.yellow { background: #f5c542; }
+.literacy-dot.green { background: #22c55e; }
+.literacy-more {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 40px;
+  min-height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e1e5ea;
+  border-radius: 999px;
+  color: #7b8794;
+  background: #f3f4f6;
+}
+.literacy-more svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: currentColor;
+}
+.literacy-more:active {
+  transform: scale(.96);
+}
+.literacy-card-add {
+  min-height: 156px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #d8dadd !important;
+  color: #989898;
+  background: #f1f2f4 !important;
+  box-shadow: none !important;
+}
+.literacy-card-add:hover {
+  transform: translateY(-2px);
+  border-color: #cdced2 !important;
+  color: #8f8f8f;
+  box-shadow: none !important;
+}
+.literacy-card-add:active {
+  transform: translateY(2px);
+  box-shadow: none !important;
 }

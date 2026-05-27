@@ -33,8 +33,8 @@ export const REWARDS = [
 ];
 
 export const LOTTERY = [
-  { name: '获得 5 积分', weight: 20, points: 5, icon: 'star' },
-  { name: '获得 10 积分', weight: 15, points: 10, icon: 'star' },
+  { name: '加分 5 积分', weight: 20, points: 5, icon: 'star' },
+  { name: '加分 10 积分', weight: 15, points: 10, icon: 'star' },
   { name: '买 1 个小零食', weight: 10, points: 0, icon: 'cookie' },
   { name: '看 20 分钟电视', weight: 10, points: 0, icon: 'tv' },
   { name: '神秘奖励', weight: 5, points: 0, icon: 'celebration' }
@@ -50,33 +50,9 @@ export const STUDY_RULE_NAMES = POINT_RULES
   .filter(rule => rule[3] === 'study')
   .map(rule => rule[0]);
 
-export const DEMO_ACCOUNTS = [
-  {
-    id: 's',
-    account: 's',
-    authEmail: 's@growth-record.demo',
-    role: 'student',
-    displayName: '学生 1',
-    roleLabel: '学生 1',
-    password: '111111'
-  },
-  {
-    id: 'st',
-    account: 'st',
-    authEmail: 'st@growth-record.demo',
-    role: 'student',
-    displayName: '学生 2',
-    roleLabel: '学生 2 / 调试',
-    password: '111111'
-  }
-];
-
-export const DEMO_ACCOUNT = DEMO_ACCOUNTS[0];
-
 export const defaultState = {
   points: 0,
   streak: 1,
-  currentUser: null,
   selectedTab: 'points',
   mySection: null,
   pointsSection: 'earn',
@@ -84,6 +60,7 @@ export const defaultState = {
   planningSection: 'active',
   pointsBoardView: 'week',
   planningDraftType: 'single',
+  literacyItems: [],
   customPointRules: [],
   customDeductRules: [],
   hiddenPointRuleIds: [],
