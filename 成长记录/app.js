@@ -1,6 +1,7 @@
-import { DEDUCT_RULES, DEMO_ACCOUNTS, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260526j';
-import { addRecord, loadState, resetState, saveState, spend } from './store.js?v=20260526j';
-import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260526j';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260527a';
+import { addRecord, createDefaultState, loadState, resetState, saveState, spend } from './store.js?v=20260527a';
+import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260527a';
+import { firebaseReady, getFirebaseSetupMessage, loadUserCloudState, observeSession, saveUserCloudState, signInDemoAccount, signOutSession } from './firebase.js?v=20260527a';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -20,6 +21,8 @@ const moreToggle = document.querySelector('.more-toggle');
 let pendingWriteOff = null;
 let loginError = '';
 let skipNextRenderAnimation = false;
+let authHydrationToken = 0;
+let persistQueue = Promise.resolve();
 
 const views = {
   points: () => pointsView(state),
@@ -64,11 +67,30 @@ function normalizeUiState() {
   }
 }
 
+function snapshotState(value) {
+  return typeof structuredClone === 'function'
+    ? structuredClone(value)
+    : JSON.parse(JSON.stringify(value));
+}
+
+function queueCloudPersist() {
+  if (!firebaseReady() || !state.currentUser) return;
+  const nextState = snapshotState(state);
+  persistQueue = persistQueue
+    .catch(() => {})
+    .then(() => saveUserCloudState(nextState))
+    .catch(error => {
+      console.error('Failed to save growth record state:', error);
+      showToast('云端保存失败，请稍后再试。');
+    });
+}
+
 function persist() {
   normalizeUiState();
   saveState(state);
   pointsText.textContent = state.points;
   pointsPill.classList.toggle('negative', state.points < 0);
+  queueCloudPersist();
 }
 
 function renderHeaderSwitch(tab) {
@@ -497,41 +519,34 @@ function drawLottery() {
   render('shop');
 }
 
-function login(form) {
+async function login(form) {
   const formData = new FormData(form);
   const account = String(formData.get('account') || '').trim();
   const password = String(formData.get('password') || '').trim();
 
-  const matchedAccount = DEMO_ACCOUNTS.find(item => item.account === account && item.password === password);
-  if (!matchedAccount) {
-    loginError = '账号或密码不对，请重新输入。';
+  if (!firebaseReady()) {
+    loginError = getFirebaseSetupMessage();
     renderAuth();
     return;
   }
 
-  state.currentUser = {
-    id: matchedAccount.id,
-    account: matchedAccount.account,
-    displayName: matchedAccount.displayName
-  };
-  state.selectedTab = 'points';
-  state.mySection = null;
-  state.pointsSection = 'earn';
-  loginError = '';
-  persist();
-  render('points');
-  showToast('已登录');
+  try {
+    renderLoading('正在登录并读取成长数据...');
+    await signInDemoAccount(account, password);
+    loginError = '';
+  } catch (error) {
+    loginError = error.message === 'missing-config'
+      ? getFirebaseSetupMessage()
+      : '账号或密码不对，请重新输入。';
+    renderAuth();
+  }
 }
 
-function logout() {
+async function logout() {
   closeModal();
-  state.currentUser = null;
-  state.mySection = null;
-  state.selectedTab = 'points';
-  state.pointsSection = 'earn';
+  renderLoading('正在退出账号...');
   loginError = '';
-  persist();
-  renderAuth();
+  await signOutSession();
 }
 
 function renderAuth() {
@@ -541,6 +556,17 @@ function renderAuth() {
   app.innerHTML = authView(loginError);
   skipNextRenderAnimation = false;
   requestAnimationFrame(() => appShell.classList.remove('skip-render-animation'));
+}
+
+function renderLoading(message) {
+  syncShellVisibility();
+  headerSwitch.hidden = true;
+  app.innerHTML = `
+    <section class="auth-page">
+      <section class="card auth-card">
+        <p class="auth-hint">${message}</p>
+      </section>
+    </section>`;
 }
 
 function render(tab = state.selectedTab) {
@@ -724,7 +750,7 @@ const actions = {
   },
   reset: () => {
     const currentUser = state.currentUser;
-    state = resetState();
+    state = resetState(currentUser?.account);
     state.currentUser = currentUser;
     persist();
     showToast('Demo 已重置');
@@ -840,13 +866,23 @@ document.addEventListener('click', event => {
     persist();
     render('my');
   }
-  actions[target.dataset.action]?.();
+  const action = actions[target.dataset.action];
+  if (action) {
+    Promise.resolve(action()).catch(error => {
+      console.error('Action failed:', error);
+      showToast('操作失败，请稍后再试。');
+    });
+  }
 });
 
 document.addEventListener('submit', event => {
   if (event.target.matches('[data-login-form]')) {
     event.preventDefault();
-    login(event.target);
+    login(event.target).catch(error => {
+      console.error('Login failed:', error);
+      loginError = '登录失败，请稍后再试。';
+      renderAuth();
+    });
     return;
   }
   if (event.target.matches('[data-plan-form]')) {
@@ -879,8 +915,53 @@ window.addEventListener('scroll', () => {
   lastScrollY = currentY;
 }, { passive: true });
 
-if (state.currentUser) {
-  goHome();
-} else {
-  renderAuth();
+function resetSignedOutState() {
+  state = createDefaultState();
+  state.currentUser = null;
+  state.selectedTab = 'points';
+  state.mySection = null;
+  state.pointsSection = 'earn';
+  pointsText.textContent = state.points;
+  pointsPill.classList.remove('negative');
 }
+
+function bootstrapSession() {
+  if (!firebaseReady()) {
+    resetSignedOutState();
+    renderAuth();
+    return;
+  }
+
+  renderLoading('正在连接成长记录...');
+  observeSession(async session => {
+    const hydrationId = ++authHydrationToken;
+
+    if (!session) {
+      resetSignedOutState();
+      if (hydrationId !== authHydrationToken) return;
+      renderAuth();
+      return;
+    }
+
+    renderLoading('正在同步你的成长数据...');
+    try {
+      const hydratedState = await loadUserCloudState(session.profile);
+      if (hydrationId !== authHydrationToken) return;
+      state = hydratedState;
+      loginError = '';
+      pointsText.textContent = state.points;
+      pointsPill.classList.toggle('negative', state.points < 0);
+      render(state.selectedTab || 'points');
+      showToast('已登录');
+    } catch (error) {
+      console.error('Failed to hydrate session:', error);
+      loginError = '读取云端数据失败，请检查 Firebase 配置。';
+      await signOutSession();
+      if (hydrationId !== authHydrationToken) return;
+      resetSignedOutState();
+      renderAuth();
+    }
+  });
+}
+
+bootstrapSession();
