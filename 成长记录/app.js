@@ -80,15 +80,15 @@ function renderHeaderSwitch(tab) {
     points: sectionSwitch([
       { value: 'earn', label: '加分' },
       { value: 'deduct', label: '减分' }
-    ], state.pointsSection || 'earn', 'points-section'),
+    ], state.pointsSection || 'earn', 'points-section', 'section-switch--header'),
     shop: sectionSwitch([
       { value: 'exchange', label: '积分兑换' },
       { value: 'lottery', label: '积分抽奖' }
-    ], state.shopSection || 'exchange', 'shop-section'),
+    ], state.shopSection || 'exchange', 'shop-section', 'section-switch--header'),
     planning: sectionSwitch([
       { value: 'active', label: '任务中' },
       { value: 'done', label: '已完成' }
-    ], state.planningSection || 'active', 'planning-section'),
+    ], state.planningSection || 'active', 'planning-section', 'section-switch--header'),
     calendar: `<div class="calendar-month-badge" aria-live="polite">${currentCalendarMonthLabel()}</div>`,
   };
 

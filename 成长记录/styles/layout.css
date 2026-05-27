@@ -174,6 +174,34 @@ p { color: var(--on-surface-variant); }
   transform: translateY(5px);
   box-shadow: 0 0 0 var(--surface-dim);
 }
+.section-switch--header {
+  width: 288px;
+  grid-template-columns: repeat(2, 144px);
+  gap: 0;
+  align-items: center;
+}
+.section-switch--header button {
+  min-height: 54px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  color: var(--ink-900);
+  background: transparent;
+  box-shadow: none;
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  transition: color .14s ease;
+}
+.section-switch--header button.active {
+  color: var(--accent-blue);
+  background: transparent;
+  box-shadow: none;
+}
+.section-switch--header button:active {
+  transform: none;
+  box-shadow: none;
+}
 
 .hero-card { min-height: 430px; }
 .hero-content {
