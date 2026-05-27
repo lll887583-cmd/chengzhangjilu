@@ -1,7 +1,7 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260527a';
-import { addRecord, createDefaultState, loadState, resetState, saveState, spend } from './store.js?v=20260527a';
-import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260527a';
-import { firebaseReady, getFirebaseSetupMessage, loadUserCloudState, observeSession, saveUserCloudState, signInDemoAccount, signOutSession } from './firebase.js?v=20260527a';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260527b';
+import { addRecord, createDefaultState, loadState, resetState, saveState, spend } from './store.js?v=20260527b';
+import { authView, calendarView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260527b';
+import { firebaseReady, getAuthErrorMessage, getFirebaseSetupMessage, loadUserCloudState, observeSession, saveUserCloudState, signInDemoAccount, signOutSession } from './firebase.js?v=20260527b';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -537,7 +537,7 @@ async function login(form) {
   } catch (error) {
     loginError = error.message === 'missing-config'
       ? getFirebaseSetupMessage()
-      : '账号或密码不对，请重新输入。';
+      : getAuthErrorMessage(error);
     renderAuth();
   }
 }
