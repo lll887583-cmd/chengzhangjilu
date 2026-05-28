@@ -231,6 +231,8 @@
   place-items: center;
   padding: 36px 24px;
   border-radius: 28px;
+  touch-action: pan-y;
+  user-select: none;
 }
 .literacy-preview-char {
   color: #243041;
