@@ -19,6 +19,7 @@ const moreNav = document.querySelector('.more-nav');
 const moreToggle = document.querySelector('.more-toggle');
 let pendingWriteOff = null;
 let skipNextRenderAnimation = false;
+let literacyPreviewTouch = null;
 const importInput = document.createElement('input');
 importInput.type = 'file';
 importInput.accept = 'application/json,.json';
@@ -460,7 +461,7 @@ function showLiteracyPreviewModal(itemId) {
   const dotIndex = total <= 1 ? 0 : Math.min(2, Math.floor((index / (total - 1)) * 3));
   modal.classList.remove('hidden');
   modal.innerHTML = `
-    <div class="modal-card literacy-preview-modal" role="dialog" aria-label="字卡详情">
+    <div class="modal-card literacy-preview-modal" role="dialog" aria-label="字卡详情" data-literacy-preview-active="${item.id}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
       <button class="literacy-preview-arrow literacy-preview-arrow-left" type="button" data-literacy-preview-move="prev" data-literacy-preview-id="${item.id}" aria-label="查看上一个字卡" ${index <= 0 ? 'disabled' : ''}>
         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M14.71 6.71a1 1 0 0 1 0 1.41L10.83 12l3.88 3.88a1 1 0 0 1-1.42 1.41l-4.58-4.58a1 1 0 0 1 0-1.42l4.58-4.58a1 1 0 0 1 1.42 0Z" fill="currentColor"></path></svg>
@@ -484,6 +485,16 @@ function moveLiteracyPreview(itemId, direction) {
   const nextIndex = direction === 'prev' ? index - 1 : index + 1;
   if (nextIndex < 0 || nextIndex >= items.length) return;
   showLiteracyPreviewModal(items[nextIndex].id);
+}
+
+function handleLiteracyPreviewSwipe(startTouch, endTouch) {
+  if (!startTouch || !endTouch) return;
+  const deltaX = endTouch.clientX - startTouch.clientX;
+  const deltaY = endTouch.clientY - startTouch.clientY;
+  if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+  const previewModal = modal.querySelector('[data-literacy-preview-active]');
+  if (!previewModal) return;
+  moveLiteracyPreview(previewModal.dataset.literacyPreviewActive, deltaX > 0 ? 'prev' : 'next');
 }
 
 function showLiteracyModal(itemId, errorMessage = '') {
@@ -1124,6 +1135,14 @@ document.addEventListener('submit', event => {
 });
 
 document.addEventListener('keydown', event => {
+  if (!modal.classList.contains('hidden') && ['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+    const previewModal = modal.querySelector('[data-literacy-preview-active]');
+    if (previewModal) {
+      event.preventDefault();
+      moveLiteracyPreview(previewModal.dataset.literacyPreviewActive, event.key === 'ArrowLeft' ? 'prev' : 'next');
+      return;
+    }
+  }
   const literacyCard = event.target.closest('[data-literacy-preview]');
   if (literacyCard && ['Enter', ' '].includes(event.key)) {
     event.preventDefault();
@@ -1135,6 +1154,30 @@ document.addEventListener('keydown', event => {
   event.preventDefault();
   speakToast(target.dataset.speak);
 });
+
+modal.addEventListener('touchstart', event => {
+  const previewModal = event.target.closest('[data-literacy-preview-active]');
+  if (!previewModal || event.touches.length !== 1) {
+    literacyPreviewTouch = null;
+    return;
+  }
+  const [touch] = event.touches;
+  literacyPreviewTouch = {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  };
+}, { passive: true });
+
+modal.addEventListener('touchend', event => {
+  if (!literacyPreviewTouch) return;
+  const [touch] = event.changedTouches || [];
+  if (!touch) {
+    literacyPreviewTouch = null;
+    return;
+  }
+  handleLiteracyPreviewSwipe(literacyPreviewTouch, touch);
+  literacyPreviewTouch = null;
+}, { passive: true });
 
 let lastScrollY = window.scrollY;
 window.addEventListener('scroll', () => {
