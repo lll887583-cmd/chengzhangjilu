@@ -1,6 +1,6 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260528b';
-import { addRecord, loadState, resetState, saveState, spend } from './store.js?v=20260528b';
-import { calendarView, literacyView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260528b';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260528c';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260528c';
+import { calendarView, literacyView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260528c';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -19,6 +19,11 @@ const moreNav = document.querySelector('.more-nav');
 const moreToggle = document.querySelector('.more-toggle');
 let pendingWriteOff = null;
 let skipNextRenderAnimation = false;
+const importInput = document.createElement('input');
+importInput.type = 'file';
+importInput.accept = 'application/json,.json';
+importInput.hidden = true;
+document.body.appendChild(importInput);
 
 const views = {
   points: () => pointsView(state),
@@ -213,6 +218,46 @@ function escapeHtml(value) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function backupFileName() {
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..+/, '').replace('T', '-');
+  return `growth-record-backup-${stamp}.json`;
+}
+
+function exportData() {
+  const payload = buildBackupPayload(state);
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = backupFileName();
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  showToast('备份文件已导出');
+}
+
+async function importDataFromFile(file) {
+  const text = await file.text();
+  let payload = null;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    throw new Error('invalid-json');
+  }
+
+  const importedState = importPersistedState(payload);
+  state = importedState;
+  persist();
+  render('my');
+}
+
+function openImportPicker() {
+  if (!window.confirm('导入会覆盖当前本地数据，是否继续？')) return;
+  importInput.value = '';
+  importInput.click();
 }
 
 function adoptPet(type) {
@@ -889,10 +934,29 @@ const actions = {
     render('my');
   },
   export: () => {
-    navigator.clipboard?.writeText(JSON.stringify(state, null, 2));
-    showToast('备份 JSON 已复制到剪贴板');
+    exportData();
+  },
+  import: () => {
+    openImportPicker();
   }
 };
+
+importInput.addEventListener('change', async event => {
+  const [file] = event.target.files || [];
+  if (!file) return;
+
+  try {
+    await importDataFromFile(file);
+    showToast('导入成功，已恢复数据');
+  } catch (error) {
+    const message = error?.message === 'unsupported-backup-version'
+      ? '备份文件版本暂不支持'
+      : '导入失败，请选择正确的备份文件';
+    showToast(message);
+  } finally {
+    importInput.value = '';
+  }
+});
 
 pointsPill.addEventListener('click', event => {
   event.stopPropagation();
