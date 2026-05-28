@@ -202,6 +202,10 @@ p { color: var(--on-surface-variant); }
   transform: none;
   box-shadow: none;
 }
+.section-switch--header-triple {
+  width: 432px;
+  grid-template-columns: repeat(3, 144px);
+}
 
 .hero-card { min-height: 430px; }
 .hero-content {

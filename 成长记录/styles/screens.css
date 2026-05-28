@@ -419,10 +419,6 @@
 .points-board-head {
   margin-bottom: 18px;
 }
-.points-board-head .section-switch {
-  width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
 .points-board-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

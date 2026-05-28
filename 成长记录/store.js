@@ -1,6 +1,7 @@
 import { PETS, defaultState } from './data.js';
 
 const LEGACY_STORAGE_KEY = 'growth-record-demo';
+const BACKUP_SCHEMA_VERSION = 1;
 const memoryStorage = new Map();
 const DEFAULT_PLAN_ITEMS = [
   { title: '读 15 分钟中文', points: 6, category: 'study', planType: 'single' },
@@ -147,4 +148,33 @@ export function normalizeState(state) {
 export function exportPersistedState(state) {
   normalizeState(state);
   return serializeState(state);
+}
+
+export function buildBackupPayload(state) {
+  return {
+    app: 'growth-record',
+    version: BACKUP_SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    state: exportPersistedState(state)
+  };
+}
+
+export function importPersistedState(payload) {
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('invalid-backup');
+  }
+
+  const hasWrappedState = Object.prototype.hasOwnProperty.call(payload, 'state');
+  const wrappedPayload = hasWrappedState ? payload : null;
+  const rawState = hasWrappedState ? payload.state : payload;
+
+  if (!rawState || typeof rawState !== 'object' || Array.isArray(rawState)) {
+    throw new Error('invalid-backup');
+  }
+
+  if (wrappedPayload?.version != null && wrappedPayload.version !== BACKUP_SCHEMA_VERSION) {
+    throw new Error('unsupported-backup-version');
+  }
+
+  return normalizeState({ ...clone(defaultState), ...clone(rawState) });
 }

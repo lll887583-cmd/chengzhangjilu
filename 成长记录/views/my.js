@@ -138,7 +138,7 @@ function pointsBoardSection(state) {
     { value: 'week', label: '周视图' },
     { value: 'month', label: '月视图' },
     { value: 'year', label: '年视图' }
-  ], boardView, 'points-board-view');
+  ], boardView, 'points-board-view', 'section-switch--header section-switch--header-triple');
 
   return myDetailShell('积分看板', '查看积分加分总数的折线趋势。', `
     <div class="points-board-head">
@@ -206,16 +206,18 @@ export function myView(state) {
   }
 
   if (state.mySection === 'profile') {
-    return myDetailShell('我的成长档案', '成长积分记录都放在这里，方便家长回看每一次加分和使用。', `
-      <div class="stat-row compact">
-        ${statCard('star', state.points, '当前积分')}
-        ${statCard('trendingUp', `+${earned}`, '累计加分')}
-        ${statCard('gift', exchangedRewards.length, '兑换奖励')}
-        ${statCard('sparkles', `-${spent}`, '累计使用')}
-        ${statCard('pets', status.label, '宠物馆状态')}
-      </div>
-      <div class="actions"><button class="btn ghost" data-action="export">导出备份</button><button class="btn ghost" data-action="reset">重置 Demo</button></div>
-    `);
+    return `
+      ${myDetailShell('我的成长档案', '成长积分记录都放在这里，方便家长回看每一次加分和使用。', `
+        <div class="stat-row compact">
+          ${statCard('star', state.points, '当前积分')}
+          ${statCard('trendingUp', `+${earned}`, '累计加分')}
+          ${statCard('gift', exchangedRewards.length, '兑换奖励')}
+          ${statCard('sparkles', `-${spent}`, '累计使用')}
+          ${statCard('pets', status.label, '宠物馆状态')}
+        </div>
+      `)}
+      <div class="actions"><button class="btn ghost" data-action="export">导出数据</button><button class="btn ghost" data-action="import">导入数据</button><button class="btn danger-soft" data-action="reset">重置</button></div>
+    `;
   }
 
   if (state.mySection === 'redeemed') {
