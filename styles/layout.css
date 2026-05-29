@@ -60,6 +60,25 @@
   line-height: 1;
 }
 
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 112px;
+  min-height: 52px;
+  margin: 0 auto;
+  padding: 0 18px;
+  border: 2px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  color: var(--on-surface);
+  background: var(--surface-container-low);
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .eyebrow {
   margin: 0 0 var(--space-xs);
   color: var(--primary);
