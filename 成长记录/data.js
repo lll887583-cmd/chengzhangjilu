@@ -33,11 +33,11 @@ export const REWARDS = [
 ];
 
 export const LOTTERY = [
-  { name: '加分 5 积分', weight: 20, points: 5, icon: 'star' },
-  { name: '加分 10 积分', weight: 15, points: 10, icon: 'star' },
-  { name: '买 1 个小零食', weight: 10, points: 0, icon: 'cookie' },
-  { name: '看 20 分钟电视', weight: 10, points: 0, icon: 'tv' },
-  { name: '神秘奖励', weight: 5, points: 0, icon: 'celebration' }
+  { name: '下次好运', weight: 30, points: 0, icon: 'celebration' },
+  { name: '操场锻炼 1 次', weight: 15, points: 0, icon: 'celebration' },
+  { name: '看 30 分钟电视', weight: 10, points: 0, icon: 'tv' },
+  { name: '加分 25 积分', weight: 25, points: 25, icon: 'star' },
+  { name: '买 2 个小零食', weight: 20, points: 0, icon: 'cookie' }
 ];
 
 export const DEFAULT_PLANS = [
