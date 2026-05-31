@@ -38,6 +38,8 @@ export function calendarView(state) {
   for (let i = 0; i < leading; i += 1) cells.push('<span class="calendar-cell muted"></span>');
   for (let day = 1; day <= totalDays; day += 1) {
     const key = `${year}-${month}-${day}`;
+    const weekdayIndex = (leading + day - 1) % 7;
+    const isWeekend = weekdayIndex >= 5;
     const isToday = dayKey(Date.now()) === key;
     const hasStudy = studyDays.has(key);
     const hasEnglishCheckin = englishCheckinDays.has(key);
@@ -46,7 +48,7 @@ export function calendarView(state) {
       hasEnglishCheckin ? '<i class="english-dot" aria-label="打卡英语"></i>' : ''
     ].filter(Boolean).join('');
     cells.push(`
-      <button class="calendar-cell ${isToday ? 'today' : ''} ${hasStudy ? 'has-study' : ''} ${hasEnglishCheckin ? 'has-english-checkin' : ''}" data-speak="${month + 1}月${day}日${hasStudy ? '有学习记录' : '暂无学习记录'}${hasEnglishCheckin ? '，检测到打卡英语' : ''}">
+      <button class="calendar-cell ${isWeekend ? 'is-weekend' : ''} ${isToday ? 'today' : ''} ${hasStudy ? 'has-study' : ''} ${hasEnglishCheckin ? 'has-english-checkin' : ''}" data-speak="${month + 1}月${day}日${hasStudy ? '有学习记录' : '暂无学习记录'}${hasEnglishCheckin ? '，检测到打卡英语' : ''}">
         <strong>${day}</strong>
         ${dots ? `<span class="calendar-dots">${dots}</span>` : ''}
       </button>`);

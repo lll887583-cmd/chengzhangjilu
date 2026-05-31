@@ -835,6 +835,9 @@
   border-color: #5f5f5f;
   background: #f7f7f7;
 }
+.calendar-cell.is-weekend strong {
+  color: #7f8a98;
+}
 .calendar-cell strong {
   font-family: "Quicksand", system-ui, sans-serif;
   font-size: 22px;
