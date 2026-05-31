@@ -30,7 +30,7 @@ export function calendarView(state) {
   const month = monthBase.getMonth();
   const firstDay = new Date(year, month, 1);
   const totalDays = new Date(year, month + 1, 0).getDate();
-  const leading = firstDay.getDay();
+  const leading = (firstDay.getDay() + 6) % 7;
   const studyDays = new Set((state.records || []).filter(isStudyRecord).map(record => dayKey(record.time)));
   const englishCheckinDays = new Set((state.records || []).filter(isEnglishCheckinRecord).map(record => dayKey(record.time)));
   const cells = [];
@@ -56,7 +56,7 @@ export function calendarView(state) {
   return `
     <section class="calendar-page">
       <section class="card calendar-card">
-        <div class="calendar-weekdays">${['日', '一', '二', '三', '四', '五', '六'].map(day => `<span>${day}</span>`).join('')}</div>
+        <div class="calendar-weekdays">${['一', '二', '三', '四', '五', '六', '日'].map(day => `<span>${day}</span>`).join('')}</div>
         <div class="calendar-grid">${cells.join('')}</div>
         <p class="calendar-legend">
           <span class="study-dot"></span> 蓝色圆点代表当天有学习行为
