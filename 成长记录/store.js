@@ -97,6 +97,7 @@ export function normalizeState(state) {
   state.planningDraftType = state.planningDraftType === 'longTerm' ? 'longTerm' : 'single';
   state.customPointRules = Array.isArray(state.customPointRules) ? state.customPointRules : [];
   state.literacyItems = Array.isArray(state.literacyItems) ? state.literacyItems : [];
+  state.numberBoardSelections = Array.isArray(state.numberBoardSelections) ? state.numberBoardSelections : [];
   state.customDeductRules = Array.isArray(state.customDeductRules) ? state.customDeductRules : [];
   state.hiddenPointRuleIds = Array.isArray(state.hiddenPointRuleIds) ? state.hiddenPointRuleIds : [];
   state.hiddenDeductRuleIds = Array.isArray(state.hiddenDeductRuleIds) ? state.hiddenDeductRuleIds : [];
@@ -132,6 +133,12 @@ export function normalizeState(state) {
     createdAt: item.createdAt || Date.now(),
     updatedAt: item.updatedAt || item.createdAt || Date.now()
   })).filter(item => item.text);
+  const validNumberSelections = state.numberBoardSelections
+    .map(value => Number(value))
+    .filter(value => Number.isInteger(value) && value >= 1 && value <= 100);
+  state.numberBoardSelections = validNumberSelections.length === 1
+    ? [validNumberSelections[0]]
+    : [];
   state.customDeductRules = state.customDeductRules.map((rule, index) => ({
     id: rule.id || `custom-deduct-${Date.now()}-${index}`,
     title: rule.title || '自定义减分',

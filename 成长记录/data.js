@@ -61,6 +61,7 @@ export const defaultState = {
   pointsBoardView: 'week',
   planningDraftType: 'single',
   literacyItems: [],
+  numberBoardSelections: [],
   customPointRules: [],
   customDeductRules: [],
   hiddenPointRuleIds: [],

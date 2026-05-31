@@ -1,6 +1,6 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260528c';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260528c';
-import { calendarView, literacyView, myView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260528c';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260531a';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260531a';
+import { calendarView, literacyView, myView, numbersView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260531a';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -31,6 +31,7 @@ const views = {
   planning: () => planningView(state),
   calendar: () => calendarView(state),
   literacy: () => literacyView(state),
+  numbers: () => numbersView(state),
   shop: () => shopView(state),
   my: () => myView(state)
 };
@@ -38,6 +39,7 @@ const views = {
 const NAV_ITEMS = [
   { value: 'points', label: '记录', viewBox: '0 0 24 24', icon: '<path d="M3 5.25A2.25 2.25 0 0 1 5.25 3h3.5A2.25 2.25 0 0 1 11 5.25v3.5A2.25 2.25 0 0 1 8.75 11h-3.5A2.25 2.25 0 0 1 3 8.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 3h3.5A2.25 2.25 0 0 1 21 5.25v3.5A2.25 2.25 0 0 1 18.75 11h-3.5A2.25 2.25 0 0 1 13 8.75v-3.5Zm-10 10A2.25 2.25 0 0 1 5.25 13h3.5A2.25 2.25 0 0 1 11 15.25v3.5A2.25 2.25 0 0 1 8.75 21h-3.5A2.25 2.25 0 0 1 3 18.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 13h3.5A2.25 2.25 0 0 1 21 15.25v3.5A2.25 2.25 0 0 1 18.75 21h-3.5A2.25 2.25 0 0 1 13 18.75v-3.5Z"/>' },
   { value: 'literacy', label: '识字', viewBox: '0 0 1024 1024', icon: '<path d="M124.917811 807.146348c0 84.278766 68.256478 148.556418 152.530149 148.556418h582.492975a41.571343 41.571343 0 0 0 41.591722-41.591721 41.571343 41.571343 0 0 0-41.591722-41.591722c-38.208955 0-69.351801-27.16402-69.351801-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975 21.692498 0 38.805015-16.720239 40.796975-37.913473h0.794747V141.475025c0-38.310846-31.04605-69.356896-69.351801-69.356896H194.269612c-38.310846 0-69.351801 31.04605-69.351801 73.335722v637.911244m207.958607-530.951642h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.407761 0 17.35196-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.050706-41.591721-31.402667 0-17.357055 18.605214-31.402667 41.591721-31.402667z m0 196.521393h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.402666 0 17.357055-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.045612-41.591721-31.402667 0-17.35196 18.605214-31.402667 41.591721-31.402666z m-55.428458 423.584477c-38.208955 0-69.346706-27.16402-69.346706-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975h447.263841c-10.749453 20.892657-17.316299 40.195821-17.316299 65.372975 0 25.17206 6.673831 44.475224 17.316299 65.372975H277.44796z" fill="currentColor"></path>' },
+  { value: 'numbers', label: '数字', viewBox: '0 0 1024 1024', icon: '<path d="M512.119991 0.959925c282.306745 0 511.160066 228.854281 511.160065 511.160066s-228.853321 511.160066-511.160065 511.160065S0.959925 794.426735 0.959925 512.119991 229.814206 0.959925 512.119991 0.959925z m-221.507495 277.034357H219.360622q-15.006508 41.882728-55.315678 73.285474-40.31685 31.407546-74.690565 42.659068v79.688174q65.312577-21.562315 113.439138-66.5636v330.953344h87.818979V277.994282z m77.509144 46.880337q-45.003684 56.875557-45.001284 186.254249 0 131.886496 40.940802 183.29288 40.936002 51.407584 107.813977 51.408784 66.5624 0 103.755894-46.877938 45.000084-56.875557 45.003684-186.885399 0-130.317019-44.689309-186.571024-37.50547-47.498289-104.070269-47.501889-66.566 0-103.753495 46.880337z m132.037685 36.09318q12.339836 10.158406 20.470401 40.314451 8.120966 30.158444 8.125765 110.784945 0 80.6337-9.064092 114.379864-6.879063 26.256349-19.378486 36.409955-12.498224 10.158406-28.437778 10.153607-15.939555 0-28.279391-10.000019-12.347035-10.000019-20.470401-40.156063-8.128165-30.158444-8.125765-110.787344 0-80.622901 9.064092-114.69424 6.871863-26.249149 19.373686-36.405156t28.437779-10.158406q15.939555 0 28.28419 10.158406z m187.874122-36.09318q-45.000084 56.875557-44.998884 186.254249 0 131.886496 40.938402 183.29288t107.816376 51.408784q66.5588 0 103.753495-46.877938 45.003684-56.875557 45.003684-186.885399 0-130.317019-44.689309-186.571024-37.50547-47.498289-104.06787-47.501889-66.570799 0-103.755894 46.880337z m132.040085 36.09318q12.339836 10.158406 20.468001 40.314451 8.120966 30.158444 8.125765 110.784945 0 80.6337-9.061692 114.379864-6.879063 26.256349-19.378486 36.409955-12.498224 10.158406-28.437779 10.153607-15.943154 0-28.28179-10.000019-12.343436-10.000019-20.468001-40.156063-8.128165-30.158444-8.125765-110.787344 0-80.622901 9.061692-114.69424 6.875463-26.249149 19.376086-36.405156 12.494624-10.158406 28.437778-10.158406 15.939555 0 28.284191 10.158406z" fill="currentColor"></path>' },
   { value: 'calendar', label: '打卡', viewBox: '0 0 1024 1024', icon: '<path d="M896 405.333333v426.666667a85.333333 85.333333 0 0 1-85.333333 85.333333H213.333333a85.333333 85.333333 0 0 1-85.333333-85.333333v-426.666667h768z m-272.213333 96.597334l-3.712 3.84-147.925334 175.061333-55.808-64.853333-3.754666-3.84a42.666667 42.666667 0 0 0-64.170667 55.296l3.242667 4.266666 88.533333 102.741334 3.626667 3.712a42.666667 42.666667 0 0 0 57.472 0l3.84-4.053334 180.138666-213.248 3.2-4.266666a42.666667 42.666667 0 0 0-64.682666-54.656zM725.333333 106.666667a42.666667 42.666667 0 0 1 42.666667 42.666666v42.666667h42.666667a85.333333 85.333333 0 0 1 85.333333 85.333333V341.333333H128V277.333333a85.333333 85.333333 0 0 1 85.333333-85.333333h42.666667v-42.666667a42.666667 42.666667 0 1 1 85.333333 0v42.666667h341.333334v-42.666667a42.666667 42.666667 0 0 1 42.666666-42.666666z"/>' },
   { value: 'shop', label: '商城', viewBox: '0 0 24 24', icon: '<path d="M6.25 5A3.25 3.25 0 0 1 9.5 1.75h5A3.25 3.25 0 0 1 17.75 5V6h.75A2.75 2.75 0 0 1 21.25 8.75v9.5A2.75 2.75 0 0 1 18.5 21H5.5a2.75 2.75 0 0 1-2.75-2.75v-9.5A2.75 2.75 0 0 1 5.5 6h.75V5Zm10 0A1.75 1.75 0 0 0 14.5 3.25h-5A1.75 1.75 0 0 0 7.75 5V6h8.5V5Zm-8 4a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Zm9 0a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Z"/>' }
 ];
@@ -85,6 +87,11 @@ function currentLiteracyCountLabel() {
   return `${count} 个字`;
 }
 
+function currentNumbersCountLabel() {
+  const selectedNumber = Array.isArray(state.numberBoardSelections) ? state.numberBoardSelections[0] : null;
+  return `已选 ${selectedNumber || 0}`;
+}
+
 function renderHeaderSwitch(tab) {
   const switchers = {
     points: sectionSwitch([
@@ -101,6 +108,7 @@ function renderHeaderSwitch(tab) {
     ], state.planningSection || 'active', 'planning-section', 'section-switch--header'),
     calendar: `<div class="calendar-month-badge" aria-live="polite">${currentCalendarMonthLabel()}</div>`,
     literacy: `<div class="status-badge" aria-live="polite">${currentLiteracyCountLabel()}</div>`,
+    numbers: `<div class="status-badge" aria-live="polite">${currentNumbersCountLabel()}</div>`,
   };
 
   headerSwitch.innerHTML = switchers[tab] || '';
@@ -874,6 +882,41 @@ function deletePlan(planId) {
   render('planning');
 }
 
+function syncNumberBoardUi(activeNumber, activeButton) {
+  const numberButtons = app.querySelectorAll('[data-number-cell]');
+  numberButtons.forEach(button => {
+    const buttonNumber = Number(button.dataset.numberCell);
+    const isSelected = buttonNumber === activeNumber;
+    button.classList.toggle('selected', isSelected);
+    button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    button.setAttribute('aria-label', `${buttonNumber}${isSelected ? '，已选中' : '，未选中'}`);
+  });
+
+  if (activeButton) {
+    activeButton.classList.add('selected');
+    activeButton.setAttribute('aria-pressed', 'true');
+    activeButton.setAttribute('aria-label', `${activeNumber}，已选中`);
+  }
+
+  if (headerSwitch) {
+    headerSwitch.innerHTML = `<div class="status-badge" aria-live="polite">${currentNumbersCountLabel()}</div>`;
+    headerSwitch.hidden = false;
+  }
+}
+
+function toggleNumberCell(value, activeButton = null) {
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 1 || number > 100) return;
+  state.numberBoardSelections = [number];
+  persist();
+  if (state.selectedTab === 'numbers') {
+    syncNumberBoardUi(number, activeButton);
+    return;
+  }
+  skipNextRenderAnimation = true;
+  render('numbers');
+}
+
 function deleteRuleCard(kind, id) {
   if (!kind || !id) return;
   if (kind === 'plan') {
@@ -1082,6 +1125,10 @@ document.addEventListener('click', event => {
     });
     const colorInput = form?.querySelector('input[name="color"]');
     if (colorInput) colorInput.value = target.dataset.literacyColor;
+    return;
+  }
+  if (target.dataset.numberCell) {
+    toggleNumberCell(target.dataset.numberCell, target);
     return;
   }
   if (target.dataset.earn) earnPoints(Number(target.dataset.earn));
