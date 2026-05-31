@@ -60,6 +60,7 @@
   h1 { font-size: 36px; }
   .brand-logo img { height: 44px; }
   h2 { font-size: 28px; line-height: 34px; }
+  .numbers-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 
 @media (max-width: 1100px) {
@@ -67,14 +68,33 @@
 }
 
 @media (max-width: 640px) {
-  .app-shell { padding-bottom: 32px; }
+  .app-shell { padding-bottom: 108px; }
   .topbar { grid-template-columns: minmax(0, 1fr) auto; }
   .top-actions { gap: 8px; }
   .logout-btn { min-height: 42px; padding: 0 14px; font-size: 14px; }
   .avatar-btn { width: 48px; height: 48px; border-radius: 16px; box-shadow: 0 4px 0 var(--shadow-green); }
   .avatar-btn svg { width: 27px; height: 27px; }
-  .tabbar { display: none; }
-  .more-nav { display: grid; }
+  .tabbar {
+    display: grid;
+    width: calc(100% - 20px);
+    bottom: 10px;
+    gap: 0;
+    padding: 6px 4px;
+    border-radius: 26px;
+  }
+  .tabbar button {
+    min-height: 54px;
+    padding: 4px 0;
+  }
+  .tabbar button span {
+    font-size: 11px;
+    line-height: 14px;
+  }
+  .tabbar button svg {
+    width: 22px;
+    height: 22px;
+  }
+  .more-nav { display: none; }
   .reward-list { grid-template-columns: 1fr; }
   .my-overview-grid { grid-template-columns: 1fr; }
   .points-board-summary { grid-template-columns: 1fr; }
@@ -141,5 +161,12 @@
   }
   .literacy-card {
     min-height: 132px;
+  }
+  .numbers-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .number-board-cell {
+    min-height: 56px;
+    font-size: 20px;
   }
 }

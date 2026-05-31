@@ -7,7 +7,7 @@
   width: min(720px, calc(100% - 28px));
   transform: translateX(-50%);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
   padding: 8px;
   border: 2px solid var(--outline-variant);
@@ -16,7 +16,7 @@
   box-shadow: 0 6px 0 var(--surface-dim);
 }
 .tabbar button {
-  min-height: 56px;
+  min-height: 58px;
   display: grid;
   place-items: center;
   align-content: center;
@@ -30,12 +30,17 @@
   padding: 4px 1px;
 }
 .tabbar button svg {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   display: block;
   fill: currentColor;
 }
-.tabbar button span { display: block; font-size: 14px; line-height: 18px; white-space: nowrap; }
+.tabbar button span {
+  display: block;
+  font-size: 13px;
+  line-height: 16px;
+  white-space: nowrap;
+}
 .tabbar button.active {
   border-color: transparent;
   color: var(--accent-blue);
