@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f3f4f6" />
+  <title>成长记录</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@700&family=Nunito+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css?v=20260602a" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar" hidden>
+      <button class="brand-logo" type="button" data-action="home" aria-label="返回获取积分">
+        <img src="./assets/logo.png" alt="成长记录" />
+      </button>
+      <div class="top-actions">
+        <button class="nav-trigger" type="button" data-action="toggle-drawer" aria-expanded="false" aria-controls="navDrawer" aria-label="打开主导航">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+        </button>
+        <button class="avatar-btn" type="button" data-action="open-my" aria-label="进入我的">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </button>
+        <button class="points-pill" type="button" data-action="open-records" aria-label="查看积分记录详情" aria-live="polite">
+          <span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></span>
+          <strong id="pointsText">0</strong>
+        </button>
+      </div>
+    </header>
+
+    <section class="workspace-shell">
+      <aside class="side-nav" aria-label="主导航" hidden>
+        <div class="side-nav-menu" id="sideNavMenu"></div>
+        <button class="side-nav-toggle side-nav-toggle-bottom" type="button" data-action="toggle-sidebar" aria-pressed="false" aria-label="收起主导航">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+        </button>
+      </aside>
+
+      <section class="content-shell">
+        <section class="content-panel">
+          <div id="headerSwitch" class="header-switch" aria-live="polite"></div>
+          <main id="app" class="screen" aria-live="polite"></main>
+        </section>
+      </section>
+    </section>
+
+    <div class="nav-drawer-backdrop" hidden data-action="close-drawer"></div>
+    <aside class="nav-drawer" id="navDrawer" aria-label="移动端导航" hidden>
+      <div class="nav-drawer-head">
+        <button class="nav-drawer-close" type="button" data-action="close-drawer" aria-label="关闭主导航">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M18.3 5.71 12 12l6.3 6.29-1.41 1.41L10.59 13.41 4.29 19.7 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.3 6.29-6.3z"/></svg>
+        </button>
+      </div>
+      <div class="nav-drawer-menu" id="navDrawerMenu"></div>
+    </aside>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="assertive" aria-atomic="true"></div>
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
+
+  <script type="module" src="./app.js?v=20260602d"></script>
+</body>
+</html>

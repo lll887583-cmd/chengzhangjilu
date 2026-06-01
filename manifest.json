@@ -1,0 +1,9 @@
+{
+  "name": "成长记录",
+  "short_name": "成长记录",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#faf9f9",
+  "theme_color": "#58cc02",
+  "icons": []
+}
