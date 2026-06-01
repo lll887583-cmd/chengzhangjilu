@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@700&family=Nunito+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260529a" />
+  <link rel="stylesheet" href="./styles.css?v=20260602a" />
 </head>
 <body>
   <div class="app-shell">
@@ -17,8 +17,10 @@
       <button class="brand-logo" type="button" data-action="home" aria-label="返回获取积分">
         <img src="./assets/logo.png" alt="成长记录" />
       </button>
-      <div id="headerSwitch" class="header-switch" aria-live="polite"></div>
       <div class="top-actions">
+        <button class="nav-trigger" type="button" data-action="toggle-drawer" aria-expanded="false" aria-controls="navDrawer" aria-label="打开主导航">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+        </button>
         <button class="avatar-btn" type="button" data-action="open-my" aria-label="进入我的">
           <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </button>
@@ -29,44 +31,36 @@
       </div>
     </header>
 
-    <main id="app" class="screen" aria-live="polite"></main>
+    <section class="workspace-shell">
+      <aside class="side-nav" aria-label="主导航" hidden>
+        <div class="side-nav-menu" id="sideNavMenu"></div>
+        <button class="side-nav-toggle side-nav-toggle-bottom" type="button" data-action="toggle-sidebar" aria-pressed="false" aria-label="收起主导航">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+        </button>
+      </aside>
 
-    <nav class="tabbar" aria-label="主导航" hidden>
-      <button data-tab="points" class="active">
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 5.25A2.25 2.25 0 0 1 5.25 3h3.5A2.25 2.25 0 0 1 11 5.25v3.5A2.25 2.25 0 0 1 8.75 11h-3.5A2.25 2.25 0 0 1 3 8.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 3h3.5A2.25 2.25 0 0 1 21 5.25v3.5A2.25 2.25 0 0 1 18.75 11h-3.5A2.25 2.25 0 0 1 13 8.75v-3.5Zm-10 10A2.25 2.25 0 0 1 5.25 13h3.5A2.25 2.25 0 0 1 11 15.25v3.5A2.25 2.25 0 0 1 8.75 21h-3.5A2.25 2.25 0 0 1 3 18.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 13h3.5A2.25 2.25 0 0 1 21 15.25v3.5A2.25 2.25 0 0 1 18.75 21h-3.5A2.25 2.25 0 0 1 13 18.75v-3.5Z"/></svg>
-        <span>记录</span>
-      </button>
-      <button data-tab="literacy">
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 1024 1024"><path d="M124.917811 807.146348c0 84.278766 68.256478 148.556418 152.530149 148.556418h582.492975a41.571343 41.571343 0 0 0 41.591722-41.591721 41.571343 41.571343 0 0 0-41.591722-41.591722c-38.208955 0-69.351801-27.16402-69.351801-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975 21.692498 0 38.805015-16.720239 40.796975-37.913473h0.794747V141.475025c0-38.310846-31.04605-69.356896-69.351801-69.356896H194.269612c-38.310846 0-69.351801 31.04605-69.351801 73.335722v637.911244m207.958607-530.951642h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.407761 0 17.35196-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.050706-41.591721-31.402667 0-17.357055 18.605214-31.402667 41.591721-31.402667z m0 196.521393h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.402666 0 17.357055-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.045612-41.591721-31.402667 0-17.35196 18.605214-31.402667 41.591721-31.402666z m-55.428458 423.584477c-38.208955 0-69.346706-27.16402-69.346706-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975h447.263841c-10.749453 20.892657-17.316299 40.195821-17.316299 65.372975 0 25.17206 6.673831 44.475224 17.316299 65.372975H277.44796z" fill="currentColor"></path></svg>
-        <span>识字</span>
-      </button>
-      <button data-tab="calendar">
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 1024 1024"><path d="M896 405.333333v426.666667a85.333333 85.333333 0 0 1-85.333333 85.333333H213.333333a85.333333 85.333333 0 0 1-85.333333-85.333333v-426.666667h768z m-272.213333 96.597334l-3.712 3.84-147.925334 175.061333-55.808-64.853333-3.754666-3.84a42.666667 42.666667 0 0 0-64.170667 55.296l3.242667 4.266666 88.533333 102.741334 3.626667 3.712a42.666667 42.666667 0 0 0 57.472 0l3.84-4.053334 180.138666-213.248 3.2-4.266666a42.666667 42.666667 0 0 0-64.682666-54.656zM725.333333 106.666667a42.666667 42.666667 0 0 1 42.666667 42.666666v42.666667h42.666667a85.333333 85.333333 0 0 1 85.333333 85.333333V341.333333H128V277.333333a85.333333 85.333333 0 0 1 85.333333-85.333333h42.666667v-42.666667a42.666667 42.666667 0 1 1 85.333333 0v42.666667h341.333334v-42.666667a42.666667 42.666667 0 0 1 42.666666-42.666666z"/></svg>
-        <span>打卡</span>
-      </button>
-      <button data-tab="shop">
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M6.25 5A3.25 3.25 0 0 1 9.5 1.75h5A3.25 3.25 0 0 1 17.75 5V6h.75A2.75 2.75 0 0 1 21.25 8.75v9.5A2.75 2.75 0 0 1 18.5 21H5.5a2.75 2.75 0 0 1-2.75-2.75v-9.5A2.75 2.75 0 0 1 5.5 6h.75V5Zm10 0A1.75 1.75 0 0 0 14.5 3.25h-5A1.75 1.75 0 0 0 7.75 5V6h8.5V5Zm-8 4a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Zm9 0a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Z"/></svg>
-        <span>商城</span>
-      </button>
-    </nav>
+      <section class="content-shell">
+        <section class="content-panel">
+          <div id="headerSwitch" class="header-switch" aria-live="polite"></div>
+          <main id="app" class="screen" aria-live="polite"></main>
+        </section>
+      </section>
+    </section>
 
-    <div class="more-nav" aria-label="更多导航" hidden>
-      <div class="more-menu" id="moreMenu">
-        <button data-tab="points"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 5.25A2.25 2.25 0 0 1 5.25 3h3.5A2.25 2.25 0 0 1 11 5.25v3.5A2.25 2.25 0 0 1 8.75 11h-3.5A2.25 2.25 0 0 1 3 8.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 3h3.5A2.25 2.25 0 0 1 21 5.25v3.5A2.25 2.25 0 0 1 18.75 11h-3.5A2.25 2.25 0 0 1 13 8.75v-3.5Zm-10 10A2.25 2.25 0 0 1 5.25 13h3.5A2.25 2.25 0 0 1 11 15.25v3.5A2.25 2.25 0 0 1 8.75 21h-3.5A2.25 2.25 0 0 1 3 18.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 13h3.5A2.25 2.25 0 0 1 21 15.25v3.5A2.25 2.25 0 0 1 18.75 21h-3.5A2.25 2.25 0 0 1 13 18.75v-3.5Z"/></svg><span>记录</span></button>
-        <button data-tab="literacy"><svg aria-hidden="true" focusable="false" viewBox="0 0 1024 1024"><path d="M124.917811 807.146348c0 84.278766 68.256478 148.556418 152.530149 148.556418h582.492975a41.571343 41.571343 0 0 0 41.591722-41.591721 41.571343 41.571343 0 0 0-41.591722-41.591722c-38.208955 0-69.351801-27.16402-69.351801-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975 21.692498 0 38.805015-16.720239 40.796975-37.913473h0.794747V141.475025c0-38.310846-31.04605-69.356896-69.351801-69.356896H194.269612c-38.310846 0-69.351801 31.04605-69.351801 73.335722v637.911244m207.958607-530.951642h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.407761 0 17.35196-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.050706-41.591721-31.402667 0-17.357055 18.605214-31.402667 41.591721-31.402667z m0 196.521393h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.402666 0 17.357055-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.045612-41.591721-31.402667 0-17.35196 18.605214-31.402667 41.591721-31.402666z m-55.428458 423.584477c-38.208955 0-69.346706-27.16402-69.346706-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975h447.263841c-10.749453 20.892657-17.316299 40.195821-17.316299 65.372975 0 25.17206 6.673831 44.475224 17.316299 65.372975H277.44796z" fill="currentColor"></path></svg><span>识字</span></button>
-        <button data-tab="calendar"><svg aria-hidden="true" focusable="false" viewBox="0 0 1024 1024"><path d="M896 405.333333v426.666667a85.333333 85.333333 0 0 1-85.333333 85.333333H213.333333a85.333333 85.333333 0 0 1-85.333333-85.333333v-426.666667h768z m-272.213333 96.597334l-3.712 3.84-147.925334 175.061333-55.808-64.853333-3.754666-3.84a42.666667 42.666667 0 0 0-64.170667 55.296l3.242667 4.266666 88.533333 102.741334 3.626667 3.712a42.666667 42.666667 0 0 0 57.472 0l3.84-4.053334 180.138666-213.248 3.2-4.266666a42.666667 42.666667 0 0 0-64.682666-54.656zM725.333333 106.666667a42.666667 42.666667 0 0 1 42.666667 42.666666v42.666667h42.666667a85.333333 85.333333 0 0 1 85.333333 85.333333V341.333333H128V277.333333a85.333333 85.333333 0 0 1 85.333333-85.333333h42.666667v-42.666667a42.666667 42.666667 0 1 1 85.333333 0v42.666667h341.333334v-42.666667a42.666667 42.666667 0 0 1 42.666666-42.666666z"/></svg><span>打卡</span></button>
-        <button data-tab="shop"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M6.25 5A3.25 3.25 0 0 1 9.5 1.75h5A3.25 3.25 0 0 1 17.75 5V6h.75A2.75 2.75 0 0 1 21.25 8.75v9.5A2.75 2.75 0 0 1 18.5 21H5.5a2.75 2.75 0 0 1-2.75-2.75v-9.5A2.75 2.75 0 0 1 5.5 6h.75V5Zm10 0A1.75 1.75 0 0 0 14.5 3.25h-5A1.75 1.75 0 0 0 7.75 5V6h8.5V5Zm-8 4a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Zm9 0a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Z"/></svg><span>商城</span></button>
+    <div class="nav-drawer-backdrop" hidden data-action="close-drawer"></div>
+    <aside class="nav-drawer" id="navDrawer" aria-label="移动端导航" hidden>
+      <div class="nav-drawer-head">
+        <button class="nav-drawer-close" type="button" data-action="close-drawer" aria-label="关闭主导航">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M18.3 5.71 12 12l6.3 6.29-1.41 1.41L10.59 13.41 4.29 19.7 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.3 6.29-6.3z"/></svg>
+        </button>
       </div>
-      <button class="more-toggle" type="button" data-action="toggle-more" aria-expanded="false" aria-controls="moreMenu">
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
-        <span>更多</span>
-      </button>
-    </div>
+      <div class="nav-drawer-menu" id="navDrawerMenu"></div>
+    </aside>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="assertive" aria-atomic="true"></div>
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
 
-  <script type="module" src="./app.js?v=20260529a"></script>
+  <script type="module" src="./app.js?v=20260602d"></script>
 </body>
 </html>

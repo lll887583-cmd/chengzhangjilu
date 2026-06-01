@@ -98,6 +98,9 @@ export function normalizeState(state) {
   state.customPointRules = Array.isArray(state.customPointRules) ? state.customPointRules : [];
   state.literacyItems = Array.isArray(state.literacyItems) ? state.literacyItems : [];
   state.numberBoardSelections = Array.isArray(state.numberBoardSelections) ? state.numberBoardSelections : [];
+  state.pinyinSelections = Array.isArray(state.pinyinSelections) ? state.pinyinSelections : [];
+  state.letterSelections = Array.isArray(state.letterSelections) ? state.letterSelections : [];
+  state.wordItems = Array.isArray(state.wordItems) ? state.wordItems : [];
   state.customDeductRules = Array.isArray(state.customDeductRules) ? state.customDeductRules : [];
   state.hiddenPointRuleIds = Array.isArray(state.hiddenPointRuleIds) ? state.hiddenPointRuleIds : [];
   state.hiddenDeductRuleIds = Array.isArray(state.hiddenDeductRuleIds) ? state.hiddenDeductRuleIds : [];
@@ -139,6 +142,26 @@ export function normalizeState(state) {
   state.numberBoardSelections = validNumberSelections.length === 1
     ? [validNumberSelections[0]]
     : [];
+  const validPinyinSelections = state.pinyinSelections
+    .map(value => String(value || '').trim())
+    .filter(Boolean);
+  state.pinyinSelections = validPinyinSelections.length === 1
+    ? [validPinyinSelections[0]]
+    : [];
+  const validLetterSelections = state.letterSelections
+    .map(value => String(value || '').trim().toUpperCase())
+    .filter(value => /^[A-Z]$/.test(value));
+  state.letterSelections = validLetterSelections.length === 1
+    ? [validLetterSelections[0]]
+    : [];
+  state.wordItems = state.wordItems.map((item, index) => ({
+    id: item.id || `word-${item.createdAt || Date.now()}-${index}`,
+    text: String(item.text || '').trim().slice(0, 24),
+    translation: String(item.translation || '').trim().slice(0, 24),
+    color: normalizeLiteracyColor(item.color),
+    createdAt: item.createdAt || Date.now(),
+    updatedAt: item.updatedAt || item.createdAt || Date.now()
+  })).filter(item => item.text);
   state.customDeductRules = state.customDeductRules.map((rule, index) => ({
     id: rule.id || `custom-deduct-${Date.now()}-${index}`,
     title: rule.title || '自定义减分',

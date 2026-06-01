@@ -1,6 +1,7 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260531a';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260531a';
-import { calendarView, literacyView, myView, numbersView, planningView, pointsView, sectionSwitch, shopView } from './views.js?v=20260531a';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260601a';
+import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260601a';
+import { calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260601b';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -13,13 +14,17 @@ const toast = document.querySelector('#toast');
 const modal = document.querySelector('#modal');
 const appShell = document.querySelector('.app-shell');
 const topbar = document.querySelector('.topbar');
-const tabbar = document.querySelector('.tabbar');
-const moreMenu = document.querySelector('#moreMenu');
-const moreNav = document.querySelector('.more-nav');
-const moreToggle = document.querySelector('.more-toggle');
+const sideNav = document.querySelector('.side-nav');
+const sideNavMenu = document.querySelector('#sideNavMenu');
+const sideNavToggle = document.querySelector('.side-nav-toggle');
+const navDrawer = document.querySelector('#navDrawer');
+const navDrawerMenu = document.querySelector('#navDrawerMenu');
+const navBackdrop = document.querySelector('.nav-drawer-backdrop');
+const navTrigger = document.querySelector('.nav-trigger');
 let pendingWriteOff = null;
 let skipNextRenderAnimation = false;
 let literacyPreviewTouch = null;
+let navCollapsed = false;
 const importInput = document.createElement('input');
 importInput.type = 'file';
 importInput.accept = 'application/json,.json';
@@ -32,41 +37,98 @@ const views = {
   calendar: () => calendarView(state),
   literacy: () => literacyView(state),
   numbers: () => numbersView(state),
+  pinyin: () => pinyinView(state),
+  letters: () => lettersView(state),
+  words: () => wordsView(state),
   shop: () => shopView(state),
   my: () => myView(state)
 };
 
-const NAV_ITEMS = [
-  { value: 'points', label: '记录', viewBox: '0 0 24 24', icon: '<path d="M3 5.25A2.25 2.25 0 0 1 5.25 3h3.5A2.25 2.25 0 0 1 11 5.25v3.5A2.25 2.25 0 0 1 8.75 11h-3.5A2.25 2.25 0 0 1 3 8.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 3h3.5A2.25 2.25 0 0 1 21 5.25v3.5A2.25 2.25 0 0 1 18.75 11h-3.5A2.25 2.25 0 0 1 13 8.75v-3.5Zm-10 10A2.25 2.25 0 0 1 5.25 13h3.5A2.25 2.25 0 0 1 11 15.25v3.5A2.25 2.25 0 0 1 8.75 21h-3.5A2.25 2.25 0 0 1 3 18.75v-3.5Zm10 0A2.25 2.25 0 0 1 15.25 13h3.5A2.25 2.25 0 0 1 21 15.25v3.5A2.25 2.25 0 0 1 18.75 21h-3.5A2.25 2.25 0 0 1 13 18.75v-3.5Z"/>' },
-  { value: 'literacy', label: '识字', viewBox: '0 0 1024 1024', icon: '<path d="M124.917811 807.146348c0 84.278766 68.256478 148.556418 152.530149 148.556418h582.492975a41.571343 41.571343 0 0 0 41.591722-41.591721 41.571343 41.571343 0 0 0-41.591722-41.591722c-38.208955 0-69.351801-27.16402-69.351801-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975 21.692498 0 38.805015-16.720239 40.796975-37.913473h0.794747V141.475025c0-38.310846-31.04605-69.356896-69.351801-69.356896H194.269612c-38.310846 0-69.351801 31.04605-69.351801 73.335722v637.911244m207.958607-530.951642h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.407761 0 17.35196-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.050706-41.591721-31.402667 0-17.357055 18.605214-31.402667 41.591721-31.402667z m0 196.521393h360.595741c22.986507 0 41.591721 14.050706 41.591722 31.402666 0 17.357055-18.605214 31.402667-41.591722 31.402667H332.876418c-22.986507 0-41.591721-14.045612-41.591721-31.402667 0-17.35196 18.605214-31.402667 41.591721-31.402666z m-55.428458 423.584477c-38.208955 0-69.346706-27.16402-69.346706-65.372975 0-38.208955 31.142846-65.372975 69.351801-65.372975h447.263841c-10.749453 20.892657-17.316299 40.195821-17.316299 65.372975 0 25.17206 6.673831 44.475224 17.316299 65.372975H277.44796z" fill="currentColor"></path>' },
-  { value: 'numbers', label: '数字', viewBox: '0 0 1024 1024', icon: '<path d="M512.119991 0.959925c282.306745 0 511.160066 228.854281 511.160065 511.160066s-228.853321 511.160066-511.160065 511.160065S0.959925 794.426735 0.959925 512.119991 229.814206 0.959925 512.119991 0.959925z m-221.507495 277.034357H219.360622q-15.006508 41.882728-55.315678 73.285474-40.31685 31.407546-74.690565 42.659068v79.688174q65.312577-21.562315 113.439138-66.5636v330.953344h87.818979V277.994282z m77.509144 46.880337q-45.003684 56.875557-45.001284 186.254249 0 131.886496 40.940802 183.29288 40.936002 51.407584 107.813977 51.408784 66.5624 0 103.755894-46.877938 45.000084-56.875557 45.003684-186.885399 0-130.317019-44.689309-186.571024-37.50547-47.498289-104.070269-47.501889-66.566 0-103.753495 46.880337z m132.037685 36.09318q12.339836 10.158406 20.470401 40.314451 8.120966 30.158444 8.125765 110.784945 0 80.6337-9.064092 114.379864-6.879063 26.256349-19.378486 36.409955-12.498224 10.158406-28.437778 10.153607-15.939555 0-28.279391-10.000019-12.347035-10.000019-20.470401-40.156063-8.128165-30.158444-8.125765-110.787344 0-80.622901 9.064092-114.69424 6.871863-26.249149 19.373686-36.405156t28.437779-10.158406q15.939555 0 28.28419 10.158406z m187.874122-36.09318q-45.000084 56.875557-44.998884 186.254249 0 131.886496 40.938402 183.29288t107.816376 51.408784q66.5588 0 103.753495-46.877938 45.003684-56.875557 45.003684-186.885399 0-130.317019-44.689309-186.571024-37.50547-47.498289-104.06787-47.501889-66.570799 0-103.755894 46.880337z m132.040085 36.09318q12.339836 10.158406 20.468001 40.314451 8.120966 30.158444 8.125765 110.784945 0 80.6337-9.061692 114.379864-6.879063 26.256349-19.378486 36.409955-12.498224 10.158406-28.437779 10.153607-15.943154 0-28.28179-10.000019-12.343436-10.000019-20.468001-40.156063-8.128165-30.158444-8.125765-110.787344 0-80.622901 9.061692-114.69424 6.875463-26.249149 19.376086-36.405156 12.494624-10.158406 28.437778-10.158406 15.939555 0 28.284191 10.158406z" fill="currentColor"></path>' },
-  { value: 'calendar', label: '打卡', viewBox: '0 0 1024 1024', icon: '<path d="M896 405.333333v426.666667a85.333333 85.333333 0 0 1-85.333333 85.333333H213.333333a85.333333 85.333333 0 0 1-85.333333-85.333333v-426.666667h768z m-272.213333 96.597334l-3.712 3.84-147.925334 175.061333-55.808-64.853333-3.754666-3.84a42.666667 42.666667 0 0 0-64.170667 55.296l3.242667 4.266666 88.533333 102.741334 3.626667 3.712a42.666667 42.666667 0 0 0 57.472 0l3.84-4.053334 180.138666-213.248 3.2-4.266666a42.666667 42.666667 0 0 0-64.682666-54.656zM725.333333 106.666667a42.666667 42.666667 0 0 1 42.666667 42.666666v42.666667h42.666667a85.333333 85.333333 0 0 1 85.333333 85.333333V341.333333H128V277.333333a85.333333 85.333333 0 0 1 85.333333-85.333333h42.666667v-42.666667a42.666667 42.666667 0 1 1 85.333333 0v42.666667h341.333334v-42.666667a42.666667 42.666667 0 0 1 42.666666-42.666666z"/>' },
-  { value: 'shop', label: '商城', viewBox: '0 0 24 24', icon: '<path d="M6.25 5A3.25 3.25 0 0 1 9.5 1.75h5A3.25 3.25 0 0 1 17.75 5V6h.75A2.75 2.75 0 0 1 21.25 8.75v9.5A2.75 2.75 0 0 1 18.5 21H5.5a2.75 2.75 0 0 1-2.75-2.75v-9.5A2.75 2.75 0 0 1 5.5 6h.75V5Zm10 0A1.75 1.75 0 0 0 14.5 3.25h-5A1.75 1.75 0 0 0 7.75 5V6h8.5V5Zm-8 4a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Zm9 0a.75.75 0 0 0-1.5 0v1a.75.75 0 0 0 1.5 0V9Z"/>' }
+const LEARNING_ITEMS = [
+  { value: 'numbers', label: '数字', ...SIDEBAR_ICONS.numbers },
+  { value: 'pinyin', label: '拼音', ...SIDEBAR_ICONS.pinyin },
+  { value: 'literacy', label: '汉字', ...SIDEBAR_ICONS.literacy },
+  { value: 'letters', label: '英文字母', ...SIDEBAR_ICONS.letters },
+  { value: 'words', label: '英文单词', ...SIDEBAR_ICONS.words }
 ];
 
-function navButton(item, activeTab) {
+const NAV_ITEMS = [
+  { value: 'points', label: '记录', ...SIDEBAR_ICONS.points },
+  ...LEARNING_ITEMS,
+  { value: 'planning', label: '任务', ...SIDEBAR_ICONS.planning },
+  { value: 'calendar', label: '日历', ...SIDEBAR_ICONS.calendar },
+  { value: 'shop', label: '商城', ...SIDEBAR_ICONS.shop }
+];
+
+const DRAWER_EXTRA_ITEMS = [
+  { action: 'open-my', label: '我的', ...SIDEBAR_ICONS.my }
+];
+
+const NAV_TABS = NAV_ITEMS.map(item => item.value);
+
+function isNavTab(tab) {
+  return NAV_TABS.includes(tab);
+}
+
+function navTone(value) {
+  if (value === 'numbers') return 'green';
+  if (['literacy', 'pinyin'].includes(value)) return 'orange';
+  if (['letters', 'words'].includes(value)) return 'purple';
+  return '';
+}
+
+function navButton(item, activeTab, extraAttrs = '', mode = 'desktop', variant = 'default') {
+  const collapsedAttr = mode === 'desktop' && navCollapsed
+    ? `title="${item.label}" aria-label="${item.label}" data-tooltip="${item.label}"`
+    : '';
+  const iconMarkup = variant === 'text-only'
+    ? ''
+    : `<svg aria-hidden="true" focusable="false" viewBox="${item.viewBox || '0 0 24 24'}">${item.icon}</svg>`;
   return `
-    <button data-tab="${item.value}" class="${item.value === activeTab ? 'active' : ''}">
-      <svg aria-hidden="true" focusable="false" viewBox="${item.viewBox || '0 0 24 24'}">${item.icon}</svg>
+    <button data-tab="${item.value}" class="${item.value === activeTab ? 'active' : ''} ${navTone(item.value) ? `nav-tone-${navTone(item.value)}` : ''} ${variant === 'text-only' ? 'nav-text-only' : ''}" ${collapsedAttr} ${extraAttrs}>
+      ${iconMarkup}
       <span>${item.label}</span>
     </button>`;
 }
 
+function actionButton(item) {
+  return `
+    <div class="nav-group">
+      <button data-action="${item.action}" type="button">
+        <svg aria-hidden="true" focusable="false" viewBox="${item.viewBox || '0 0 24 24'}">${item.icon}</svg>
+        <span>${item.label}</span>
+      </button>
+    </div>`;
+}
+
+function renderNavMenu(activeTab, mode = 'desktop') {
+  return NAV_ITEMS.map((item, index) => {
+    const dividerAfter = index === 0 || item.value === 'words';
+    return `
+      <div class="nav-group">${navButton(item, activeTab, '', mode)}</div>
+      ${dividerAfter ? '<div class="nav-divider" aria-hidden="true"></div>' : ''}
+    `;
+  }).join('');
+}
+
 function renderNavigation(activeTab) {
-  tabbar.innerHTML = NAV_ITEMS.map(item => navButton(item, activeTab)).join('');
-  moreMenu.innerHTML = NAV_ITEMS.map(item => navButton(item, activeTab)).join('');
+  appShell.classList.toggle('side-collapsed', navCollapsed);
+  sideNav.classList.toggle('collapsed', navCollapsed);
+  sideNavToggle?.setAttribute('aria-pressed', navCollapsed ? 'true' : 'false');
+  sideNavToggle?.setAttribute('aria-label', navCollapsed ? '展开主导航' : '收起主导航');
+  sideNavMenu.innerHTML = renderNavMenu(activeTab, 'desktop');
+  navDrawerMenu.innerHTML = `${renderNavMenu(activeTab, 'drawer')}${DRAWER_EXTRA_ITEMS.map(actionButton).join('')}`;
 }
 
 function syncShellVisibility() {
   appShell.classList.remove('logged-out');
   topbar.hidden = false;
-  tabbar.hidden = false;
-  moreNav.hidden = false;
+  sideNav.hidden = false;
 }
 
 function normalizeUiState() {
-  if (!NAV_ITEMS.some(item => item.value === state.selectedTab)) {
-    state.selectedTab = NAV_ITEMS[0]?.value || 'points';
+  if (!isNavTab(state.selectedTab)) {
+    state.selectedTab = 'points';
   }
 }
 
@@ -77,11 +139,6 @@ function persist() {
   pointsPill.classList.toggle('negative', state.points < 0);
 }
 
-function currentCalendarMonthLabel() {
-  const monthBase = state.calendarMonth ? new Date(`${state.calendarMonth}T00:00:00`) : new Date();
-  return `${monthBase.getMonth() + 1}月`;
-}
-
 function currentLiteracyCountLabel() {
   const count = Array.isArray(state.literacyItems) ? state.literacyItems.length : 0;
   return `${count} 个字`;
@@ -89,7 +146,37 @@ function currentLiteracyCountLabel() {
 
 function currentNumbersCountLabel() {
   const selectedNumber = Array.isArray(state.numberBoardSelections) ? state.numberBoardSelections[0] : null;
-  return `已选 ${selectedNumber || 0}`;
+  return selectedNumber ? `已选 ${selectedNumber}` : '1-100';
+}
+
+function currentPinyinLabel() {
+  const selected = Array.isArray(state.pinyinSelections) ? state.pinyinSelections[0] : '';
+  return selected ? `已选 ${selected}` : '拼音网格';
+}
+
+function currentLettersLabel() {
+  const selected = Array.isArray(state.letterSelections) ? state.letterSelections[0] : '';
+  return selected ? `已选 ${selected}` : 'A - Z';
+}
+
+function currentWordsLabel() {
+  const count = Array.isArray(state.wordItems) ? state.wordItems.length : 0;
+  return `${count} 个词`;
+}
+
+function wordPreviewFontSize(text) {
+  const length = String(text || '').trim().length;
+  if (length <= 4) return 168;
+  if (length <= 6) return 152;
+  if (length <= 8) return 138;
+  if (length <= 10) return 124;
+  if (length <= 12) return 110;
+  return 96;
+}
+
+function currentCalendarMonthLabel() {
+  const monthBase = state.calendarMonth ? new Date(`${state.calendarMonth}T00:00:00`) : new Date();
+  return `${monthBase.getMonth() + 1}月`;
 }
 
 function renderHeaderSwitch(tab) {
@@ -109,11 +196,13 @@ function renderHeaderSwitch(tab) {
     calendar: `<div class="calendar-month-badge" aria-live="polite">${currentCalendarMonthLabel()}</div>`,
     literacy: `<div class="status-badge" aria-live="polite">${currentLiteracyCountLabel()}</div>`,
     numbers: `<div class="status-badge" aria-live="polite">${currentNumbersCountLabel()}</div>`,
+    pinyin: `<div class="status-badge" aria-live="polite">${currentPinyinLabel()}</div>`,
+    letters: `<div class="status-badge" aria-live="polite">${currentLettersLabel()}</div>`,
+    words: `<div class="status-badge" aria-live="polite">${currentWordsLabel()}</div>`
   };
 
   headerSwitch.innerHTML = switchers[tab] || '';
   headerSwitch.hidden = !switchers[tab];
-  topbar.classList.toggle('no-switch', !switchers[tab]);
 }
 
 function showToast(message) {
@@ -470,6 +559,7 @@ function showLiteracyPreviewModal(itemId) {
   const item = index >= 0 ? items[index] : null;
   if (!item) return;
   const safeText = escapeHtml(item.text);
+  const previewFontSize = wordPreviewFontSize(item.text);
   const total = items.length;
   const dotIndex = total <= 1 ? 0 : Math.min(2, Math.floor((index / (total - 1)) * 3));
   modal.classList.remove('hidden');
@@ -527,9 +617,14 @@ function showLiteracyModal(itemId, errorMessage = '') {
         <input name="text" type="text" maxlength="1" autocomplete="off" value="${safeText}" aria-label="修改汉字" required>
       </label>
       <div class="literacy-color-picker" role="radiogroup" aria-label="选择颜色">
-        ${['red', 'yellow', 'green'].map(color => `
-          <button class="literacy-color-option ${color} ${activeColor === color ? 'active' : ''}" type="button" data-literacy-color="${color}" aria-pressed="${activeColor === color}">
-            <span></span>
+        ${[
+          ['red', '红色'],
+          ['yellow', '黄色'],
+          ['green', '绿色']
+        ].map(([color, label]) => `
+          <button class="literacy-color-option ${color} ${activeColor === color ? 'active' : ''}" type="button" data-literacy-color="${color}" aria-pressed="${activeColor === color}" aria-label="${label}">
+            <span aria-hidden="true"></span>
+            <em>${label}</em>
           </button>
         `).join('')}
       </div>
@@ -543,19 +638,33 @@ function showLiteracyModal(itemId, errorMessage = '') {
   setTimeout(() => modal.querySelector('input[name="text"]')?.focus(), 0);
 }
 
-function showCreateLiteracyModal(errorMessage = '', currentValue = '') {
+function showCreateLiteracyModal(errorMessage = '', currentValue = '', currentColor = 'red') {
   const safeText = escapeHtml(currentValue);
+  const activeColor = normalizeLiteracyColor(currentColor);
   modal.classList.remove('hidden');
   modal.innerHTML = `
     <form class="modal-card literacy-modal" data-literacy-create-form>
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
       <div class="custom-rule-head">
-        <h2>新增识字卡</h2>
+        <h2>新增汉字卡</h2>
       </div>
       <label class="custom-rule-field">
         <span>汉字</span>
         <input name="text" type="text" maxlength="1" autocomplete="off" value="${safeText}" placeholder="输入 1 个字" aria-label="输入待巩固字" required>
       </label>
+      <div class="literacy-color-picker" role="radiogroup" aria-label="选择颜色">
+        ${[
+          ['red', '红色'],
+          ['yellow', '黄色'],
+          ['green', '绿色']
+        ].map(([color, label]) => `
+          <button class="literacy-color-option ${color} ${activeColor === color ? 'active' : ''}" type="button" data-literacy-color="${color}" aria-pressed="${activeColor === color}" aria-label="${label}">
+            <span aria-hidden="true"></span>
+            <em>${label}</em>
+          </button>
+        `).join('')}
+      </div>
+      <input type="hidden" name="color" value="${activeColor}">
       ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
       <div class="actions">
         <button class="btn secondary" type="submit">提交</button>
@@ -569,16 +678,17 @@ function addLiteracyItem(form) {
   const data = new FormData(form);
   const text = String(data.get('text') || '').trim();
   const char = Array.from(text)[0] || '';
+  const color = normalizeLiteracyColor(String(data.get('color') || 'red'));
   if (!char) {
-    showCreateLiteracyModal('请先输入一个字。', text);
+    showCreateLiteracyModal('请先输入一个字。', text, color);
     return;
   }
   if (Array.from(text).length !== 1) {
-    showCreateLiteracyModal('一次只能添加 1 个字。', text);
+    showCreateLiteracyModal('一次只能添加 1 个字。', text, color);
     return;
   }
   if ((state.literacyItems || []).some(item => item.text === char)) {
-    showCreateLiteracyModal('这个字已经添加过了。', text);
+    showCreateLiteracyModal('这个字已经添加过了。', text, color);
     return;
   }
   const now = Date.now();
@@ -586,7 +696,7 @@ function addLiteracyItem(form) {
   state.literacyItems.unshift({
     id: `literacy-${now}`,
     text: char,
-    color: 'red',
+    color,
     createdAt: now,
     updatedAt: now
   });
@@ -631,6 +741,187 @@ function deleteLiteracyItem(itemId) {
   showToast('字卡已删除。');
   persist();
   render('literacy');
+}
+
+function showWordPreviewModal(itemId) {
+  const items = state.wordItems || [];
+  const index = items.findIndex(entry => entry.id === itemId);
+  const item = index >= 0 ? items[index] : null;
+  if (!item) return;
+  const safeText = escapeHtml(item.text);
+  const safeTranslation = escapeHtml(String(item.translation || '').trim());
+  const previewFontSize = wordPreviewFontSize(item.text);
+  const total = items.length;
+  const dotIndex = total <= 1 ? 0 : Math.min(2, Math.floor((index / (total - 1)) * 3));
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <div class="modal-card literacy-preview-modal word-preview-modal" role="dialog" aria-label="单词卡详情" data-word-preview-active="${item.id}">
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <button class="literacy-preview-arrow literacy-preview-arrow-left" type="button" data-word-preview-move="prev" data-word-preview-id="${item.id}" aria-label="查看上一个单词卡" ${index <= 0 ? 'disabled' : ''}>
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M14.71 6.71a1 1 0 0 1 0 1.41L10.83 12l3.88 3.88a1 1 0 0 1-1.42 1.41l-4.58-4.58a1 1 0 0 1 0-1.42l4.58-4.58a1 1 0 0 1 1.42 0Z" fill="currentColor"></path></svg>
+      </button>
+      <button class="literacy-preview-arrow literacy-preview-arrow-right" type="button" data-word-preview-move="next" data-word-preview-id="${item.id}" aria-label="查看下一个单词卡" ${index >= total - 1 ? 'disabled' : ''}>
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M9.29 6.71a1 1 0 0 0 0 1.41L13.17 12l-3.88 3.88a1 1 0 1 0 1.42 1.41l4.58-4.58a1 1 0 0 0 0-1.42l-4.58-4.58a1 1 0 0 0-1.42 0Z" fill="currentColor"></path></svg>
+      </button>
+      <div class="word-preview-copy">
+        <div class="literacy-preview-char word-preview-text" aria-hidden="true" style="font-size:${previewFontSize}px">${safeText}</div>
+        ${safeTranslation ? `<p class="word-preview-translation">${safeTranslation}</p>` : ''}
+      </div>
+      <div class="literacy-preview-footer">
+        <div class="literacy-preview-dots" aria-label="单词卡浏览进度">
+          ${[0, 1, 2].map(dot => `<span class="literacy-preview-dot ${dot === dotIndex ? 'active' : ''}"></span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function moveWordPreview(itemId, direction) {
+  const items = state.wordItems || [];
+  const index = items.findIndex(item => item.id === itemId);
+  if (index < 0) return;
+  const nextIndex = direction === 'prev' ? index - 1 : index + 1;
+  if (nextIndex < 0 || nextIndex >= items.length) return;
+  showWordPreviewModal(items[nextIndex].id);
+}
+
+function showWordModal(itemId, errorMessage = '') {
+  const item = (state.wordItems || []).find(entry => entry.id === itemId);
+  if (!item) return;
+  const activeColor = normalizeLiteracyColor(item.color);
+  const safeText = escapeHtml(item.text);
+  const safeTranslation = escapeHtml(String(item.translation || '').trim());
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <form class="modal-card literacy-modal" data-word-edit-form="${item.id}">
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <div class="custom-rule-head">
+        <h2>修改单词卡</h2>
+      </div>
+      <label class="custom-rule-field">
+        <span>英文单词</span>
+        <input name="text" type="text" maxlength="24" autocomplete="off" value="${safeText}" aria-label="修改英文单词" required>
+      </label>
+      <label class="custom-rule-field">
+        <span>翻译</span>
+        <input name="translation" type="text" maxlength="24" autocomplete="off" value="${safeTranslation}" placeholder="输入中文翻译" aria-label="修改中文翻译">
+      </label>
+      <div class="literacy-color-picker" role="radiogroup" aria-label="选择颜色">
+        ${[
+          ['red', '红色'],
+          ['yellow', '黄色'],
+          ['green', '绿色']
+        ].map(([color, label]) => `
+          <button class="literacy-color-option ${color} ${activeColor === color ? 'active' : ''}" type="button" data-literacy-color="${color}" aria-pressed="${activeColor === color}" aria-label="${label}">
+            <span aria-hidden="true"></span>
+            <em>${label}</em>
+          </button>
+        `).join('')}
+      </div>
+      <input type="hidden" name="color" value="${activeColor}">
+      ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
+      <div class="actions">
+        <button class="btn secondary" type="submit">提交</button>
+        <button class="btn ghost" type="button" data-action="close-modal">取消</button>
+      </div>
+  </form>`;
+  setTimeout(() => modal.querySelector('input[name="text"]')?.focus(), 0);
+}
+
+function showCreateWordModal(errorMessage = '', currentValue = '', currentColor = 'red', currentTranslation = '') {
+  const safeText = escapeHtml(currentValue);
+  const safeTranslation = escapeHtml(currentTranslation);
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <form class="modal-card literacy-modal" data-word-create-form>
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <div class="custom-rule-head">
+        <h2>新增单词卡</h2>
+      </div>
+      <label class="custom-rule-field">
+        <span>英文单词</span>
+        <input name="text" type="text" maxlength="24" autocomplete="off" value="${safeText}" placeholder="输入英文单词" aria-label="输入英文单词" required>
+      </label>
+      <label class="custom-rule-field">
+        <span>翻译</span>
+        <input name="translation" type="text" maxlength="24" autocomplete="off" value="${safeTranslation}" placeholder="输入中文翻译" aria-label="输入中文翻译">
+      </label>
+      <input type="hidden" name="color" value="red">
+      ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
+      <div class="actions">
+        <button class="btn secondary" type="submit">提交</button>
+        <button class="btn ghost" type="button" data-action="close-modal">取消</button>
+      </div>
+    </form>`;
+  setTimeout(() => modal.querySelector('input[name="text"]')?.focus(), 0);
+}
+
+function addWordItem(form) {
+  const data = new FormData(form);
+  const rawText = String(data.get('text') || '').trim();
+  const text = rawText.replace(/\s+/g, ' ');
+  const translation = String(data.get('translation') || '').trim().replace(/\s+/g, ' ');
+  const color = normalizeLiteracyColor(String(data.get('color') || 'red'));
+  if (!text) {
+    showCreateWordModal('请先输入一个英文单词。', rawText, color, translation);
+    return;
+  }
+  if ((state.wordItems || []).some(item => item.text.toLowerCase() === text.toLowerCase())) {
+    showCreateWordModal('这个单词已经添加过了。', rawText, color, translation);
+    return;
+  }
+  const now = Date.now();
+  state.wordItems ||= [];
+  state.wordItems.unshift({
+    id: `word-${now}`,
+    text,
+    translation,
+    color,
+    createdAt: now,
+    updatedAt: now
+  });
+  closeModal();
+  showToast(`已添加：${text}`);
+  persist();
+  render('words');
+}
+
+function submitWordEdit(form) {
+  const itemId = form.dataset.wordEditForm;
+  const item = (state.wordItems || []).find(entry => entry.id === itemId);
+  if (!item) {
+    closeModal();
+    return;
+  }
+  const data = new FormData(form);
+  const rawText = String(data.get('text') || '').trim();
+  const text = rawText.replace(/\s+/g, ' ');
+  const translation = String(data.get('translation') || '').trim().replace(/\s+/g, ' ');
+  const color = normalizeLiteracyColor(String(data.get('color') || 'red'));
+  if (!text) {
+    showWordModal(itemId, '请先输入一个英文单词。');
+    return;
+  }
+  if ((state.wordItems || []).some(entry => entry.id !== itemId && entry.text.toLowerCase() === text.toLowerCase())) {
+    showWordModal(itemId, '这个单词已经存在了。');
+    return;
+  }
+  item.text = text;
+  item.translation = translation;
+  item.color = color;
+  item.updatedAt = Date.now();
+  closeModal();
+  showToast('单词卡已更新。');
+  persist();
+  render('words');
+}
+
+function deleteWordItem(itemId) {
+  const beforeCount = (state.wordItems || []).length;
+  state.wordItems = (state.wordItems || []).filter(item => item.id !== itemId);
+  if (state.wordItems.length === beforeCount) return;
+  showToast('单词卡已删除。');
+  persist();
+  render('words');
 }
 
 function exchangeReward(id) {
@@ -776,16 +1067,55 @@ function closeModal() {
   modal.innerHTML = '';
 }
 
+function closeDrawer() {
+  navDrawer.hidden = true;
+  navBackdrop.hidden = true;
+  navDrawer.classList.remove('open');
+  navBackdrop.classList.remove('show');
+  navTrigger?.setAttribute('aria-expanded', 'false');
+}
+
+function openDrawer() {
+  navDrawer.hidden = false;
+  navBackdrop.hidden = false;
+  requestAnimationFrame(() => {
+    navDrawer.classList.add('open');
+    navBackdrop.classList.add('show');
+  });
+  navTrigger?.setAttribute('aria-expanded', 'true');
+}
+
+function toggleDrawer() {
+  if (navDrawer.classList.contains('open')) {
+    closeDrawer();
+    return;
+  }
+  openDrawer();
+}
+
+function syncDrawerForViewport() {
+  if (window.getComputedStyle(sideNav).display !== 'none') {
+    closeDrawer();
+  }
+}
+
+function toggleSidebar() {
+  navCollapsed = !navCollapsed;
+  renderNavigation(state.selectedTab);
+  syncDrawerForViewport();
+}
+
 function goToTab(tab) {
-  if (!NAV_ITEMS.some(item => item.value === tab)) return;
+  if (!isNavTab(tab)) return;
   if (tab !== 'my') state.mySection = null;
-  moreNav?.classList.remove('open');
-  moreToggle?.setAttribute('aria-expanded', 'false');
+  closeDrawer();
   render(tab);
 }
 
 function jumpToTab(tab) {
+  if (!isNavTab(tab) && tab !== 'my') return;
   state.mySection = null;
+  closeDrawer();
   render(tab);
 }
 
@@ -793,25 +1123,24 @@ function goHome() {
   state.mySection = null;
   state.pointsSection = 'earn';
   persist();
+  closeDrawer();
   render('points');
 }
 
 function openRecordsDetail() {
   state.mySection = 'records';
   persist();
+  closeDrawer();
   render('my');
 }
 
 function openMy() {
   state.mySection = null;
   persist();
+  closeDrawer();
   render('my');
 }
 
-function toggleMore() {
-  const isOpen = moreNav?.classList.toggle('open');
-  moreToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-}
 
 function closePlanTypeMenus() {
   document.querySelectorAll('[data-plan-type-menu]').forEach(menu => menu.classList.add('hidden'));
@@ -904,6 +1233,50 @@ function syncNumberBoardUi(activeNumber, activeButton) {
   }
 }
 
+function syncPinyinBoardUi(activeValue, activeButton) {
+  const pinyinButtons = app.querySelectorAll('[data-pinyin-cell]');
+  pinyinButtons.forEach(button => {
+    const cellValue = button.dataset.pinyinCell;
+    const isSelected = cellValue === activeValue;
+    button.classList.toggle('selected', isSelected);
+    button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    button.setAttribute('aria-label', `${cellValue}，拼音${isSelected ? '，已选中' : '，未选中'}`);
+  });
+
+  if (activeButton) {
+    activeButton.classList.add('selected');
+    activeButton.setAttribute('aria-pressed', 'true');
+    activeButton.setAttribute('aria-label', `${activeValue}，拼音，已选中`);
+  }
+
+  if (headerSwitch) {
+    headerSwitch.innerHTML = `<div class="status-badge" aria-live="polite">${currentPinyinLabel()}</div>`;
+    headerSwitch.hidden = false;
+  }
+}
+
+function syncLetterBoardUi(activeValue, activeButton) {
+  const letterButtons = app.querySelectorAll('[data-letter-cell]');
+  letterButtons.forEach(button => {
+    const cellValue = button.dataset.letterCell;
+    const isSelected = cellValue === activeValue;
+    button.classList.toggle('selected', isSelected);
+    button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    button.setAttribute('aria-label', `${cellValue}，英文字母${isSelected ? '，已选中' : '，未选中'}`);
+  });
+
+  if (activeButton) {
+    activeButton.classList.add('selected');
+    activeButton.setAttribute('aria-pressed', 'true');
+    activeButton.setAttribute('aria-label', `${activeValue}，英文字母，已选中`);
+  }
+
+  if (headerSwitch) {
+    headerSwitch.innerHTML = `<div class="status-badge" aria-live="polite">${currentLettersLabel()}</div>`;
+    headerSwitch.hidden = false;
+  }
+}
+
 function toggleNumberCell(value, activeButton = null) {
   const number = Number(value);
   if (!Number.isInteger(number) || number < 1 || number > 100) return;
@@ -915,6 +1288,32 @@ function toggleNumberCell(value, activeButton = null) {
   }
   skipNextRenderAnimation = true;
   render('numbers');
+}
+
+function togglePinyinCell(value, activeButton = null) {
+  const nextValue = String(value || '').trim();
+  if (!nextValue) return;
+  state.pinyinSelections = [nextValue];
+  persist();
+  if (state.selectedTab === 'pinyin') {
+    syncPinyinBoardUi(nextValue, activeButton);
+    return;
+  }
+  skipNextRenderAnimation = true;
+  render('pinyin');
+}
+
+function toggleLetterCell(value, activeButton = null) {
+  const nextValue = String(value || '').trim().toUpperCase();
+  if (!/^[A-Z]$/.test(nextValue)) return;
+  state.letterSelections = [nextValue];
+  persist();
+  if (state.selectedTab === 'letters') {
+    syncLetterBoardUi(nextValue, activeButton);
+    return;
+  }
+  skipNextRenderAnimation = true;
+  render('letters');
 }
 
 function deleteRuleCard(kind, id) {
@@ -979,7 +1378,9 @@ const actions = {
   home: goHome,
   'open-records': openRecordsDetail,
   'open-my': openMy,
-  'toggle-more': toggleMore,
+  'toggle-sidebar': toggleSidebar,
+  'toggle-drawer': toggleDrawer,
+  'close-drawer': closeDrawer,
   'close-modal': closeModal,
   'my-back': () => {
     state.mySection = null;
@@ -1027,6 +1428,10 @@ document.addEventListener('click', event => {
     closeModal();
     return;
   }
+  if (event.target === navBackdrop && navDrawer.classList.contains('open')) {
+    closeDrawer();
+    return;
+  }
 
   if (!event.target.closest('[data-plan-type]')) {
     closePlanTypeMenus();
@@ -1038,6 +1443,12 @@ document.addEventListener('click', event => {
   const literacyCard = event.target.closest('[data-literacy-preview]');
   if (literacyCard && !event.target.closest('button')) {
     showLiteracyPreviewModal(literacyCard.dataset.literacyPreview);
+    return;
+  }
+
+  const wordCard = event.target.closest('[data-word-preview]');
+  if (wordCard && !event.target.closest('button')) {
+    showWordPreviewModal(wordCard.dataset.wordPreview);
     return;
   }
 
@@ -1116,8 +1527,14 @@ document.addEventListener('click', event => {
   if (target.dataset.literacyPreview) showLiteracyPreviewModal(target.dataset.literacyPreview);
   if (target.dataset.literacyEdit) showLiteracyModal(target.dataset.literacyEdit);
   if (target.dataset.literacyMore) showLiteracyModal(target.dataset.literacyMore);
+  if (target.dataset.wordCreate !== undefined) showCreateWordModal();
+  if (target.dataset.wordDelete) deleteWordItem(target.dataset.wordDelete);
+  if (target.dataset.wordPreviewMove) moveWordPreview(target.dataset.wordPreviewId, target.dataset.wordPreviewMove);
+  if (target.dataset.wordPreview) showWordPreviewModal(target.dataset.wordPreview);
+  if (target.dataset.wordEdit) showWordModal(target.dataset.wordEdit);
+  if (target.dataset.wordMore) showWordModal(target.dataset.wordMore);
   if (target.dataset.literacyColor) {
-    const form = target.closest('[data-literacy-edit-form]');
+    const form = target.closest('form');
     form?.querySelectorAll('[data-literacy-color]').forEach(option => {
       const active = option.dataset.literacyColor === target.dataset.literacyColor;
       option.classList.toggle('active', active);
@@ -1129,6 +1546,14 @@ document.addEventListener('click', event => {
   }
   if (target.dataset.numberCell) {
     toggleNumberCell(target.dataset.numberCell, target);
+    return;
+  }
+  if (target.dataset.pinyinCell) {
+    togglePinyinCell(target.dataset.pinyinCell, target);
+    return;
+  }
+  if (target.dataset.letterCell) {
+    toggleLetterCell(target.dataset.letterCell, target);
     return;
   }
   if (target.dataset.earn) earnPoints(Number(target.dataset.earn));
@@ -1181,6 +1606,16 @@ document.addEventListener('submit', event => {
     submitLiteracyEdit(event.target);
     return;
   }
+  if (event.target.matches('[data-word-create-form]')) {
+    event.preventDefault();
+    addWordItem(event.target);
+    return;
+  }
+  if (event.target.matches('[data-word-edit-form]')) {
+    event.preventDefault();
+    submitWordEdit(event.target);
+    return;
+  }
   if (!event.target.matches('[data-write-off-form]')) return;
   event.preventDefault();
   submitWriteOffVerification();
@@ -1194,11 +1629,27 @@ document.addEventListener('keydown', event => {
       moveLiteracyPreview(previewModal.dataset.literacyPreviewActive, event.key === 'ArrowLeft' ? 'prev' : 'next');
       return;
     }
+    const wordPreviewModal = modal.querySelector('[data-word-preview-active]');
+    if (wordPreviewModal) {
+      event.preventDefault();
+      moveWordPreview(wordPreviewModal.dataset.wordPreviewActive, event.key === 'ArrowLeft' ? 'prev' : 'next');
+      return;
+    }
   }
   const literacyCard = event.target.closest('[data-literacy-preview]');
   if (literacyCard && ['Enter', ' '].includes(event.key)) {
     event.preventDefault();
     showLiteracyPreviewModal(literacyCard.dataset.literacyPreview);
+    return;
+  }
+  const wordCard = event.target.closest('[data-word-preview]');
+  if (wordCard && ['Enter', ' '].includes(event.key)) {
+    event.preventDefault();
+    showWordPreviewModal(wordCard.dataset.wordPreview);
+    return;
+  }
+  if (event.key === 'Escape' && navDrawer.classList.contains('open')) {
+    closeDrawer();
     return;
   }
   const target = event.target.closest('[data-speak]');
@@ -1207,8 +1658,10 @@ document.addEventListener('keydown', event => {
   speakToast(target.dataset.speak);
 });
 
+window.addEventListener('resize', syncDrawerForViewport);
+
 modal.addEventListener('touchstart', event => {
-  const previewModal = event.target.closest('[data-literacy-preview-active]');
+  const previewModal = event.target.closest('[data-literacy-preview-active], [data-word-preview-active]');
   if (!previewModal || event.touches.length !== 1) {
     literacyPreviewTouch = null;
     return;
@@ -1227,19 +1680,21 @@ modal.addEventListener('touchend', event => {
     literacyPreviewTouch = null;
     return;
   }
-  handleLiteracyPreviewSwipe(literacyPreviewTouch, touch);
+  const previewModal = modal.querySelector('[data-literacy-preview-active], [data-word-preview-active]');
+  if (previewModal?.dataset.wordPreviewActive) {
+    const deltaX = touch.clientX - literacyPreviewTouch.clientX;
+    const deltaY = touch.clientY - literacyPreviewTouch.clientY;
+    if (Math.abs(deltaX) >= 48 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      moveWordPreview(previewModal.dataset.wordPreviewActive, deltaX > 0 ? 'prev' : 'next');
+    }
+  } else {
+    handleLiteracyPreviewSwipe(literacyPreviewTouch, touch);
+  }
   literacyPreviewTouch = null;
-}, { passive: true });
-
-let lastScrollY = window.scrollY;
-window.addEventListener('scroll', () => {
-  if (!moreNav) return;
-  const currentY = window.scrollY;
-  moreNav.classList.toggle('nav-hidden', currentY > lastScrollY && currentY > 80);
-  lastScrollY = currentY;
 }, { passive: true });
 
 pointsText.textContent = state.points;
 pointsPill.classList.toggle('negative', state.points < 0);
 syncShellVisibility();
 render(state.selectedTab || 'points');
+syncDrawerForViewport();

@@ -1,0 +1,138 @@
+{
+  "app": "growth-record",
+  "version": 1,
+  "exportedAt": "2026-06-02T12:00:00.000Z",
+  "state": {
+    "points": 42,
+    "streak": 3,
+    "selectedTab": "words",
+    "mySection": null,
+    "pointsSection": "earn",
+    "shopSection": "exchange",
+    "planningSection": "done",
+    "pointsBoardView": "month",
+    "planningDraftType": "single",
+    "literacyItems": [
+      {
+        "id": "literacy-1748850000001",
+        "text": "汉",
+        "color": "red",
+        "createdAt": 1748850000001,
+        "updatedAt": 1748851000001
+      },
+      {
+        "id": "literacy-1748850000002",
+        "text": "字",
+        "color": "green",
+        "createdAt": 1748850000002,
+        "updatedAt": 1748851000002
+      }
+    ],
+    "numberBoardSelections": [
+      10
+    ],
+    "pinyinSelections": [
+      "a"
+    ],
+    "letterSelections": [
+      "C"
+    ],
+    "wordItems": [
+      {
+        "id": "word-1748850000101",
+        "text": "truck",
+        "translation": "",
+        "color": "yellow",
+        "createdAt": 1748850000101,
+        "updatedAt": 1748851000101
+      },
+      {
+        "id": "word-1748850000102",
+        "text": "red",
+        "translation": "",
+        "color": "green",
+        "createdAt": 1748850000102,
+        "updatedAt": 1748851000102
+      }
+    ],
+    "customPointRules": [
+      {
+        "id": "custom-point-1",
+        "title": "主动整理书包",
+        "points": 3,
+        "description": ""
+      }
+    ],
+    "customDeductRules": [
+      {
+        "id": "custom-deduct-1",
+        "title": "顶嘴",
+        "points": 2,
+        "description": ""
+      }
+    ],
+    "hiddenPointRuleIds": [],
+    "hiddenDeductRuleIds": [],
+    "petSection": "cloud",
+    "calendarMonth": "2026-06-01",
+    "previewPet": "sonicHummingbird",
+    "collectedPets": [
+      "sonicHummingbird"
+    ],
+    "pet": {
+      "type": "sonicHummingbird",
+      "name": "音速蜂鸟",
+      "level": 2,
+      "exp": 12,
+      "fedAt": 1748850000201,
+      "playedAt": 1748850000301,
+      "sleptAt": 1748850000401,
+      "reviveCost": 30
+    },
+    "plans": [
+      {
+        "id": "default-plan-1",
+        "title": "读 15 分钟中文",
+        "points": 6,
+        "category": "study",
+        "planType": "single",
+        "done": false,
+        "createdAt": 1748850000501,
+        "completedAt": null
+      },
+      {
+        "id": "plan-1748850000601-0",
+        "title": "口算 10 题",
+        "points": 8,
+        "category": "study",
+        "planType": "single",
+        "done": true,
+        "createdAt": 1748850000601,
+        "completedAt": 1748852000601
+      }
+    ],
+    "exchangedRewards": [
+      {
+        "id": "toy",
+        "name": "买 1 个玩具",
+        "cost": 60,
+        "time": 1748850000701,
+        "exchangeId": "toy-1748850000701-0"
+      }
+    ],
+    "records": [
+      {
+        "text": "欢迎来到成长记录，初始积分为 0",
+        "delta": 0,
+        "time": 1748850000000,
+        "category": "system"
+      },
+      {
+        "text": "完成任务：口算 10 题",
+        "delta": 8,
+        "time": 1748852000601,
+        "category": "study"
+      }
+    ]
+  }
+}

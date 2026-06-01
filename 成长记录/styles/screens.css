@@ -351,7 +351,7 @@
 .my-entry-card strong {
   color: var(--on-surface);
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: clamp(20px, 2.4vw, 28px);
   line-height: 1;
 }
 .my-entry-card p {
@@ -373,11 +373,11 @@
   text-align: center;
 }
 .my-card-icon {
-  width: 76px;
-  height: 76px;
+  width: 60px;
+  height: 60px;
   display: grid;
   place-items: center;
-  border-radius: 24px;
+  border-radius: 18px;
   color: var(--on-secondary-container);
   background: var(--secondary-container);
   box-shadow: none;
@@ -403,8 +403,8 @@
   box-shadow: none;
 }
 .my-card-icon svg {
-  width: 44px;
-  height: 44px;
+  width: 28px;
+  height: 28px;
   display: block;
   fill: currentColor;
 }
@@ -514,8 +514,8 @@
 }
 .section-head h2 { margin-bottom: 6px; }
 .my-detail-card .section-head h2 {
-  font-size: 30px;
-  line-height: 38px;
+  font-size: clamp(20px, 2.4vw, 28px);
+  line-height: 1.12;
 }
 .section-head p { margin-bottom: 0; }
 .redeemed-list { grid-template-columns: 1fr; }
@@ -564,6 +564,19 @@
   box-shadow: 0 6px 0 #d7dce3;
   opacity: 1;
   filter: none;
+}
+.plan-complete-btn.redeemed-btn,
+.plan-complete-btn.redeemed-btn:disabled {
+  border-color: #cfd4dc;
+  color: #7b8088;
+  background: #eef1f4;
+  box-shadow: 0 6px 0 #d7dce3;
+  opacity: 1;
+  filter: none;
+}
+.plan-complete-btn.redeemed-btn:active,
+.plan-complete-btn.redeemed-btn:disabled:active {
+  box-shadow: 0 0 0 #d7dce3;
 }
 .empty-card {
   display: grid;
@@ -985,6 +998,32 @@
   text-align: center;
   pointer-events: none;
 }
+.word-card {
+  min-height: 176px;
+  padding: 22px 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+}
+.word-card strong {
+  width: 100%;
+  line-height: 1.2;
+  text-transform: none;
+  white-space: nowrap;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+.word-preview-text {
+  max-width: 100%;
+  line-height: 1.1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-align: center;
+  font-weight: 700;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
 .literacy-dot {
   position: absolute;
   top: 16px;
@@ -1095,4 +1134,17 @@
 }
 .number-board-cell span {
   pointer-events: none;
+}
+.number-board-filler {
+  min-height: 72px;
+  background: #fff;
+}
+.learning-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.letters-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.words-grid {
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
 }

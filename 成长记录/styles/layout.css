@@ -1,36 +1,57 @@
 /* 2. App shell, topbar, navigation, and shared components */
 .app-shell {
-  width: min(1000px, 100%);
+  width: 100%;
   min-height: 100vh;
   margin: 0 auto;
-  padding: var(--space-md) 20px 112px;
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0;
 }
 
 .app-shell.logged-out {
-  width: min(1000px, 100%);
+  width: 100%;
   padding-bottom: var(--space-md);
+}
+
+.workspace-shell {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+  min-height: calc(100vh - 90px);
+  transition: grid-template-columns 0.22s ease;
+}
+
+.app-shell.side-collapsed .workspace-shell {
+  grid-template-columns: 88px minmax(0, 1fr);
+}
+
+.content-shell {
+  min-width: 0;
+  min-height: 0;
+  background: #f5f7fa;
+}
+
+.content-panel {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 20px;
+  padding: 24px 24px 32px;
+  background: transparent;
 }
 
 .topbar {
   display: grid;
-  grid-template-columns: auto minmax(180px, 470px) auto;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--gutter);
-  margin-bottom: var(--space-md);
-}
-
-.topbar.no-switch {
   grid-template-columns: auto minmax(0, 1fr) auto;
-}
-
-.topbar.no-switch .brand-logo {
-  grid-column: 1;
-}
-
-.topbar.no-switch .top-actions {
-  grid-column: 3;
-  justify-self: end;
+  align-items: center;
+  gap: var(--gutter);
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
 }
 
 .brand-logo {
@@ -39,10 +60,11 @@
   padding: 0;
   border: 0;
   background: transparent;
+  justify-self: start;
 }
 .brand-logo img {
   width: auto;
-  height: 58px;
+  height: 48px;
   display: block;
 }
 
@@ -51,11 +73,11 @@
   align-items: center;
   justify-content: center;
   min-width: 84px;
-  min-height: 52px;
+  min-height: 46px;
   margin: 0 auto;
   color: var(--on-surface);
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1;
 }
@@ -65,15 +87,15 @@
   align-items: center;
   justify-content: center;
   min-width: 112px;
-  min-height: 52px;
+  min-height: 46px;
   margin: 0 auto;
-  padding: 0 18px;
+  padding: 0 16px;
   border: 2px solid var(--outline-variant);
   border-radius: var(--radius-full);
   color: var(--on-surface);
   background: var(--surface-container-low);
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -112,16 +134,16 @@ p { color: var(--on-surface-variant); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-width: 132px;
-  padding: 12px 18px;
+  gap: 8px;
+  min-width: 118px;
+  padding: 10px 16px;
   border: 2px solid var(--secondary);
   border-radius: var(--radius-full);
   color: var(--on-secondary-container);
   background: var(--secondary-container);
   box-shadow: var(--depth) var(--shadow-yellow);
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -138,8 +160,8 @@ p { color: var(--on-surface-variant); }
   outline-offset: 4px;
 }
 .points-pill svg {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   display: block;
   fill: currentColor;
 }
@@ -151,6 +173,16 @@ p { color: var(--on-surface-variant); }
 }
 
 .screen { animation: rise 0.28s ease both; }
+.screen,
+#app {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
 .app-shell.skip-render-animation .screen,
 .app-shell.skip-render-animation .my-detail-card {
   animation: none !important;
@@ -160,15 +192,17 @@ p { color: var(--on-surface-variant); }
 
 .header-switch {
   min-width: 0;
-  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
-.header-switch:empty { display: block; }
+.header-switch:empty { display: none; }
 .section-switch {
-  width: 418px;
+  width: auto;
   display: grid;
   grid-template-columns: repeat(2, 200px);
-  gap: 18px;
-  justify-self: center;
+  gap: 12px;
   margin: 0;
 }
 .section-switch button {
@@ -198,9 +232,10 @@ p { color: var(--on-surface-variant); }
   grid-template-columns: repeat(2, 144px);
   gap: 0;
   align-items: center;
+  justify-self: center;
 }
 .section-switch--header button {
-  min-height: 54px;
+  min-height: 46px;
   border: 0;
   border-radius: 0;
   padding: 0;
@@ -208,7 +243,7 @@ p { color: var(--on-surface-variant); }
   background: transparent;
   box-shadow: none;
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   transition: color .14s ease;
 }
@@ -238,7 +273,26 @@ p { color: var(--on-surface-variant); }
   display: inline-flex;
   align-items: center;
   justify-content: end;
-  gap: 14px;
+  gap: 10px;
+}
+.nav-trigger {
+  display: none !important;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border-radius: 14px;
+  color: #0f3f73;
+  background: #e9f3ff;
+  box-shadow: 0 4px 0 #bfd6f1;
+  line-height: 0;
+}
+.nav-trigger svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
 }
 .logout-btn {
   min-height: 48px;
@@ -257,15 +311,15 @@ p { color: var(--on-surface-variant); }
   box-shadow: 0 0 0 var(--surface-dim);
 }
 .avatar-btn {
-  width: 62px;
-  height: 62px;
+  width: 54px;
+  height: 54px;
   display: grid;
   place-items: center;
   border: 2px solid var(--primary);
-  border-radius: 22px;
+  border-radius: 18px;
   color: var(--on-primary-container);
   background: #bdf58b;
-  box-shadow: 0 6px 0 var(--shadow-green);
+  box-shadow: 0 5px 0 var(--shadow-green);
   transition: transform .14s ease, box-shadow .14s ease;
 }
 .avatar-btn:active {
@@ -273,7 +327,7 @@ p { color: var(--on-surface-variant); }
   box-shadow: 0 1px 0 var(--shadow-green);
 }
 .avatar-btn svg {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   fill: currentColor;
 }

@@ -234,11 +234,33 @@
   touch-action: pan-y;
   user-select: none;
 }
+.word-preview-modal {
+  width: min(760px, calc(100vw - 56px));
+  min-height: 280px;
+  padding: 40px 36px;
+}
+.word-preview-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  max-width: 100%;
+}
 .literacy-preview-char {
   color: #243041;
   font-family: "Quicksand", system-ui, sans-serif;
   font-size: clamp(120px, 28vw, 188px);
   line-height: 1;
+}
+.word-preview-translation {
+  margin: 0;
+  color: #5b6472;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-align: center;
+  word-break: break-word;
 }
 .literacy-preview-footer {
   display: flex;
@@ -300,8 +322,11 @@
 }
 .literacy-color-option {
   min-height: 64px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 2px solid #e5e7eb;
   border-radius: 18px;
   background: #f8fafc;
@@ -312,6 +337,12 @@
   height: 20px;
   border-radius: 50%;
 }
+.literacy-color-option em {
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1;
+  color: #475569;
+}
 .literacy-color-option.red span { background: #ef4444; }
 .literacy-color-option.yellow span { background: #f5c542; }
 .literacy-color-option.green span { background: #22c55e; }
@@ -319,6 +350,10 @@
   border-color: #94a3b8;
   background: #eef2f7;
   box-shadow: 0 4px 0 #d8dde4;
+}
+.literacy-color-option.active em {
+  color: #1f2937;
+  font-weight: 700;
 }
 .literacy-color-option:active {
   transform: translateY(3px);
