@@ -285,6 +285,15 @@
   width: 132px;
   height: 132px;
 }
+.lottery-status {
+  margin: 8px 0 0;
+  text-align: center;
+  color: var(--on-surface-variant);
+  font-size: 15px;
+}
+.lottery-status strong {
+  color: var(--on-surface);
+}
 .lottery-question {
   position: absolute;
   width: 52px;

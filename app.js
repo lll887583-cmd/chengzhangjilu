@@ -1,7 +1,7 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260601a';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260602d';
 import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260601a';
-import { calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260601b';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602d';
+import { calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260602e';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -311,6 +311,80 @@ function spendPoints(cost, failMessage) {
   return spend(state, cost, showToast, failMessage);
 }
 
+function dateKey(time = Date.now()) {
+  const date = new Date(time);
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function isBoostEligibleRecord(record) {
+  const category = record?.category || '';
+  return !['shop', 'system', 'pet'].includes(category)
+    && !['lottery-boost', 'lottery-boost-settlement'].includes(record?.source);
+}
+
+function getDailyNetPoints(targetDateKey = dateKey()) {
+  return (state.records || []).reduce((sum, record) => (
+    dateKey(record.time) === targetDateKey && isBoostEligibleRecord(record)
+      ? sum + (record.delta || 0)
+      : sum
+  ), 0);
+}
+
+function getEffectiveDailyNetPoints(targetDateKey = dateKey()) {
+  return Math.max(0, getDailyNetPoints(targetDateKey));
+}
+
+function settleExpiredDailyPointBoost() {
+  const boost = state.dailyPointBoost;
+  if (!boost || boost.dateKey === dateKey()) return;
+
+  const totalNetPoints = getEffectiveDailyNetPoints(boost.dateKey);
+  const bonus = totalNetPoints * (boost.multiplier - 1);
+  if (bonus > 0) {
+    state.points += bonus;
+    addRecord(state, `${boost.dateKey} 净积分${boost.multiplier}倍卡结算，补差 ${bonus} 积分`, bonus, {
+      category: 'points',
+      source: 'lottery-boost-settlement'
+    });
+  } else {
+    addRecord(state, `${boost.dateKey} 净积分${boost.multiplier}倍卡结算，今日净积分不足，未补差`, 0, {
+      category: 'system',
+      source: 'lottery-boost-settlement'
+    });
+  }
+
+  state.dailyPointBoost = null;
+}
+
+function activateDailyPointBoost(multiplier, time = Date.now()) {
+  settleExpiredDailyPointBoost();
+  const boostDateKey = dateKey(time);
+  const currentBoost = state.dailyPointBoost?.dateKey === boostDateKey ? state.dailyPointBoost : null;
+  const currentMultiplier = currentBoost?.multiplier || 1;
+  const nextMultiplier = Math.max(currentMultiplier, multiplier);
+  if (nextMultiplier <= currentMultiplier) {
+    return { applied: false, multiplier: currentMultiplier };
+  }
+
+  state.dailyPointBoost = {
+    dateKey: boostDateKey,
+    multiplier: nextMultiplier
+  };
+
+  return { applied: true, multiplier: nextMultiplier };
+}
+
+function awardPoints(points, recordText, meta, toastMessage, renderTab) {
+  settleExpiredDailyPointBoost();
+  state.points += points;
+  addRecord(state, recordText, points, meta);
+  showToast(toastMessage);
+  persist();
+  render(renderTab);
+}
+
 function normalizeLiteracyColor(color) {
   return ['red', 'yellow', 'green'].includes(color) ? color : 'red';
 }
@@ -458,11 +532,13 @@ function revivePet() {
 
 function earnPoints(ruleIndex) {
   const [name, points, , category = 'points'] = POINT_RULES[ruleIndex];
-  state.points += points;
-  addRecord(state, `${name}，加分 ${points} 积分`, points, { category, source: 'points-rule' });
-  showToast(`太棒了！加分 ${points} 积分。`);
-  persist();
-  render('points');
+  awardPoints(
+    points,
+    `${name}，加分 ${points} 积分`,
+    { category, source: 'points-rule' },
+    `太棒了！加分 ${points} 积分。`,
+    'points'
+  );
 }
 
 function deductPoints(ruleIndex) {
@@ -477,11 +553,13 @@ function deductPoints(ruleIndex) {
 function earnCustomPoints(ruleId) {
   const rule = (state.customPointRules || []).find(item => item.id === ruleId);
   if (!rule) return;
-  state.points += rule.points;
-  addRecord(state, `${rule.title}，加分 ${rule.points} 积分`, rule.points, { category: 'points', source: 'custom-points-rule' });
-  showToast(`太棒了！加分 ${rule.points} 积分。`);
-  persist();
-  render('points');
+  awardPoints(
+    rule.points,
+    `${rule.title}，加分 ${rule.points} 积分`,
+    { category: 'points', source: 'custom-points-rule' },
+    `太棒了！加分 ${rule.points} 积分。`,
+    'points'
+  );
 }
 
 function deductCustomPoints(ruleId) {
@@ -1005,15 +1083,14 @@ function writeOffReward(exchangeId) {
 }
 
 function drawLottery() {
+  settleExpiredDailyPointBoost();
   if (!spendPoints(20)) return;
   const total = LOTTERY.reduce((sum, item) => sum + item.weight, 0);
   let pick = Math.random() * total;
   const reward = LOTTERY.find(item => (pick -= item.weight) <= 0) || LOTTERY[0];
   const time = Date.now();
 
-  if (reward.points) {
-    state.points += reward.points;
-  } else {
+  if (reward.type === 'reward') {
     const prizeId = `lottery-${reward.name.replace(/\s+/g, '-')}`;
     state.exchangedRewards.unshift({
       id: prizeId,
@@ -1027,14 +1104,30 @@ function drawLottery() {
     });
   }
 
-  addRecord(state, `积分抽奖：${reward.name}`, reward.points - 20, { category: 'shop' });
-  showToast(reward.points ? `抽到了：${reward.name}` : `抽到了：${reward.name}，已放入我的兑换。`);
+  addRecord(state, `积分抽奖：${reward.name}`, -20, { category: 'shop' });
+
+  let toastMessage = `抽到了：${reward.name}`;
+  if (reward.type === 'reward') {
+    toastMessage = `${toastMessage}，已放入我的兑换。`;
+  } else if (reward.type === 'boost') {
+    const boostResult = activateDailyPointBoost(reward.multiplier, time);
+    if (boostResult.applied) {
+      toastMessage = boostResult.multiplier === 2
+        ? '哇，抽到双倍卡啦！今天晚上 11:59 前，你今天赚到的积分会翻成 2 倍！'
+        : '哇，抽到三倍卡啦！今天晚上 11:59 前，你今天赚到的积分会翻成 3 倍！';
+    } else {
+      toastMessage = `${toastMessage}，今天已经有更高倍数卡生效啦。`;
+    }
+  }
+
+  showToast(toastMessage);
   persist();
   render('shop');
 }
 
 function render(tab = state.selectedTab) {
   state.selectedTab = tab;
+  settleExpiredDailyPointBoost();
   syncPetTime();
   persist();
   appShell.classList.toggle('skip-render-animation', skipNextRenderAnimation);
@@ -1194,11 +1287,13 @@ function completePlan(planId, sourceTab = 'planning') {
     plan.done = true;
     plan.completedAt = Date.now();
   }
-  state.points += plan.points;
-  addRecord(state, `${plan.title}，加分 ${plan.points} 积分`, plan.points, { category: 'study', source: 'planning' });
-  showToast(`学习任务完成，加分 ${plan.points} 积分。`);
-  persist();
-  render(sourceTab);
+  awardPoints(
+    plan.points,
+    `${plan.title}，加分 ${plan.points} 积分`,
+    { category: 'study', source: 'planning' },
+    `学习任务完成，加分 ${plan.points} 积分。`,
+    sourceTab
+  );
 }
 
 
