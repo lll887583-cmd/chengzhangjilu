@@ -46,6 +46,12 @@ export const DEFAULT_PLANS = [
   { title: '英语听读打卡', points: 8, category: 'study', planType: 'single' }
 ];
 
+export const ADDITION_MODES = {
+  easy: { id: 'easy', label: '轻松模式', seconds: 120 },
+  standard: { id: 'standard', label: '标准模式', seconds: 90 },
+  challenge: { id: 'challenge', label: '挑战模式', seconds: 60 }
+};
+
 export const STUDY_RULE_NAMES = POINT_RULES
   .filter(rule => rule[3] === 'study')
   .map(rule => rule[0]);
@@ -62,6 +68,7 @@ export const defaultState = {
   planningDraftType: 'single',
   literacyItems: [],
   numberBoardSelections: [],
+  additionGame: null,
   pinyinSelections: [],
   letterSelections: [],
   wordItems: [],

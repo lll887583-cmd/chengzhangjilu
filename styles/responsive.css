@@ -96,10 +96,10 @@
   .avatar-btn {
     display: none;
   }
-  .points-pill { min-width: 92px; gap: 6px; padding: 9px 10px; font-size: 20px; }
-  .points-pill svg { width: 26px; height: 26px; }
+  .points-pill { min-width: 84px; gap: 5px; padding: 7px 9px; font-size: 18px; }
+  .points-pill svg { width: 22px; height: 22px; }
   h1 { font-size: 36px; }
-  .brand-logo img { height: 44px; }
+  .brand-logo img { height: 38px; }
   h2 { font-size: 28px; line-height: 34px; }
   .numbers-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .nav-trigger { display: inline-flex !important; }
@@ -114,8 +114,8 @@
   .topbar { grid-template-columns: minmax(0, 1fr) auto; }
   .top-actions { gap: 8px; }
   .logout-btn { min-height: 42px; padding: 0 14px; font-size: 14px; }
-  .avatar-btn { width: 48px; height: 48px; border-radius: 16px; box-shadow: 0 4px 0 var(--shadow-green); }
-  .avatar-btn svg { width: 27px; height: 27px; }
+  .avatar-btn { width: 40px; height: 40px; border-radius: 14px; box-shadow: 0 4px 0 var(--shadow-green); }
+  .avatar-btn svg { width: 22px; height: 22px; }
   .nav-trigger { width: 48px; height: 48px; border-radius: 14px; }
   .reward-list { grid-template-columns: 1fr; }
   .my-overview-grid { grid-template-columns: 1fr; }
@@ -183,6 +183,21 @@
   }
   .words-grid {
     grid-template-columns: 1fr;
+  }
+  .addition-mode-grid,
+  .addition-options,
+  .addition-result-grid {
+    grid-template-columns: 1fr;
+  }
+  .addition-mode-card {
+    min-height: 132px;
+  }
+  .addition-question {
+    font-size: clamp(40px, 11vw, 56px);
+  }
+  .addition-option {
+    min-height: 88px;
+    font-size: 32px;
   }
   .literacy-card {
     min-height: 132px;

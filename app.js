@@ -1,7 +1,7 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260602f';
+import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260602f';
 import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
 import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602e';
-import { calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260602e';
+import { additionView, calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260602m';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -25,6 +25,8 @@ let pendingWriteOff = null;
 let skipNextRenderAnimation = false;
 let literacyPreviewTouch = null;
 let navCollapsed = false;
+let additionTimerId = null;
+let additionAdvanceTimerId = null;
 const importInput = document.createElement('input');
 importInput.type = 'file';
 importInput.accept = 'application/json,.json';
@@ -37,6 +39,7 @@ const views = {
   calendar: () => calendarView(state),
   literacy: () => literacyView(state),
   numbers: () => numbersView(state),
+  addition: () => additionView(state),
   pinyin: () => pinyinView(state),
   letters: () => lettersView(state),
   words: () => wordsView(state),
@@ -46,6 +49,7 @@ const views = {
 
 const LEARNING_ITEMS = [
   { value: 'numbers', label: '数字', ...SIDEBAR_ICONS.numbers },
+  { value: 'addition', label: '加法', ...SIDEBAR_ICONS.addition },
   { value: 'pinyin', label: '拼音', ...SIDEBAR_ICONS.pinyin },
   { value: 'literacy', label: '汉字', ...SIDEBAR_ICONS.literacy },
   { value: 'letters', label: '英文字母', ...SIDEBAR_ICONS.letters },
@@ -71,7 +75,7 @@ function isNavTab(tab) {
 }
 
 function navTone(value) {
-  if (value === 'numbers') return 'green';
+  if (['numbers', 'addition'].includes(value)) return 'green';
   if (['literacy', 'pinyin'].includes(value)) return 'orange';
   if (['letters', 'words'].includes(value)) return 'purple';
   return '';
@@ -149,6 +153,23 @@ function currentNumbersCountLabel() {
   return selectedNumber ? `已选 ${selectedNumber}` : '1-100';
 }
 
+function additionRemainingSeconds(game = state.additionGame) {
+  if (!game?.endsAt) return 0;
+  return Math.max(0, Math.ceil((game.endsAt - Date.now()) / 1000));
+}
+
+function currentAdditionLabel() {
+  const game = state.additionGame;
+  if (game?.status === 'playing') {
+    const mode = getAdditionMode(game.mode);
+    return `${mode.label} · ${game.currentIndex + 1}/10 · ${additionRemainingSeconds(game)}秒`;
+  }
+  if (game?.status === 'finished') {
+    return `${game.correctCount}/10`;
+  }
+  return '10 以内';
+}
+
 function currentPinyinLabel() {
   const selected = Array.isArray(state.pinyinSelections) ? state.pinyinSelections[0] : '';
   return selected ? `已选 ${selected}` : '拼音网格';
@@ -196,6 +217,7 @@ function renderHeaderSwitch(tab) {
     calendar: `<div class="calendar-month-badge" aria-live="polite">${currentCalendarMonthLabel()}</div>`,
     literacy: `<div class="status-badge" aria-live="polite">${currentLiteracyCountLabel()}</div>`,
     numbers: `<div class="status-badge" aria-live="polite">${currentNumbersCountLabel()}</div>`,
+    addition: `<div class="status-badge" aria-live="polite">${currentAdditionLabel()}</div>`,
     pinyin: `<div class="status-badge" aria-live="polite">${currentPinyinLabel()}</div>`,
     letters: `<div class="status-badge" aria-live="polite">${currentLettersLabel()}</div>`,
     words: `<div class="status-badge" aria-live="polite">${currentWordsLabel()}</div>`
@@ -214,13 +236,20 @@ function showToast(message) {
 }
 
 function speakToast(message) {
+  speakMessage(message);
+}
+
+function speakMessage(message, { onend } = {}) {
   if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
 
   const spokenText = message
     .replace(/[\u2B50\u{1F31F}\u{1F331}\u{1F36C}\u{1F4FA}\u{1F389}\u2728\u{1F9F8}\u{1F36A}\u{1F381}\u{1F34E}\u{1FA80}]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
-  if (!spokenText) return;
+  if (!spokenText) {
+    onend?.();
+    return;
+  }
 
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(spokenText);
@@ -228,6 +257,10 @@ function speakToast(message) {
   utterance.rate = 0.95;
   utterance.pitch = 1.08;
   utterance.volume = 1;
+  if (typeof onend === 'function') {
+    utterance.onend = () => onend();
+    utterance.onerror = () => onend();
+  }
   window.speechSynthesis.speak(utterance);
 }
 
@@ -353,6 +386,314 @@ function awardPoints(points, recordText, meta, toastMessage, renderTab) {
   showToast(toastMessage);
   persist();
   render(renderTab);
+}
+
+function clearAdditionTimers() {
+  clearInterval(additionTimerId);
+  clearTimeout(additionAdvanceTimerId);
+  additionTimerId = null;
+  additionAdvanceTimerId = null;
+}
+
+function getAdditionMode(modeId) {
+  return ADDITION_MODES[modeId] || ADDITION_MODES.easy;
+}
+
+function shuffleList(items) {
+  const list = [...items];
+  for (let index = list.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [list[index], list[swapIndex]] = [list[swapIndex], list[index]];
+  }
+  return list;
+}
+
+function randomFrom(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function buildAdditionOptions(answer) {
+  const candidates = shuffleList([
+    answer - 2,
+    answer - 1,
+    answer + 1,
+    answer + 2,
+    answer - 3,
+    answer + 3
+  ]).filter(value => value >= 0 && value <= 10 && value !== answer);
+  const options = [answer];
+  candidates.forEach(value => {
+    if (!options.includes(value) && options.length < 3) {
+      options.push(value);
+    }
+  });
+  for (let value = 0; value <= 10 && options.length < 3; value += 1) {
+    if (!options.includes(value)) options.push(value);
+  }
+  return shuffleList(options.slice(0, 3));
+}
+
+function buildAdditionQuestion(modeId, index, usedKeys) {
+  const mode = getAdditionMode(modeId);
+  const buckets = {
+    easy: [
+      [0, 4, 0, 5],
+      [0, 5, 0, 6],
+      [1, 5, 0, 7]
+    ],
+    standard: [
+      [0, 6, 0, 7],
+      [1, 7, 0, 8],
+      [2, 8, 0, 10]
+    ],
+    challenge: [
+      [2, 8, 0, 10],
+      [3, 9, 0, 10],
+      [4, 10, 0, 10]
+    ]
+  };
+  const range = buckets[mode.id][Math.min(buckets[mode.id].length - 1, Math.floor(index / 4))];
+  const [aMin, aMax, sumMin, sumMax] = range;
+
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const a = aMin + Math.floor(Math.random() * (aMax - aMin + 1));
+    const minB = Math.max(0, sumMin - a);
+    const maxB = Math.min(10 - a, sumMax - a);
+    if (maxB < minB) continue;
+    const b = minB + Math.floor(Math.random() * (maxB - minB + 1));
+    const key = `${Math.min(a, b)}-${Math.max(a, b)}`;
+    if (usedKeys.has(key)) continue;
+    usedKeys.add(key);
+    const answer = a + b;
+    return { a, b, answer, options: buildAdditionOptions(answer) };
+  }
+
+  const fallbackPool = [];
+  for (let a = 0; a <= 10; a += 1) {
+    for (let b = 0; b <= 10 - a; b += 1) {
+      const key = `${Math.min(a, b)}-${Math.max(a, b)}`;
+      if (!usedKeys.has(key)) fallbackPool.push({ a, b, key });
+    }
+  }
+  const fallback = randomFrom(fallbackPool.length ? fallbackPool : [{ a: 0, b: 0, key: '0-0' }]);
+  usedKeys.add(fallback.key);
+  return {
+    a: fallback.a,
+    b: fallback.b,
+    answer: fallback.a + fallback.b,
+    options: buildAdditionOptions(fallback.a + fallback.b)
+  };
+}
+
+function generateAdditionQuestions(modeId) {
+  const usedKeys = new Set();
+  return Array.from({ length: 10 }, (_, index) => buildAdditionQuestion(modeId, index, usedKeys));
+}
+
+function calculateAdditionReward(game) {
+  const basePoints = 5;
+  const accuracyPoints = game.correctCount;
+  const perfectBonus = game.correctCount === game.questions.length ? 2 : 0;
+  return basePoints + accuracyPoints + perfectBonus;
+}
+
+function additionResultText(game, mode) {
+  return `加法练习（${mode.label}），答对 ${game.correctCount}/${game.questions.length} 题，加分 ${game.awardedPoints} 积分`;
+}
+
+function finishAdditionGame(reason = 'complete') {
+  const game = state.additionGame;
+  if (!game || game.status === 'finished') return;
+  clearAdditionTimers();
+  game.status = 'finished';
+  game.completionReason = reason;
+  game.finishedAt = Date.now();
+  game.currentSelection = null;
+  game.awardedPoints = calculateAdditionReward(game);
+  const mode = getAdditionMode(game.mode);
+  state.points += game.awardedPoints;
+  addRecord(state, additionResultText(game, mode), game.awardedPoints, {
+    category: 'study',
+    source: 'addition'
+  });
+  persist();
+  showToast(
+    reason === 'timeout'
+      ? `时间到啦，答对 ${game.correctCount} 题，加分 ${game.awardedPoints} 积分。`
+      : `答题完成，答对 ${game.correctCount} 题，加分 ${game.awardedPoints} 积分。`
+  );
+  if (state.selectedTab === 'addition') {
+    render('addition');
+  }
+}
+
+function syncAdditionUi() {
+  const game = state.additionGame;
+  if (!game || game.status !== 'playing') return;
+  const countdown = additionRemainingSeconds(game);
+  headerSwitch.innerHTML = `<div class="status-badge" aria-live="polite">${game.currentIndex + 1}/10 · ${countdown}秒</div>`;
+  headerSwitch.hidden = false;
+  const countdownNode = app.querySelector('[data-addition-countdown]');
+  if (countdownNode) countdownNode.textContent = `${countdown} 秒`;
+}
+
+function additionQuestionMarkup(question) {
+  return `${question.a} + ${question.b} = <span class="addition-question-mark">?</span>`;
+}
+
+function speakAdditionQuestion(question) {
+  if (!question) return;
+  speakToast(`${question.a}加${question.b}等于几`);
+}
+
+function estimateSpeechDuration(message) {
+  const plainText = String(message || '')
+    .replace(/\s+/g, '')
+    .trim();
+  return Math.max(2200, plainText.length * 260 + 900);
+}
+
+function additionOptionMarkup(option, game, answer) {
+  const isAnswered = game.currentSelection !== null;
+  const isSelected = game.currentSelection === option;
+  const isCorrect = option === answer;
+  const tone = !isAnswered
+    ? ''
+    : isCorrect
+      ? 'is-correct'
+      : isSelected
+        ? 'is-wrong'
+        : 'is-idle';
+
+  return `
+    <button class="addition-option ${tone}" type="button" data-addition-option="${option}" ${isAnswered ? 'disabled' : ''}>
+      <span>${option}</span>
+    </button>`;
+}
+
+function updateAdditionPlayingDom() {
+  const game = state.additionGame;
+  if (!game || game.status !== 'playing' || state.selectedTab !== 'addition') return;
+  const question = game.questions[game.currentIndex];
+  if (!question) return;
+
+  const questionNode = app.querySelector('[data-addition-question]');
+  const optionsNode = app.querySelector('[data-addition-options]');
+  if (!questionNode || !optionsNode) {
+    skipNextRenderAnimation = true;
+    render('addition');
+    return;
+  }
+
+  questionNode.innerHTML = additionQuestionMarkup(question);
+  optionsNode.innerHTML = question.options
+    .map(option => additionOptionMarkup(option, game, question.answer))
+    .join('');
+  syncAdditionUi();
+}
+
+function ensureAdditionTimer() {
+  clearInterval(additionTimerId);
+  const game = state.additionGame;
+  if (state.selectedTab !== 'addition' || !game || game.status !== 'playing') return;
+  if (additionRemainingSeconds(game) <= 0) {
+    finishAdditionGame('timeout');
+    return;
+  }
+  syncAdditionUi();
+  additionTimerId = window.setInterval(() => {
+    const nextGame = state.additionGame;
+    if (!nextGame || nextGame.status !== 'playing') {
+      clearAdditionTimers();
+      return;
+    }
+    if (additionRemainingSeconds(nextGame) <= 0) {
+      finishAdditionGame('timeout');
+      return;
+    }
+    syncAdditionUi();
+  }, 1000);
+}
+
+function startAdditionGame(modeId) {
+  clearAdditionTimers();
+  const mode = getAdditionMode(modeId);
+  const startedAt = Date.now();
+  state.additionGame = {
+    mode: mode.id,
+    status: 'playing',
+    questions: generateAdditionQuestions(mode.id),
+    currentIndex: 0,
+    correctCount: 0,
+    startedAt,
+    endsAt: startedAt + mode.seconds * 1000,
+    currentSelection: null,
+    answeredAt: null,
+    finishedAt: null,
+    awardedPoints: 0,
+    completionReason: null
+  };
+  persist();
+  render('addition');
+  window.setTimeout(() => {
+    speakAdditionQuestion(state.additionGame?.questions?.[0]);
+  }, 360);
+}
+
+function advanceAdditionQuestion() {
+  const game = state.additionGame;
+  if (!game || game.status !== 'playing') return;
+  game.currentSelection = null;
+  game.answeredAt = null;
+  if (game.currentIndex >= game.questions.length - 1) {
+    finishAdditionGame('complete');
+    return;
+  }
+  game.currentIndex += 1;
+  persist();
+  if (state.selectedTab === 'addition') {
+    updateAdditionPlayingDom();
+  }
+  window.setTimeout(() => {
+    speakAdditionQuestion(game.questions[game.currentIndex]);
+  }, 420);
+}
+
+function answerAdditionQuestion(optionValue) {
+  const game = state.additionGame;
+  if (!game || game.status !== 'playing' || game.currentSelection !== null) return;
+  const answer = game.questions[game.currentIndex]?.answer;
+  const selectedValue = Number(optionValue);
+  if (!Number.isFinite(selectedValue)) return;
+  game.currentSelection = selectedValue;
+  game.answeredAt = Date.now();
+  let feedbackText = '';
+  if (selectedValue === answer) {
+    game.correctCount += 1;
+    feedbackText = `${selectedValue}，答对啦`;
+  } else {
+    feedbackText = `${selectedValue}，答错了，是${answer}`;
+  }
+  persist();
+  if (state.selectedTab === 'addition') {
+    updateAdditionPlayingDom();
+  }
+  clearTimeout(additionAdvanceTimerId);
+  let advanced = false;
+  const advanceOnce = () => {
+    if (advanced) return;
+    advanced = true;
+    advanceAdditionQuestion();
+  };
+  speakMessage(feedbackText, { onend: advanceOnce });
+  additionAdvanceTimerId = window.setTimeout(advanceOnce, estimateSpeechDuration(feedbackText));
+}
+
+function resetAdditionGame() {
+  clearAdditionTimers();
+  state.additionGame = null;
+  persist();
+  render('addition');
 }
 
 function normalizeLiteracyColor(color) {
@@ -1098,11 +1439,13 @@ function render(tab = state.selectedTab) {
   state.selectedTab = tab;
   syncPetTime();
   persist();
+  clearInterval(additionTimerId);
   appShell.classList.toggle('skip-render-animation', skipNextRenderAnimation);
   syncShellVisibility();
   renderNavigation(tab);
   renderHeaderSwitch(tab);
   app.innerHTML = (views[tab] || views.points)();
+  ensureAdditionTimer();
   skipNextRenderAnimation = false;
   requestAnimationFrame(() => appShell.classList.remove('skip-render-animation'));
 }
@@ -1609,6 +1952,22 @@ document.addEventListener('click', event => {
   }
   if (target.dataset.numberCell) {
     toggleNumberCell(target.dataset.numberCell, target);
+    return;
+  }
+  if (target.dataset.additionMode) {
+    startAdditionGame(target.dataset.additionMode);
+    return;
+  }
+  if (target.dataset.additionOption) {
+    answerAdditionQuestion(target.dataset.additionOption);
+    return;
+  }
+  if (target.dataset.additionRestart) {
+    startAdditionGame(target.dataset.additionRestart);
+    return;
+  }
+  if (target.dataset.additionReset !== undefined) {
+    resetAdditionGame();
     return;
   }
   if (target.dataset.pinyinCell) {

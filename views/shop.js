@@ -32,7 +32,7 @@ export function shopView(state) {
             ${LOTTERY_QUESTION_POSITIONS.slice(2).map(position => `<span class="lottery-question ${position}">${LOTTERY_QUESTION}</span>`).join('')}
           </div>
         </div>
-        <button class="btn" data-action="lottery" style="width:100%;margin-top:18px">开始抽奖 20 积分</button>
+        <button class="btn lottery-draw-btn" data-action="lottery">开始抽奖 20 积分</button>
       </section>`}
     </section>`;
 }

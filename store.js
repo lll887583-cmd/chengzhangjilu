@@ -98,6 +98,9 @@ export function normalizeState(state) {
   state.customPointRules = Array.isArray(state.customPointRules) ? state.customPointRules : [];
   state.literacyItems = Array.isArray(state.literacyItems) ? state.literacyItems : [];
   state.numberBoardSelections = Array.isArray(state.numberBoardSelections) ? state.numberBoardSelections : [];
+  state.additionGame = state.additionGame && typeof state.additionGame === 'object'
+    ? state.additionGame
+    : null;
   state.pinyinSelections = Array.isArray(state.pinyinSelections) ? state.pinyinSelections : [];
   state.letterSelections = Array.isArray(state.letterSelections) ? state.letterSelections : [];
   state.wordItems = Array.isArray(state.wordItems) ? state.wordItems : [];
@@ -142,6 +145,34 @@ export function normalizeState(state) {
   state.numberBoardSelections = validNumberSelections.length === 1
     ? [validNumberSelections[0]]
     : [];
+  if (state.additionGame) {
+    const game = state.additionGame;
+    const validQuestions = Array.isArray(game.questions) ? game.questions.map(item => ({
+      a: Math.max(0, Math.min(10, Number(item.a) || 0)),
+      b: Math.max(0, Math.min(10, Number(item.b) || 0)),
+      answer: Math.max(0, Math.min(10, Number(item.answer) || 0)),
+      options: Array.isArray(item.options)
+        ? item.options.map(value => Math.max(0, Math.min(10, Number(value) || 0))).slice(0, 3)
+        : []
+    })).filter(item => item.a + item.b <= 10 && item.options.length === 3)
+      : [];
+    state.additionGame = validQuestions.length
+      ? {
+        mode: ['easy', 'standard', 'challenge'].includes(game.mode) ? game.mode : 'easy',
+        status: ['playing', 'finished'].includes(game.status) ? game.status : 'playing',
+        questions: validQuestions,
+        currentIndex: Math.max(0, Math.min(validQuestions.length - 1, Number(game.currentIndex) || 0)),
+        correctCount: Math.max(0, Math.min(validQuestions.length, Number(game.correctCount) || 0)),
+        startedAt: Number(game.startedAt) || Date.now(),
+        endsAt: Number(game.endsAt) || Date.now(),
+        currentSelection: Number.isInteger(game.currentSelection) ? game.currentSelection : null,
+        answeredAt: Number(game.answeredAt) || null,
+        finishedAt: Number(game.finishedAt) || null,
+        awardedPoints: Math.max(0, Number(game.awardedPoints) || 0),
+        completionReason: ['complete', 'timeout'].includes(game.completionReason) ? game.completionReason : null
+      }
+      : null;
+  }
   const validPinyinSelections = state.pinyinSelections
     .map(value => String(value || '').trim())
     .filter(Boolean);

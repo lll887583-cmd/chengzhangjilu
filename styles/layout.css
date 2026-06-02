@@ -17,7 +17,7 @@
 .workspace-shell {
   min-width: 0;
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: 0;
   align-items: stretch;
   min-height: calc(100vh - 90px);
@@ -25,7 +25,7 @@
 }
 
 .app-shell.side-collapsed .workspace-shell {
-  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, 1fr);
 }
 
 .content-shell {
@@ -49,7 +49,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--gutter);
-  padding: 12px 20px;
+  padding: 10px 18px;
   border-bottom: 1px solid #e5e7eb;
   background: #ffffff;
 }
@@ -64,7 +64,7 @@
 }
 .brand-logo img {
   width: auto;
-  height: 48px;
+  height: 42px;
   display: block;
 }
 
@@ -73,11 +73,11 @@
   align-items: center;
   justify-content: center;
   min-width: 84px;
-  min-height: 46px;
+  min-height: 40px;
   margin: 0 auto;
   color: var(--on-surface);
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1;
 }
@@ -86,16 +86,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 112px;
-  min-height: 46px;
+  min-width: 104px;
+  min-height: 40px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 14px;
   border: 2px solid var(--outline-variant);
   border-radius: var(--radius-full);
   color: var(--on-surface);
   background: var(--surface-container-low);
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -134,16 +134,16 @@ p { color: var(--on-surface-variant); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-width: 118px;
-  padding: 10px 16px;
+  gap: 7px;
+  min-width: 106px;
+  padding: 8px 14px;
   border: 2px solid var(--secondary);
   border-radius: var(--radius-full);
   color: var(--on-secondary-container);
   background: var(--secondary-container);
   box-shadow: var(--depth) var(--shadow-yellow);
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -160,8 +160,8 @@ p { color: var(--on-surface-variant); }
   outline-offset: 4px;
 }
 .points-pill svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: block;
   fill: currentColor;
 }
@@ -228,14 +228,14 @@ p { color: var(--on-surface-variant); }
   box-shadow: 0 0 0 var(--surface-dim);
 }
 .section-switch--header {
-  width: 288px;
-  grid-template-columns: repeat(2, 144px);
+  width: 264px;
+  grid-template-columns: repeat(2, 132px);
   gap: 0;
   align-items: center;
   justify-self: center;
 }
 .section-switch--header button {
-  min-height: 46px;
+  min-height: 40px;
   border: 0;
   border-radius: 0;
   padding: 0;
@@ -243,7 +243,7 @@ p { color: var(--on-surface-variant); }
   background: transparent;
   box-shadow: none;
   font-family: "Quicksand", system-ui, sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   transition: color .14s ease;
 }
@@ -257,8 +257,8 @@ p { color: var(--on-surface-variant); }
   box-shadow: none;
 }
 .section-switch--header-triple {
-  width: 432px;
-  grid-template-columns: repeat(3, 144px);
+  width: 396px;
+  grid-template-columns: repeat(3, 132px);
 }
 
 .hero-card { min-height: 430px; }
@@ -311,12 +311,12 @@ p { color: var(--on-surface-variant); }
   box-shadow: 0 0 0 var(--surface-dim);
 }
 .avatar-btn {
-  width: 54px;
-  height: 54px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
   border: 2px solid var(--primary);
-  border-radius: 18px;
+  border-radius: 14px;
   color: var(--on-primary-container);
   background: #bdf58b;
   box-shadow: 0 5px 0 var(--shadow-green);
@@ -327,7 +327,7 @@ p { color: var(--on-surface-variant); }
   box-shadow: 0 1px 0 var(--shadow-green);
 }
 .avatar-btn svg {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   fill: currentColor;
 }
