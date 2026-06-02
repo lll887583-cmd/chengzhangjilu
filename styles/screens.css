@@ -275,6 +275,7 @@
   width: 100%;
 }
 .lottery-draw-btn {
+  display: block;
   width: fit-content;
   min-width: 280px;
   margin: 18px auto 0;
