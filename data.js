@@ -33,7 +33,7 @@ export const REWARDS = [
 ];
 
 export const LOTTERY = [
-  { name: '下次好运', weight: 32, type: 'empty', icon: 'celebration' },
+  { name: '加 10 积分', weight: 32, type: 'points', points: 10, icon: 'star' },
   { name: '操场锻炼 1 次', weight: 20, type: 'reward', icon: 'celebration' },
   { name: '看 30 分钟电视', weight: 12, type: 'reward', icon: 'tv' },
   { name: '买 2 个小零食', weight: 18, type: 'reward', icon: 'cookie' },
@@ -71,7 +71,6 @@ export const defaultState = {
   hiddenPointRuleIds: [],
   hiddenDeductRuleIds: [],
   petSection: 'cloud',
-  dailyPointBoost: null,
   calendarMonth: null,
   previewPet: 'sonicHummingbird',
   collectedPets: [],

@@ -81,7 +81,6 @@ export function normalizeState(state) {
   state.records ||= [];
   state.exchangedRewards ||= [];
   state.collectedPets ||= [];
-  state.dailyPointBoost ||= null;
   if (!Array.isArray(state.plans) || state.plans.length === 0) {
     state.plans = DEFAULT_PLAN_ITEMS.map((plan, index) => ({
       ...plan,
@@ -107,15 +106,6 @@ export function normalizeState(state) {
   state.hiddenDeductRuleIds = Array.isArray(state.hiddenDeductRuleIds) ? state.hiddenDeductRuleIds : [];
   state.petSection ||= 'cloud';
   state.calendarMonth ||= null;
-  if (state.dailyPointBoost) {
-    const multiplier = Number(state.dailyPointBoost.multiplier) || 0;
-    state.dailyPointBoost = multiplier > 1 && state.dailyPointBoost.dateKey
-      ? {
-        dateKey: String(state.dailyPointBoost.dateKey),
-        multiplier
-      }
-      : null;
-  }
   if (state.selectedTab === 'pet') state.selectedTab = 'points';
   if (!PETS[state.previewPet]) state.previewPet = defaultState.previewPet;
   state.collectedPets = state.collectedPets.filter(type => PETS[type]);
