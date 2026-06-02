@@ -17,7 +17,7 @@ function myDetailShell(title, subtitle, content, extraClass = '') {
       <div class="section-head my-back-row">
         <div>
           <h2>${title}</h2>
-          <p>${subtitle}</p>
+          ${subtitle ? '' : ''}
         </div>
         <button class="btn ghost" data-action="my-back">返回</button>
       </div>

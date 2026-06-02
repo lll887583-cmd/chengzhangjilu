@@ -5,9 +5,10 @@
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   align-content: stretch;
+  width: max-content;
   gap: 18px;
   height: calc(100vh - 73px);
-  padding: 16px 12px 0;
+  padding: 16px 10px 0;
   border-right: 1px solid #e5e7eb;
   border-radius: 0;
   background: #ffffff;
@@ -115,7 +116,7 @@
 .nav-drawer-menu button {
   width: 100%;
   min-height: 40px;
-  padding: 0 12px;
+  padding: 0 14px;
   display: flex !important;
   flex-direction: row !important;
   border-radius: 8px;
@@ -125,8 +126,8 @@
   background: transparent;
   box-shadow: none;
   font-family: "Nunito Sans", system-ui, sans-serif;
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 500;
   justify-content: flex-start;
 }
 
@@ -200,7 +201,7 @@
 
 .nav-submenu button {
   min-height: 36px;
-  padding-left: 44px;
+  padding-left: 48px;
   font-size: 14px;
   color: #64748b;
   position: relative;
@@ -208,7 +209,7 @@
 
 .nav-submenu button.nav-text-only {
   gap: 0;
-  padding-left: 44px;
+  padding-left: 48px;
 }
 
 .nav-submenu button.nav-text-only span {
@@ -233,6 +234,7 @@
 }
 
 .side-nav.collapsed {
+  width: max-content;
   padding-left: 8px;
   padding-right: 8px;
 }
@@ -250,6 +252,7 @@
 .side-nav.collapsed .side-nav-menu button,
 .side-nav.collapsed .nav-parent-btn,
 .side-nav.collapsed .nav-submenu button {
+  min-width: 56px;
   min-height: 46px;
   padding: 0 !important;
   justify-content: center !important;
