@@ -1,9 +1,9 @@
 /* Main stylesheet entry. Edit module files in ./styles/ for faster changes. */
-@import url('./styles/base.css?v=20260602e');
-@import url('./styles/layout.css?v=20260602e');
-@import url('./styles/components.css?v=20260602e');
-@import url('./styles/pet.css?v=20260602e');
-@import url('./styles/screens.css?v=20260602e');
-@import url('./styles/navigation.css?v=20260602e');
-@import url('./styles/overlays.css?v=20260602e');
-@import url('./styles/responsive.css?v=20260602e');
+@import url('./styles/base.css?v=20260602f');
+@import url('./styles/layout.css?v=20260602f');
+@import url('./styles/components.css?v=20260602f');
+@import url('./styles/pet.css?v=20260602f');
+@import url('./styles/screens.css?v=20260602f');
+@import url('./styles/navigation.css?v=20260602f');
+@import url('./styles/overlays.css?v=20260602f');
+@import url('./styles/responsive.css?v=20260602f');

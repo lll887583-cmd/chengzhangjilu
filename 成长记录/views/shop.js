@@ -10,36 +10,8 @@ const LOTTERY_QUESTION_POSITIONS = [
   'right bottom'
 ];
 
-function todayDateKey() {
-  const date = new Date();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
-function lotteryStatus(state) {
-  const todayKey = todayDateKey();
-  const netPoints = (state.records || []).reduce((sum, record) => {
-    const recordDate = new Date(record.time);
-    const month = `${recordDate.getMonth() + 1}`.padStart(2, '0');
-    const day = `${recordDate.getDate()}`.padStart(2, '0');
-    const key = `${recordDate.getFullYear()}-${month}-${day}`;
-    const category = record?.category || '';
-    if (key !== todayKey || ['shop', 'system', 'pet'].includes(category) || record?.source === 'lottery-boost') {
-      return sum;
-    }
-    return sum + (record.delta || 0);
-  }, 0);
-  const boost = state.dailyPointBoost?.dateKey === todayKey ? state.dailyPointBoost : null;
-  return {
-    netPoints,
-    multiplier: boost?.multiplier || 1
-  };
-}
-
 export function shopView(state) {
   const shopSection = state.shopSection || 'exchange';
-  const { netPoints, multiplier } = lotteryStatus(state);
   return `
     <section class="shop-page">
       ${shopSection === 'exchange' ? `
@@ -60,7 +32,6 @@ export function shopView(state) {
             ${LOTTERY_QUESTION_POSITIONS.slice(2).map(position => `<span class="lottery-question ${position}">${LOTTERY_QUESTION}</span>`).join('')}
           </div>
         </div>
-        <p class="lottery-status">今日净积分：<strong>${netPoints}</strong> · 当前倍率：<strong>x${multiplier}</strong></p>
         <button class="btn" data-action="lottery" style="width:100%;margin-top:18px">开始抽奖 20 积分</button>
       </section>`}
     </section>`;

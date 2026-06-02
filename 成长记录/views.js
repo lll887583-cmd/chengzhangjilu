@@ -7,5 +7,5 @@ export { calendarView } from './views/calendar.js?v=20260531a';
 export { literacyView } from './views/literacy.js?v=20260531a';
 export { numbersView } from './views/numbers.js?v=20260531a';
 export { lettersView, pinyinView, wordsView } from './views/learning.js?v=20260602c';
-export { shopView } from './views/shop.js?v=20260602d';
+export { shopView } from './views/shop.js?v=20260602f';
 export { myView } from './views/my.js?v=20260602a';

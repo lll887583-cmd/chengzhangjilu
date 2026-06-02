@@ -1,6 +1,6 @@
-import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260602d';
+import { DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260602f';
 import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602d';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602e';
 import { calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260602e';
 
 // Interaction controller for the static demo.
@@ -321,7 +321,7 @@ function dateKey(time = Date.now()) {
 function isBoostEligibleRecord(record) {
   const category = record?.category || '';
   return !['shop', 'system', 'pet'].includes(category)
-    && !['lottery-boost', 'lottery-boost-settlement'].includes(record?.source);
+    && record?.source !== 'lottery-boost';
 }
 
 function getDailyNetPoints(targetDateKey = dateKey()) {
@@ -336,48 +336,18 @@ function getEffectiveDailyNetPoints(targetDateKey = dateKey()) {
   return Math.max(0, getDailyNetPoints(targetDateKey));
 }
 
-function settleExpiredDailyPointBoost() {
-  const boost = state.dailyPointBoost;
-  if (!boost || boost.dateKey === dateKey()) return;
-
-  const totalNetPoints = getEffectiveDailyNetPoints(boost.dateKey);
-  const bonus = totalNetPoints * (boost.multiplier - 1);
-  if (bonus > 0) {
-    state.points += bonus;
-    addRecord(state, `${boost.dateKey} 净积分${boost.multiplier}倍卡结算，补差 ${bonus} 积分`, bonus, {
-      category: 'points',
-      source: 'lottery-boost-settlement'
-    });
-  } else {
-    addRecord(state, `${boost.dateKey} 净积分${boost.multiplier}倍卡结算，今日净积分不足，未补差`, 0, {
-      category: 'system',
-      source: 'lottery-boost-settlement'
-    });
-  }
-
-  state.dailyPointBoost = null;
-}
-
-function activateDailyPointBoost(multiplier, time = Date.now()) {
-  settleExpiredDailyPointBoost();
-  const boostDateKey = dateKey(time);
-  const currentBoost = state.dailyPointBoost?.dateKey === boostDateKey ? state.dailyPointBoost : null;
-  const currentMultiplier = currentBoost?.multiplier || 1;
-  const nextMultiplier = Math.max(currentMultiplier, multiplier);
-  if (nextMultiplier <= currentMultiplier) {
-    return { applied: false, multiplier: currentMultiplier };
-  }
-
-  state.dailyPointBoost = {
-    dateKey: boostDateKey,
-    multiplier: nextMultiplier
-  };
-
-  return { applied: true, multiplier: nextMultiplier };
+function applyInstantDailyPointBoost(multiplier) {
+  const totalNetPoints = getEffectiveDailyNetPoints(dateKey());
+  const bonus = totalNetPoints * (multiplier - 1);
+  state.points += bonus;
+  addRecord(state, `今日净积分${multiplier}倍卡生效，立刻奖励 ${bonus} 积分`, bonus, {
+    category: 'points',
+    source: 'lottery-boost'
+  });
+  return { multiplier, bonus };
 }
 
 function awardPoints(points, recordText, meta, toastMessage, renderTab) {
-  settleExpiredDailyPointBoost();
   state.points += points;
   addRecord(state, recordText, points, meta);
   showToast(toastMessage);
@@ -1083,14 +1053,15 @@ function writeOffReward(exchangeId) {
 }
 
 function drawLottery() {
-  settleExpiredDailyPointBoost();
   if (!spendPoints(20)) return;
   const total = LOTTERY.reduce((sum, item) => sum + item.weight, 0);
   let pick = Math.random() * total;
   const reward = LOTTERY.find(item => (pick -= item.weight) <= 0) || LOTTERY[0];
   const time = Date.now();
 
-  if (reward.type === 'reward') {
+  if (reward.type === 'points' && reward.points) {
+    state.points += reward.points;
+  } else if (reward.type === 'reward') {
     const prizeId = `lottery-${reward.name.replace(/\s+/g, '-')}`;
     state.exchangedRewards.unshift({
       id: prizeId,
@@ -1104,20 +1075,18 @@ function drawLottery() {
     });
   }
 
-  addRecord(state, `积分抽奖：${reward.name}`, -20, { category: 'shop' });
+  addRecord(state, `积分抽奖：${reward.name}`, (reward.type === 'points' ? reward.points : 0) - 20, { category: 'shop' });
 
   let toastMessage = `抽到了：${reward.name}`;
-  if (reward.type === 'reward') {
+  if (reward.type === 'points' && reward.points) {
+    toastMessage = `${toastMessage}，立刻加 ${reward.points} 积分。`;
+  } else if (reward.type === 'reward') {
     toastMessage = `${toastMessage}，已放入我的兑换。`;
   } else if (reward.type === 'boost') {
-    const boostResult = activateDailyPointBoost(reward.multiplier, time);
-    if (boostResult.applied) {
-      toastMessage = boostResult.multiplier === 2
-        ? '哇，抽到双倍卡啦！今天晚上 11:59 前，你今天赚到的积分会翻成 2 倍！'
-        : '哇，抽到三倍卡啦！今天晚上 11:59 前，你今天赚到的积分会翻成 3 倍！';
-    } else {
-      toastMessage = `${toastMessage}，今天已经有更高倍数卡生效啦。`;
-    }
+    const boostResult = applyInstantDailyPointBoost(reward.multiplier);
+    toastMessage = boostResult.multiplier === 2
+      ? `哇，抽到双倍卡啦！按你当前的净得分，立刻多奖励 ${boostResult.bonus} 分！`
+      : `哇，抽到三倍卡啦！按你当前的净得分，立刻多奖励 ${boostResult.bonus} 分！`;
   }
 
   showToast(toastMessage);
@@ -1127,7 +1096,6 @@ function drawLottery() {
 
 function render(tab = state.selectedTab) {
   state.selectedTab = tab;
-  settleExpiredDailyPointBoost();
   syncPetTime();
   persist();
   appShell.classList.toggle('skip-render-animation', skipNextRenderAnimation);
