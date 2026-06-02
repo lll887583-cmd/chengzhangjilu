@@ -181,7 +181,7 @@ function redemptionCard(reward) {
     : ' · 待核销';
 
   const sourceText = reward.source === 'lottery'
-    ? '抽奖加分'
+    ? '抽奖奖励'
     : `使用 ${reward.cost} 积分`;
 
   return `

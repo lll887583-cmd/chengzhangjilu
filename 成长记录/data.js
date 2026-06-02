@@ -33,11 +33,12 @@ export const REWARDS = [
 ];
 
 export const LOTTERY = [
-  { name: '下次好运', weight: 30, points: 0, icon: 'celebration' },
-  { name: '操场锻炼 1 次', weight: 15, points: 0, icon: 'celebration' },
-  { name: '看 30 分钟电视', weight: 10, points: 0, icon: 'tv' },
-  { name: '加分 25 积分', weight: 25, points: 25, icon: 'star' },
-  { name: '买 2 个小零食', weight: 20, points: 0, icon: 'cookie' }
+  { name: '下次好运', weight: 32, type: 'empty', icon: 'celebration' },
+  { name: '操场锻炼 1 次', weight: 20, type: 'reward', icon: 'celebration' },
+  { name: '看 30 分钟电视', weight: 12, type: 'reward', icon: 'tv' },
+  { name: '买 2 个小零食', weight: 18, type: 'reward', icon: 'cookie' },
+  { name: '今日净积分双倍卡', weight: 14, type: 'boost', multiplier: 2, icon: 'star' },
+  { name: '今日净积分三倍卡', weight: 4, type: 'boost', multiplier: 3, icon: 'star' }
 ];
 
 export const DEFAULT_PLANS = [
@@ -70,6 +71,7 @@ export const defaultState = {
   hiddenPointRuleIds: [],
   hiddenDeductRuleIds: [],
   petSection: 'cloud',
+  dailyPointBoost: null,
   calendarMonth: null,
   previewPet: 'sonicHummingbird',
   collectedPets: [],
