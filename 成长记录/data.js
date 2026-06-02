@@ -33,12 +33,11 @@ export const REWARDS = [
 ];
 
 export const LOTTERY = [
-  { name: '加 10 积分', weight: 32, type: 'points', points: 10, icon: 'star' },
+  { name: '加 10 积分', weight: 36, type: 'points', points: 10, icon: 'star' },
   { name: '操场锻炼 1 次', weight: 20, type: 'reward', icon: 'celebration' },
   { name: '看 30 分钟电视', weight: 12, type: 'reward', icon: 'tv' },
   { name: '买 2 个小零食', weight: 18, type: 'reward', icon: 'cookie' },
-  { name: '今日净积分双倍卡', weight: 14, type: 'boost', multiplier: 2, icon: 'star' },
-  { name: '今日净积分三倍卡', weight: 4, type: 'boost', multiplier: 3, icon: 'star' }
+  { name: '今日净积分双倍卡', weight: 14, type: 'boost', multiplier: 2, icon: 'star' }
 ];
 
 export const DEFAULT_PLANS = [
