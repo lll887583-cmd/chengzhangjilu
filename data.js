@@ -29,15 +29,15 @@ export const REWARDS = [
   { id: 'aeon', icon: 'celebration', name: '去永旺玩', cost: 90 },
   { id: 'tv', icon: 'tv', name: '看 40 分钟电视', cost: 100 },
   { id: 'game', icon: 'game', name: '玩 30 分钟游戏', cost: 120 },
-  { id: 'rainbow-park', icon: 'celebration', name: '去彩虹乐园玩', cost: 150 }
+  { id: 'rainbow-park', icon: 'celebration', name: '去彩虹乐园玩', cost: 500 }
 ];
 
 export const LOTTERY = [
-  { name: '加 10 积分', weight: 36, type: 'points', points: 10, icon: 'star' },
-  { name: '操场锻炼 1 次', weight: 20, type: 'reward', icon: 'celebration' },
-  { name: '看 30 分钟电视', weight: 12, type: 'reward', icon: 'tv' },
-  { name: '买 2 个小零食', weight: 18, type: 'reward', icon: 'cookie' },
-  { name: '今日净积分双倍卡', weight: 14, type: 'boost', multiplier: 2, icon: 'star' }
+  { name: '加 10 积分', weight: 42, type: 'points', points: 10, icon: 'star' },
+  { name: '操场锻炼 1 次', weight: 23, type: 'reward', icon: 'celebration' },
+  { name: '看 30 分钟电视', weight: 14, type: 'reward', icon: 'tv' },
+  { name: '买 2 个小零食', weight: 20, type: 'reward', icon: 'cookie' },
+  { name: '今日净积分双倍卡', weight: 1, type: 'boost', multiplier: 2, icon: 'star' }
 ];
 
 export const DEFAULT_PLANS = [
