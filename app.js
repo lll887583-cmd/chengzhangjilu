@@ -1027,9 +1027,8 @@ function showLiteracyModal(itemId, errorMessage = '') {
   setTimeout(() => modal.querySelector('input[name="text"]')?.focus(), 0);
 }
 
-function showCreateLiteracyModal(errorMessage = '', currentValue = '', currentColor = 'red') {
+function showCreateLiteracyModal(errorMessage = '', currentValue = '') {
   const safeText = escapeHtml(currentValue);
-  const activeColor = normalizeLiteracyColor(currentColor);
   modal.classList.remove('hidden');
   modal.innerHTML = `
     <form class="modal-card literacy-modal" data-literacy-create-form>
@@ -1041,19 +1040,7 @@ function showCreateLiteracyModal(errorMessage = '', currentValue = '', currentCo
         <span>汉字</span>
         <input name="text" type="text" maxlength="1" autocomplete="off" value="${safeText}" placeholder="输入 1 个字" aria-label="输入待巩固字" required>
       </label>
-      <div class="literacy-color-picker" role="radiogroup" aria-label="选择颜色">
-        ${[
-          ['red', '红色'],
-          ['yellow', '黄色'],
-          ['green', '绿色']
-        ].map(([color, label]) => `
-          <button class="literacy-color-option ${color} ${activeColor === color ? 'active' : ''}" type="button" data-literacy-color="${color}" aria-pressed="${activeColor === color}" aria-label="${label}">
-            <span aria-hidden="true"></span>
-            <em>${label}</em>
-          </button>
-        `).join('')}
-      </div>
-      <input type="hidden" name="color" value="${activeColor}">
+      <input type="hidden" name="color" value="red">
       ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
       <div class="actions">
         <button class="btn secondary" type="submit">提交</button>
@@ -1067,17 +1054,17 @@ function addLiteracyItem(form) {
   const data = new FormData(form);
   const text = String(data.get('text') || '').trim();
   const char = Array.from(text)[0] || '';
-  const color = normalizeLiteracyColor(String(data.get('color') || 'red'));
+  const color = 'red';
   if (!char) {
-    showCreateLiteracyModal('请先输入一个字。', text, color);
+    showCreateLiteracyModal('请先输入一个字。', text);
     return;
   }
   if (Array.from(text).length !== 1) {
-    showCreateLiteracyModal('一次只能添加 1 个字。', text, color);
+    showCreateLiteracyModal('一次只能添加 1 个字。', text);
     return;
   }
   if ((state.literacyItems || []).some(item => item.text === char)) {
-    showCreateLiteracyModal('这个字已经添加过了。', text, color);
+    showCreateLiteracyModal('这个字已经添加过了。', text);
     return;
   }
   const now = Date.now();
