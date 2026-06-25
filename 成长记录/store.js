@@ -52,6 +52,7 @@ function createDefaultWordItems() {
 
 function mergeWordItems(existingItems) {
   const defaults = createDefaultWordItems();
+  const defaultByText = new Map(defaults.map(item => [String(item.text || '').trim().toLowerCase(), item]));
   const seen = new Set();
   const merged = [];
 
@@ -61,7 +62,8 @@ function mergeWordItems(existingItems) {
     const key = text.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    merged.push(item);
+    const preset = defaultByText.get(key);
+    merged.push(preset ? { ...preset, color: 'red' } : item);
   }
 
   return merged;
