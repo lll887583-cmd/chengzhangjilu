@@ -51,6 +51,49 @@ export const ADDITION_MODES = {
   challenge: { id: 'challenge', label: '挑战模式', seconds: 60 }
 };
 
+export const DEFAULT_WORD_ITEMS = [
+  { id: 'word-bus', text: 'bus', translation: '公共汽车', color: 'red' },
+  { id: 'word-car', text: 'car', translation: '小汽车', color: 'yellow' },
+  { id: 'word-bike', text: 'bike', translation: '自行车', color: 'green' },
+  { id: 'word-motorbike', text: 'motorbike', translation: '摩托车', color: 'red' },
+  { id: 'word-truck', text: 'truck', translation: '卡车', color: 'yellow' },
+  { id: 'word-raining', text: 'raining', translation: '下雨天', color: 'green' },
+  { id: 'word-sunny', text: 'sunny', translation: '晴天', color: 'red' },
+  { id: 'word-snowing', text: 'snowing', translation: '下雪天', color: 'yellow' },
+  { id: 'word-hot', text: 'hot', translation: '热的', color: 'green' },
+  { id: 'word-cold', text: 'cold', translation: '冷的', color: 'red' },
+  { id: 'word-chicken', text: 'chicken', translation: '鸡肉', color: 'yellow' },
+  { id: 'word-noodles', text: 'noodles', translation: '面条', color: 'green' },
+  { id: 'word-soup', text: 'soup', translation: '汤', color: 'red' },
+  { id: 'word-hungry', text: 'hungry', translation: '饿的', color: 'yellow' },
+  { id: 'word-pillow', text: 'pillow', translation: '枕头', color: 'green' },
+  { id: 'word-blanket', text: 'blanket', translation: '毯子', color: 'red' },
+  { id: 'word-bear', text: 'bear', translation: '熊', color: 'yellow' },
+  { id: 'word-candy', text: 'candy', translation: '糖果', color: 'green' },
+  { id: 'word-ice-cream', text: 'ice cream', translation: '冰淇淋', color: 'red' },
+  { id: 'word-chips', text: 'chips', translation: '薯条', color: 'yellow' },
+  { id: 'word-police-officer', text: 'police officer', translation: '警察', color: 'green' },
+  { id: 'word-farmer', text: 'farmer', translation: '农民', color: 'red' },
+  { id: 'word-doctor', text: 'doctor', translation: '医生', color: 'yellow' },
+  { id: 'word-he', text: 'he', translation: '他', color: 'green' },
+  { id: 'word-she', text: 'she', translation: '她', color: 'red' },
+  { id: 'word-swing', text: 'swing', translation: '秋千', color: 'yellow' },
+  { id: 'word-run', text: 'run', translation: '跑步', color: 'green' },
+  { id: 'word-slide', text: 'slide', translation: '滑梯', color: 'red' },
+  { id: 'word-see-saw', text: 'see-saw', translation: '跷跷板', color: 'yellow' },
+  { id: 'word-daddy', text: 'daddy', translation: '爸爸', color: 'green' },
+  { id: 'word-mummy', text: 'mummy', translation: '妈妈', color: 'red' },
+  { id: 'word-brother', text: 'brother', translation: '兄弟', color: 'yellow' },
+  { id: 'word-sister', text: 'sister', translation: '姐妹', color: 'green' },
+  { id: 'word-soap', text: 'soap', translation: '肥皂', color: 'red' },
+  { id: 'word-towel', text: 'towel', translation: '毛巾', color: 'yellow' },
+  { id: 'word-shampoo', text: 'shampoo', translation: '洗发水', color: 'green' },
+  { id: 'word-moon', text: 'moon', translation: '月亮', color: 'red' },
+  { id: 'word-sky', text: 'sky', translation: '天空', color: 'yellow' },
+  { id: 'word-stars', text: 'stars', translation: '星星', color: 'green' },
+  { id: 'word-sun', text: 'sun', translation: '太阳', color: 'red' }
+];
+
 export const STUDY_RULE_NAMES = POINT_RULES
   .filter(rule => rule[3] === 'study')
   .map(rule => rule[0]);
@@ -70,7 +113,11 @@ export const defaultState = {
   additionGame: null,
   pinyinSelections: [],
   letterSelections: [],
-  wordItems: [],
+  wordItems: DEFAULT_WORD_ITEMS.map((item, index) => ({
+    ...item,
+    createdAt: Date.now() + index,
+    updatedAt: Date.now() + index
+  })),
   customPointRules: [],
   customDeductRules: [],
   hiddenPointRuleIds: [],

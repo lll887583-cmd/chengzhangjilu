@@ -1,4 +1,4 @@
-import { PETS, defaultState } from './data.js';
+import { DEFAULT_WORD_ITEMS, PETS, defaultState } from './data.js';
 
 const LEGACY_STORAGE_KEY = 'growth-record-demo';
 const BACKUP_SCHEMA_VERSION = 1;
@@ -39,6 +39,32 @@ function serializeState(state) {
 
 function normalizeLiteracyColor(color) {
   return ['red', 'yellow', 'green'].includes(color) ? color : 'red';
+}
+
+function createDefaultWordItems() {
+  const now = Date.now();
+  return DEFAULT_WORD_ITEMS.map((item, index) => ({
+    ...item,
+    createdAt: now + index,
+    updatedAt: now + index
+  }));
+}
+
+function mergeWordItems(existingItems) {
+  const defaults = createDefaultWordItems();
+  const seen = new Set();
+  const merged = [];
+
+  for (const item of [...defaults, ...(Array.isArray(existingItems) ? existingItems : [])]) {
+    const text = String(item?.text || '').trim();
+    if (!text) continue;
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+  }
+
+  return merged;
 }
 
 // Persistence and state-normalization helpers only.
@@ -103,7 +129,7 @@ export function normalizeState(state) {
     : null;
   state.pinyinSelections = Array.isArray(state.pinyinSelections) ? state.pinyinSelections : [];
   state.letterSelections = Array.isArray(state.letterSelections) ? state.letterSelections : [];
-  state.wordItems = Array.isArray(state.wordItems) ? state.wordItems : [];
+  state.wordItems = mergeWordItems(state.wordItems);
   state.customDeductRules = Array.isArray(state.customDeductRules) ? state.customDeductRules : [];
   state.hiddenPointRuleIds = Array.isArray(state.hiddenPointRuleIds) ? state.hiddenPointRuleIds : [];
   state.hiddenDeductRuleIds = Array.isArray(state.hiddenDeductRuleIds) ? state.hiddenDeductRuleIds : [];
