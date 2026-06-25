@@ -1,7 +1,7 @@
 import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260602f';
 import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
 import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602e';
-import { additionView, calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260602m';
+import { additionView, calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260603b';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -950,7 +950,6 @@ function showLiteracyPreviewModal(itemId) {
   const safeText = escapeHtml(item.text);
   const previewFontSize = wordPreviewFontSize(item.text);
   const total = items.length;
-  const dotIndex = total <= 1 ? 0 : Math.min(2, Math.floor((index / (total - 1)) * 3));
   modal.classList.remove('hidden');
   modal.innerHTML = `
     <div class="modal-card literacy-preview-modal" role="dialog" aria-label="字卡详情" data-literacy-preview-active="${item.id}">
@@ -962,11 +961,6 @@ function showLiteracyPreviewModal(itemId) {
         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M9.29 6.71a1 1 0 0 0 0 1.41L13.17 12l-3.88 3.88a1 1 0 1 0 1.42 1.41l4.58-4.58a1 1 0 0 0 0-1.42l-4.58-4.58a1 1 0 0 0-1.42 0Z" fill="currentColor"></path></svg>
       </button>
       <div class="literacy-preview-char" aria-hidden="true">${safeText}</div>
-      <div class="literacy-preview-footer">
-        <div class="literacy-preview-dots" aria-label="字卡浏览进度">
-          ${[0, 1, 2].map(dot => `<span class="literacy-preview-dot ${dot === dotIndex ? 'active' : ''}"></span>`).join('')}
-        </div>
-      </div>
     </div>`;
 }
 
@@ -1128,7 +1122,6 @@ function showWordPreviewModal(itemId) {
   const safeTranslation = escapeHtml(String(item.translation || '').trim());
   const previewFontSize = wordPreviewFontSize(item.text);
   const total = items.length;
-  const dotIndex = total <= 1 ? 0 : Math.min(2, Math.floor((index / (total - 1)) * 3));
   modal.classList.remove('hidden');
   modal.innerHTML = `
     <div class="modal-card literacy-preview-modal word-preview-modal" role="dialog" aria-label="单词卡详情" data-word-preview-active="${item.id}">
@@ -1142,11 +1135,6 @@ function showWordPreviewModal(itemId) {
       <div class="word-preview-copy">
         <div class="literacy-preview-char word-preview-text" aria-hidden="true" style="font-size:${previewFontSize}px">${safeText}</div>
         ${safeTranslation ? `<p class="word-preview-translation">${safeTranslation}</p>` : ''}
-      </div>
-      <div class="literacy-preview-footer">
-        <div class="literacy-preview-dots" aria-label="单词卡浏览进度">
-          ${[0, 1, 2].map(dot => `<span class="literacy-preview-dot ${dot === dotIndex ? 'active' : ''}"></span>`).join('')}
-        </div>
       </div>
     </div>`;
 }
