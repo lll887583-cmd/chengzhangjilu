@@ -29,8 +29,8 @@ export const REWARDS = [
   { id: 'aeon', icon: 'celebration', name: '去永旺玩', cost: 90 },
   { id: 'tv', icon: 'tv', name: '看 40 分钟电视', cost: 100 },
   { id: 'game', icon: 'game', name: '玩 30 分钟游戏', cost: 120 },
-  { id: 'all-star-park', icon: 'celebration', name: '全明星公园', cost: 350 },
-  { id: 'rainbow-park', icon: 'celebration', name: '彩虹乐园', cost: 500 }
+  { id: 'all-star-park', icon: 'celebration', name: '全明星公园', cost: 450 },
+  { id: 'rainbow-park', icon: 'celebration', name: '彩虹乐园', cost: 350 }
 ];
 
 export const LOTTERY = [
