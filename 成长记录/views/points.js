@@ -1,35 +1,45 @@
 import { DEDUCT_RULES, POINT_RULES } from '../data.js?v=20260526h';
 import { iconSvg } from './shared.js?v=20260526h';
 
+function sortRulesByPoints(rules) {
+  return [...rules].sort((left, right) => {
+    if (left.points !== right.points) return left.points - right.points;
+    return (left.order || 0) - (right.order || 0);
+  });
+}
+
 export function pointsView(state) {
   const pointsSection = state.pointsSection || 'earn';
   const isDeduct = pointsSection === 'deduct';
   const hiddenRuleIds = new Set(isDeduct ? (state.hiddenDeductRuleIds || []) : (state.hiddenPointRuleIds || []));
   const customRules = (isDeduct ? (state.customDeductRules || []) : (state.customPointRules || []))
-    .map(rule => ({
+    .map((rule, index) => ({
       kind: isDeduct ? 'deduct-custom' : 'point-custom',
       id: rule.id,
       title: rule.title,
       points: rule.points,
-      description: rule.description || ''
+      description: rule.description || '',
+      order: 1000 + index
     }));
   const longTermPlans = (state.plans || [])
     .filter(plan => !plan.done && plan.planType === 'longTerm')
-    .map(plan => ({
+    .map((plan, index) => ({
       kind: 'plan',
       id: plan.id,
       title: plan.title,
       points: plan.points,
-      description: ''
+      description: '',
+      order: POINT_RULES.length + index
     }));
   const baseRules = (isDeduct
-    ? DEDUCT_RULES.map((rule, index) => ({ kind: 'deduct', id: `deduct-${index}`, index, title: rule[0], points: rule[1], description: rule[2] }))
+    ? DEDUCT_RULES.map((rule, index) => ({ kind: 'deduct', id: `deduct-${index}`, index, title: rule[0], points: rule[1], description: rule[2], order: index }))
     : [
-      ...POINT_RULES.map((rule, index) => ({ kind: 'point', id: `point-${index}`, index, title: rule[0], points: rule[1], description: rule[2] })),
+      ...POINT_RULES.map((rule, index) => ({ kind: 'point', id: `point-${index}`, index, title: rule[0], points: rule[1], description: rule[2], order: index })),
       ...longTermPlans.map(plan => ({ ...plan, deleteId: plan.id }))
     ]);
-  const rules = [...baseRules, ...customRules]
-    .filter(rule => !hiddenRuleIds.has(rule.id));
+  const rules = sortRulesByPoints(
+    [...baseRules, ...customRules].filter(rule => !hiddenRuleIds.has(rule.id))
+  );
 
   return `
     <section class="points-page">
