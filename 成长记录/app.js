@@ -898,7 +898,7 @@ function showCustomRuleModal(ruleType, errorMessage = '') {
       </label>
       <label class="custom-rule-field">
         <span>积分数</span>
-        <input name="points" type="number" min="1" max="99" inputmode="numeric" placeholder="请输入积分数" aria-label="积分数" required>
+        <input name="points" type="number" min="1" max="1000" inputmode="numeric" placeholder="请输入积分数" aria-label="积分数" required>
       </label>
       ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
       <div class="actions">
@@ -914,7 +914,7 @@ function submitCustomRuleForm(form) {
   const data = new FormData(form);
   const title = String(data.get('title') || '').trim();
   const pointsValue = Number(data.get('points'));
-  const points = Math.max(1, Math.min(99, pointsValue || 0));
+  const points = Math.max(1, Math.min(1000, pointsValue || 0));
 
   if (!title) {
     showCustomRuleModal(ruleType, '请先填写内容。');
