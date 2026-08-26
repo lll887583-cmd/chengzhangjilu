@@ -872,6 +872,11 @@ function earnCustomPoints(ruleId) {
     `太棒了！加分 ${formatPoints(rule.points)} 积分。`,
     'points'
   );
+  if (rule.planType !== 'longTerm') {
+    state.customPointRules = state.customPointRules.filter(item => item.id !== ruleId);
+    persist();
+    render('points');
+  }
 }
 
 function deductCustomPoints(ruleId) {
@@ -880,12 +885,17 @@ function deductCustomPoints(ruleId) {
   state.points -= rule.points;
   addRecord(state, `${rule.title}，减分 ${formatPoints(rule.points)} 积分`, -rule.points, { category: 'deduct', source: 'custom-deduct-rule' });
   showToast(`已减分 ${formatPoints(rule.points)} 积分。`);
+  if (rule.planType !== 'longTerm') {
+    state.customDeductRules = state.customDeductRules.filter(item => item.id !== ruleId);
+  }
   persist();
   render('points');
 }
 
 function showCustomRuleModal(ruleType, errorMessage = '') {
   const isDeduct = ruleType === 'deduct';
+  const draftRuleType = state.customRuleDraftType === 'longTerm' ? 'longTerm' : 'single';
+  const draftRuleTypeLabel = draftRuleType === 'longTerm' ? '长期' : '单次';
   modal.classList.remove('hidden');
   modal.innerHTML = `
     <form class="modal-card custom-rule-modal" data-custom-rule-form="${ruleType}">
@@ -897,6 +907,14 @@ function showCustomRuleModal(ruleType, errorMessage = '') {
         <span>内容</span>
         <input name="title" type="text" maxlength="24" autocomplete="off" placeholder="${isDeduct ? '例如：顶嘴' : '例如：主动整理书包'}" aria-label="内容" required>
       </label>
+      <div class="plan-type-select" data-rule-type>
+        <input type="hidden" name="planType" value="${draftRuleType}">
+        <button class="plan-type-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" data-rule-type-trigger><span data-rule-type-label>${draftRuleTypeLabel}</span><span class="plan-type-arrow" aria-hidden="true"></span></button>
+        <div class="plan-type-menu hidden" role="listbox" aria-label="项目类型" data-rule-type-menu>
+          <button class="plan-type-option ${draftRuleType === 'single' ? 'is-active' : ''}" type="button" role="option" aria-selected="${draftRuleType === 'single' ? 'true' : 'false'}" data-rule-type-option="single"><span class="plan-type-check" aria-hidden="true">✓</span><span>单次</span></button>
+          <button class="plan-type-option ${draftRuleType === 'longTerm' ? 'is-active' : ''}" type="button" role="option" aria-selected="${draftRuleType === 'longTerm' ? 'true' : 'false'}" data-rule-type-option="longTerm"><span class="plan-type-check" aria-hidden="true">✓</span><span>长期</span></button>
+        </div>
+      </div>
       <label class="custom-rule-field">
         <span>积分数</span>
         <input name="points" type="number" min="0.1" max="1000" step="0.1" inputmode="decimal" placeholder="请输入积分数" aria-label="积分数" required>
@@ -921,7 +939,7 @@ function submitCustomRuleForm(form) {
     showCustomRuleModal(ruleType, '请先填写内容。');
     return;
   }
-  if (!Number.isFinite(pointsValue) || pointsValue < 1) {
+  if (!Number.isFinite(pointsValue) || pointsValue < 0.1) {
     showCustomRuleModal(ruleType, '请输入正确的积分数。');
     return;
   }
@@ -930,13 +948,15 @@ function submitCustomRuleForm(form) {
     id: `custom-${ruleType}-${Date.now()}`,
     title,
     points,
-    description: ''
+    description: '',
+    planType: data.get('planType') === 'longTerm' ? 'longTerm' : 'single'
   };
   if (ruleType === 'deduct') {
     state.customDeductRules.unshift(nextRule);
   } else {
     state.customPointRules.unshift(nextRule);
   }
+  state.customRuleDraftType = 'single';
   closeModal();
   showToast(ruleType === 'deduct' ? '新的减分项目已添加。' : '新的加分项目已添加。');
   persist();
@@ -1523,8 +1543,8 @@ function openMy() {
 
 
 function closePlanTypeMenus() {
-  document.querySelectorAll('[data-plan-type-menu]').forEach(menu => menu.classList.add('hidden'));
-  document.querySelectorAll('[data-plan-type-trigger]').forEach(trigger => trigger.setAttribute('aria-expanded', 'false'));
+  document.querySelectorAll('[data-plan-type-menu], [data-rule-type-menu]').forEach(menu => menu.classList.add('hidden'));
+  document.querySelectorAll('[data-plan-type-trigger], [data-rule-type-trigger]').forEach(trigger => trigger.setAttribute('aria-expanded', 'false'));
 }
 
 function showPlanModal() {
@@ -1849,6 +1869,18 @@ document.addEventListener('click', event => {
     return;
   }
 
+  if (target.dataset.ruleTypeTrigger !== undefined) {
+    const root = target.closest('[data-rule-type]');
+    const menu = root?.querySelector('[data-rule-type-menu]');
+    const willOpen = menu?.classList.contains('hidden');
+    closePlanTypeMenus();
+    if (menu && willOpen) {
+      menu.classList.remove('hidden');
+      target.setAttribute('aria-expanded', 'true');
+    }
+    return;
+  }
+
   if (target.dataset.planTypeOption) {
     const root = target.closest('[data-plan-type]');
     const hiddenInput = root?.querySelector('input[name="planType"]');
@@ -1862,6 +1894,24 @@ document.addEventListener('click', event => {
       option.setAttribute('aria-selected', active ? 'true' : 'false');
     });
     state.planningDraftType = nextValue;
+    persist();
+    closePlanTypeMenus();
+    return;
+  }
+
+  if (target.dataset.ruleTypeOption) {
+    const root = target.closest('[data-rule-type]');
+    const hiddenInput = root?.querySelector('input[name="planType"]');
+    const label = root?.querySelector('[data-rule-type-label]');
+    const nextValue = target.dataset.ruleTypeOption;
+    if (hiddenInput) hiddenInput.value = nextValue;
+    if (label) label.textContent = nextValue === 'longTerm' ? '长期' : '单次';
+    root?.querySelectorAll('[data-rule-type-option]').forEach(option => {
+      const active = option.dataset.ruleTypeOption === nextValue;
+      option.classList.toggle('is-active', active);
+      option.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    state.customRuleDraftType = nextValue;
     persist();
     closePlanTypeMenus();
     return;

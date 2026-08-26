@@ -123,6 +123,7 @@ export function normalizeState(state) {
   state.planningSection ||= 'active';
   state.pointsBoardView = ['week', 'month', 'year'].includes(state.pointsBoardView) ? state.pointsBoardView : 'week';
   state.planningDraftType = state.planningDraftType === 'longTerm' ? 'longTerm' : 'single';
+  state.customRuleDraftType = state.customRuleDraftType === 'longTerm' ? 'longTerm' : 'single';
   state.customPointRules = Array.isArray(state.customPointRules) ? state.customPointRules : [];
   state.literacyItems = Array.isArray(state.literacyItems) ? state.literacyItems : [];
   state.numberBoardSelections = Array.isArray(state.numberBoardSelections) ? state.numberBoardSelections : [];
@@ -158,7 +159,8 @@ export function normalizeState(state) {
     id: rule.id || `custom-point-${Date.now()}-${index}`,
     title: rule.title || '自定义任务',
     points: Math.max(1, Number(rule.points) || 1),
-    description: rule.description || ''
+    description: rule.description || '',
+    planType: rule.planType === 'longTerm' ? 'longTerm' : 'single'
   }));
   state.literacyItems = state.literacyItems.map((item, index) => ({
     id: item.id || `literacy-${item.createdAt || Date.now()}-${index}`,
@@ -225,7 +227,8 @@ export function normalizeState(state) {
     id: rule.id || `custom-deduct-${Date.now()}-${index}`,
     title: rule.title || '自定义减分',
     points: Math.max(1, Number(rule.points) || 1),
-    description: rule.description || ''
+    description: rule.description || '',
+    planType: rule.planType === 'longTerm' ? 'longTerm' : 'single'
   }));
   state.exchangedRewards = state.exchangedRewards.map((reward, index) => ({
     ...reward,
