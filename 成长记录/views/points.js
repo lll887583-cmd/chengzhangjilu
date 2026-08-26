@@ -45,9 +45,11 @@ export function pointsView(state) {
   return `
     <section class="points-page">
       <div class="rule-list adaptive">${rules.map(rule => `
-        <article class="rule-card ${isDeduct ? 'deduct' : ''}" role="button" tabindex="0" data-speak="${rule.title}，${isDeduct ? '会减分' : '完成后可以加分'} ${formatPoints(rule.points)} 积分">
-          <button class="rule-delete" type="button" data-delete-rule-kind="${rule.kind}" data-delete-rule-id="${rule.deleteId || rule.id}" aria-label="删除${rule.title}">${iconSvg('close')}</button>
+        <article class="rule-card ${isDeduct ? 'deduct' : ''}" role="button" tabindex="0" data-rule-context-kind="${rule.kind}" data-rule-context-id="${rule.deleteId || rule.id}" data-speak="${rule.title}，${isDeduct ? '会减分' : '完成后可以加分'} ${formatPoints(rule.points)} 积分">
           <div class="rule-score">${isDeduct ? '-' : '+'}${formatPoints(rule.points)}</div>
+          <button class="literacy-more" type="button" data-card-more-kind="${rule.kind}" data-card-more-id="${rule.deleteId || rule.id}" aria-label="更多操作">
+            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M9.29 6.71a1 1 0 0 0 0 1.41L13.17 12l-3.88 3.88a1 1 0 1 0 1.42 1.41l4.58-4.58a1 1 0 0 0 0-1.42l-4.58-4.58a1 1 0 0 0 1.42 0Z" fill="currentColor"></path></svg>
+          </button>
           <div class="rule-title-row">
             <h3>${rule.title}</h3>
             ${!['point', 'deduct', 'plan'].includes(rule.kind) && rule.planType !== 'longTerm' ? '<span class="rule-type-badge">次</span>' : ''}

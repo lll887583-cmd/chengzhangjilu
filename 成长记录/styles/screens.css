@@ -64,6 +64,7 @@
 .rule-list.adaptive .rule-card-add { min-height: 198px; }
 .rule-list.adaptive .rule-card .btn { width: 100%; margin-top: 12px; }
 .rule-delete {
+  display: none !important;
   position: absolute;
   top: 16px;
   right: 16px;
@@ -162,6 +163,7 @@
   height: 30px;
 }
 .rule-delete {
+  display: none !important;
   width: 34px;
   height: 34px;
   position: absolute;
@@ -663,6 +665,36 @@
 }
 
 .rule-card[role="button"] { cursor: pointer; }
+.rule-context-menu {
+  position: fixed;
+  z-index: 80;
+  min-width: 132px;
+  padding: 6px;
+  border: 2px solid var(--outline-variant);
+  border-radius: 14px;
+  background: var(--surface-container-lowest);
+  box-shadow: 0 4px 0 var(--surface-dim), 0 12px 24px rgba(31, 41, 55, .16);
+}
+.rule-context-menu.hidden { display: none; }
+.rule-context-menu button {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 9px;
+  color: #b42318;
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+}
+.rule-context-menu button:hover,
+.rule-context-menu button:focus-visible { background: #f1f3f5; }
+.rule-context-menu svg { width: 19px; height: 19px; fill: currentColor; flex: 0 0 auto; }
 .rule-card[role="button"]:focus-visible {
   outline: 4px solid rgba(29, 126, 216, .28);
   outline-offset: 4px;
@@ -1095,6 +1127,7 @@
   border-radius: 999px;
   color: #7b8794;
   background: #f3f4f6;
+  box-shadow: 0 2px 0 #e1e5ea;
 }
 .literacy-more svg {
   width: 18px;
@@ -1104,7 +1137,55 @@
 }
 .literacy-more:active {
   transform: scale(.96);
+  box-shadow: none;
 }
+.rule-list.adaptive .rule-card > .literacy-more {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  bottom: auto;
+  width: 40px;
+  min-height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e1e5ea;
+  border-radius: 999px;
+  color: #7b8794;
+  background: #f3f4f6;
+  box-shadow: 0 2px 0 #e1e5ea;
+}
+.card-action-menu {
+  position: fixed;
+  z-index: 80;
+  min-width: 132px;
+  padding: 6px;
+  border: 2px solid var(--outline-variant);
+  border-radius: 14px;
+  background: var(--surface-container-lowest);
+  box-shadow: 0 4px 0 var(--surface-dim), 0 12px 24px rgba(31, 41, 55, .16);
+}
+.card-action-menu.hidden { display: none; }
+.card-action-menu button {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 9px;
+  color: #667085;
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+}
+.card-action-menu button:last-child { color: #b42318; }
+.card-action-menu button:hover,
+.card-action-menu button:focus-visible { background: #f1f3f5; }
+.card-action-menu svg { width: 19px; height: 19px; fill: currentColor; flex: 0 0 auto; }
 .literacy-card-add {
   min-height: 156px;
   display: flex;

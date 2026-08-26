@@ -44,7 +44,7 @@ function wordCard(item) {
       </button>
       <span class="literacy-dot ${tone}" aria-hidden="true"></span>
       <strong style="font-size:${fontSize}px">${safeText}</strong>
-      <button class="literacy-more" type="button" data-word-more="${item.id}" aria-label="编辑${safeText}单词卡">
+      <button class="literacy-more" type="button" data-card-more-kind="word" data-card-more-id="${item.id}" aria-label="更多操作">
         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M9.29 6.71a1 1 0 0 0 0 1.41L13.17 12l-3.88 3.88a1 1 0 1 0 1.42 1.41l4.58-4.58a1 1 0 0 0 0-1.42l-4.58-4.58a1 1 0 0 0-1.42 0Z" fill="currentColor"></path></svg>
       </button>
     </article>`;

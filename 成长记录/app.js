@@ -1,8 +1,8 @@
 import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260826k';
 import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
 import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602e';
-import { additionView, calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260826g';
-import { formatPoints } from './views/shared.js?v=20260826f';
+import { additionView, calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260826n';
+import { formatPoints, iconSvg } from './views/shared.js?v=20260826l';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -23,6 +23,31 @@ const navDrawerMenu = document.querySelector('#navDrawerMenu');
 const navBackdrop = document.querySelector('.nav-drawer-backdrop');
 const navTrigger = document.querySelector('.nav-trigger');
 let pendingWriteOff = null;
+const ruleContextMenu = document.createElement('div');
+ruleContextMenu.id = 'ruleContextMenu';
+ruleContextMenu.className = 'rule-context-menu hidden';
+ruleContextMenu.setAttribute('role', 'menu');
+ruleContextMenu.innerHTML = `<button type="button" role="menuitem" data-rule-context-delete>${iconSvg('trash')}<span>删除</span></button>`;
+document.body.appendChild(ruleContextMenu);
+const cardActionMenu = document.createElement('div');
+cardActionMenu.id = 'cardActionMenu';
+cardActionMenu.className = 'card-action-menu hidden';
+cardActionMenu.setAttribute('role', 'menu');
+cardActionMenu.innerHTML = `
+  <button type="button" role="menuitem" data-card-action="edit">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z" fill="currentColor"/></svg>
+    <span>编辑</span>
+  </button>
+  <button type="button" role="menuitem" data-card-action="delete">
+    ${iconSvg('trash')}
+    <span>删除</span>
+  </button>`;
+document.body.appendChild(cardActionMenu);
+let activeRuleContext = null;
+let activeCardAction = null;
+let ruleLongPressTimer = null;
+let ruleLongPressStart = null;
+let suppressRuleCardClickUntil = 0;
 let skipNextRenderAnimation = false;
 let literacyPreviewTouch = null;
 let navCollapsed = false;
@@ -892,24 +917,26 @@ function deductCustomPoints(ruleId) {
   render('points');
 }
 
-function showCustomRuleModal(ruleType, errorMessage = '') {
+function showCustomRuleModal(ruleType, errorMessage = '', editId = '') {
   const isDeduct = ruleType === 'deduct';
-  const draftRuleType = state.customRuleDraftType === 'longTerm' ? 'longTerm' : 'single';
+  const rules = isDeduct ? (state.customDeductRules || []) : (state.customPointRules || []);
+  const editingRule = editId ? rules.find(rule => rule.id === editId) : null;
+  const draftRuleType = editingRule?.planType === 'longTerm' || state.customRuleDraftType === 'longTerm' ? 'longTerm' : 'single';
   const draftRuleTypeLabel = draftRuleType === 'longTerm' ? '长期' : '单次';
   modal.classList.remove('hidden');
   modal.innerHTML = `
-    <form class="modal-card custom-rule-modal" data-custom-rule-form="${ruleType}">
+    <form class="modal-card custom-rule-modal" data-custom-rule-form="${ruleType}" data-custom-rule-edit="${editId}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
       <div class="custom-rule-head">
-        <h2>${isDeduct ? '新增减分项目' : '新增加分项目'}</h2>
+        <h2>${editId ? (isDeduct ? '编辑减分项目' : '编辑加分项目') : (isDeduct ? '新增减分项目' : '新增加分项目')}</h2>
       </div>
       <label class="custom-rule-field">
         <span>内容</span>
-        <input name="title" type="text" maxlength="24" autocomplete="off" placeholder="${isDeduct ? '例如：顶嘴' : '例如：主动整理书包'}" aria-label="内容" required>
+        <input name="title" type="text" maxlength="24" autocomplete="off" value="${editingRule ? escapeHtml(editingRule.title) : ''}" placeholder="${isDeduct ? '例如：顶嘴' : '例如：主动整理书包'}" aria-label="内容" required>
       </label>
       <label class="custom-rule-field">
         <span>积分数</span>
-        <input name="points" type="number" min="1" max="1000" step="1" inputmode="numeric" placeholder="请输入积分数" aria-label="积分数" required>
+        <input name="points" type="number" min="1" max="1000" step="1" inputmode="numeric" value="${editingRule ? editingRule.points : ''}" placeholder="请输入积分数" aria-label="积分数" required>
       </label>
       <label class="custom-rule-field custom-rule-select-field"><span>类型</span><div class="plan-type-select" data-rule-type>
         <input type="hidden" name="planType" value="${draftRuleType}">
@@ -936,29 +963,32 @@ function submitCustomRuleForm(form) {
   const points = Math.max(1, Math.min(1000, Math.round(pointsValue || 0)));
 
   if (!title) {
-    showCustomRuleModal(ruleType, '请先填写内容。');
+    showCustomRuleModal(ruleType, '请先填写内容。', form.dataset.customRuleEdit || '');
     return;
   }
   if (!Number.isFinite(pointsValue) || pointsValue < 1) {
-    showCustomRuleModal(ruleType, '请输入正确的积分数。');
+    showCustomRuleModal(ruleType, '请输入正确的积分数。', form.dataset.customRuleEdit || '');
     return;
   }
 
+  const editId = form.dataset.customRuleEdit || '';
   const nextRule = {
-    id: `custom-${ruleType}-${Date.now()}`,
+    id: editId || `custom-${ruleType}-${Date.now()}`,
     title,
     points,
     description: '',
     planType: data.get('planType') === 'longTerm' ? 'longTerm' : 'single'
   };
-  if (ruleType === 'deduct') {
-    state.customDeductRules.unshift(nextRule);
+  const collection = ruleType === 'deduct' ? state.customDeductRules : state.customPointRules;
+  if (editId) {
+    const index = collection.findIndex(rule => rule.id === editId);
+    if (index >= 0) collection[index] = nextRule;
   } else {
-    state.customPointRules.unshift(nextRule);
+    collection.unshift(nextRule);
   }
-  state.customRuleDraftType = 'single';
+  state.customRuleDraftType = nextRule.planType;
   closeModal();
-  showToast(ruleType === 'deduct' ? '新的减分项目已添加。' : '新的加分项目已添加。');
+  showToast(editId ? '项目已更新。' : (ruleType === 'deduct' ? '新的减分项目已添加。' : '新的加分项目已添加。'));
   persist();
   render('points');
 }
@@ -1441,6 +1471,13 @@ function render(tab = state.selectedTab) {
   renderNavigation(tab);
   renderHeaderSwitch(tab);
   app.innerHTML = (views[tab] || views.points)();
+  app.querySelectorAll('[data-card-more-kind]').forEach(trigger => {
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      openCardActionMenu(trigger.closest('.literacy-card, .rule-card'), trigger);
+    });
+  });
   ensureAdditionTimer();
   skipNextRenderAnimation = false;
   requestAnimationFrame(() => appShell.classList.remove('skip-render-animation'));
@@ -1748,6 +1785,171 @@ function deleteRuleCard(kind, id) {
   render('points');
 }
 
+function editRuleCard(kind, id) {
+  const isDeduct = kind === 'deduct' || kind === 'deduct-custom';
+  const collection = isDeduct ? (state.customDeductRules || []) : (state.customPointRules || []);
+  if (kind === 'point-custom' || kind === 'deduct-custom') {
+    showCustomRuleModal(isDeduct ? 'deduct' : 'earn', '', id);
+    return;
+  }
+
+  let source = null;
+  if (kind === 'point') {
+    const [title, points] = POINT_RULES[Number(id.replace('point-', ''))] || [];
+    source = { title, points };
+  } else if (kind === 'deduct') {
+    const [title, points] = DEDUCT_RULES[Number(id.replace('deduct-', ''))] || [];
+    source = { title, points };
+  } else if (kind === 'plan') {
+    source = (state.plans || []).find(plan => plan.id === id);
+  }
+  if (!source?.title || !Number.isFinite(Number(source.points))) return;
+
+  const nextId = `custom-${isDeduct ? 'deduct' : 'earn'}-${Date.now()}`;
+  collection.unshift({
+    id: nextId,
+    title: source.title,
+    points: Number(source.points),
+    description: source.description || '',
+    planType: 'longTerm'
+  });
+  if (kind === 'point') {
+    state.hiddenPointRuleIds ||= [];
+    state.hiddenPointRuleIds.push(id);
+  } else if (kind === 'deduct') {
+    state.hiddenDeductRuleIds ||= [];
+    state.hiddenDeductRuleIds.push(id);
+  } else if (kind === 'plan') {
+    state.plans = (state.plans || []).filter(plan => plan.id !== id);
+  }
+  persist();
+  showCustomRuleModal(isDeduct ? 'deduct' : 'earn', '', nextId);
+}
+
+function closeRuleContextMenu() {
+  ruleContextMenu.classList.add('hidden');
+  activeRuleContext = null;
+}
+
+function openRuleContextMenu(card, clientX, clientY) {
+  const kind = card?.dataset.ruleContextKind;
+  const id = card?.dataset.ruleContextId;
+  if (!kind || !id) return;
+  activeRuleContext = { kind, id };
+  ruleContextMenu.classList.remove('hidden');
+  const gap = 10;
+  const left = Math.max(gap, Math.min(clientX, window.innerWidth - ruleContextMenu.offsetWidth - gap));
+  const top = Math.max(gap, Math.min(clientY, window.innerHeight - ruleContextMenu.offsetHeight - gap));
+  ruleContextMenu.style.left = `${left}px`;
+  ruleContextMenu.style.top = `${top}px`;
+}
+
+function closeCardActionMenu() {
+  cardActionMenu.classList.add('hidden');
+  activeCardAction = null;
+}
+
+function openCardActionMenu(card, trigger) {
+  const kind = trigger?.dataset.cardMoreKind;
+  const id = trigger?.dataset.cardMoreId;
+  if (!kind || !id) return;
+  activeCardAction = { kind, id };
+  cardActionMenu.classList.remove('hidden');
+  const editButton = cardActionMenu.querySelector('[data-card-action="edit"]');
+  const editable = ['literacy', 'word', 'point-custom', 'deduct-custom', 'point', 'deduct', 'plan'].includes(kind);
+  editButton.hidden = !editable;
+  const rect = trigger.getBoundingClientRect();
+  const gap = 8;
+  const isPointsCard = ['point', 'deduct', 'point-custom', 'deduct-custom', 'plan'].includes(kind);
+  const preferredLeft = isPointsCard ? rect.left - cardActionMenu.offsetWidth + rect.width : rect.right - cardActionMenu.offsetWidth;
+  const left = Math.max(gap, Math.min(preferredLeft, window.innerWidth - cardActionMenu.offsetWidth - gap));
+  const preferredTop = isPointsCard ? rect.bottom + gap : rect.top - cardActionMenu.offsetHeight - gap;
+  const top = isPointsCard
+    ? Math.min(preferredTop, window.innerHeight - cardActionMenu.offsetHeight - gap)
+    : (preferredTop >= gap ? preferredTop : Math.min(rect.bottom + gap, window.innerHeight - cardActionMenu.offsetHeight - gap));
+  cardActionMenu.style.left = `${left}px`;
+  cardActionMenu.style.top = `${Math.max(gap, top)}px`;
+}
+
+app.addEventListener('pointerup', event => {
+  const trigger = event.target.closest?.('[data-card-more-kind]');
+  if (trigger) openCardActionMenu(trigger.closest('.literacy-card, .rule-card'), trigger);
+}, true);
+
+function getRuleCardFromEvent(event) {
+  const card = event.target.closest?.('.rule-card[data-rule-context-kind]');
+  return card && !card.classList.contains('rule-card-add') ? card : null;
+}
+
+function cancelRuleLongPress() {
+  if (ruleLongPressTimer) window.clearTimeout(ruleLongPressTimer);
+  ruleLongPressTimer = null;
+  ruleLongPressStart = null;
+}
+
+app.addEventListener('touchstart', event => {
+  if (event.touches.length !== 1) return cancelRuleLongPress();
+  const card = getRuleCardFromEvent(event);
+  if (!card || event.target.closest('button')) return cancelRuleLongPress();
+  const [touch] = event.touches;
+  ruleLongPressStart = { card, clientX: touch.clientX, clientY: touch.clientY };
+  ruleLongPressTimer = window.setTimeout(() => {
+    if (!ruleLongPressStart) return;
+    const { card: activeCard, clientX, clientY } = ruleLongPressStart;
+    suppressRuleCardClickUntil = Date.now() + 700;
+    const trigger = activeCard.querySelector('[data-card-more-kind]');
+    if (trigger) openCardActionMenu(activeCard, trigger);
+    else openRuleContextMenu(activeCard, clientX, clientY);
+    cancelRuleLongPress();
+  }, 500);
+}, { passive: true });
+
+app.addEventListener('touchmove', event => {
+  if (!ruleLongPressStart || event.touches.length !== 1) return cancelRuleLongPress();
+  const [touch] = event.touches;
+  if (Math.hypot(touch.clientX - ruleLongPressStart.clientX, touch.clientY - ruleLongPressStart.clientY) > 10) cancelRuleLongPress();
+}, { passive: true });
+app.addEventListener('touchend', cancelRuleLongPress, { passive: true });
+app.addEventListener('touchcancel', cancelRuleLongPress, { passive: true });
+
+app.addEventListener('contextmenu', event => {
+  const card = getRuleCardFromEvent(event);
+  if (!card) return;
+  event.preventDefault();
+  const trigger = card.querySelector('[data-card-more-kind]');
+  if (trigger) openCardActionMenu(card, trigger);
+  else openRuleContextMenu(card, event.clientX, event.clientY);
+});
+
+ruleContextMenu.addEventListener('click', event => {
+  const deleteButton = event.target.closest('[data-rule-context-delete]');
+  if (!deleteButton || !activeRuleContext) return;
+  const { kind, id } = activeRuleContext;
+  closeRuleContextMenu();
+  deleteRuleCard(kind, id);
+});
+
+cardActionMenu.addEventListener('click', event => {
+  const actionButton = event.target.closest('[data-card-action]');
+  if (!actionButton || !activeCardAction) return;
+  const { kind, id } = activeCardAction;
+  const action = actionButton.dataset.cardAction;
+  closeCardActionMenu();
+  if (action === 'edit') {
+    if (kind === 'literacy') showLiteracyModal(id);
+    if (kind === 'word') showWordModal(id);
+    if (kind === 'point-custom') showCustomRuleModal('earn', '', id);
+    if (kind === 'deduct-custom') showCustomRuleModal('deduct', '', id);
+    if (kind === 'point' || kind === 'deduct' || kind === 'plan') editRuleCard(kind, id);
+    return;
+  }
+  if (action === 'delete') {
+    if (kind === 'literacy') deleteLiteracyItem(id);
+    if (kind === 'word') deleteWordItem(id);
+    if (kind === 'point-custom' || kind === 'deduct-custom' || kind === 'point' || kind === 'deduct' || kind === 'plan') deleteRuleCard(kind, id);
+  }
+});
+
 function addPlan(form) {
   const data = new FormData(form);
   const title = String(data.get('title') || '').trim();
@@ -1826,6 +2028,14 @@ pointsPill.addEventListener('click', event => {
 });
 
 document.addEventListener('click', event => {
+  const cardMoreTrigger = event.target.closest?.('[data-card-more-kind]');
+  if (cardMoreTrigger) {
+    openCardActionMenu(cardMoreTrigger.closest('.literacy-card, .rule-card'), cardMoreTrigger);
+    return;
+  }
+  if (!event.target.closest('#ruleContextMenu')) closeRuleContextMenu();
+  if (!event.target.closest('#cardActionMenu')) closeCardActionMenu();
+  if (Date.now() < suppressRuleCardClickUntil && getRuleCardFromEvent(event)) return;
   if (event.target === modal && !modal.classList.contains('hidden')) {
     closeModal();
     return;
@@ -1958,13 +2168,15 @@ document.addEventListener('click', event => {
   if (target.dataset.literacyPreviewMove) moveLiteracyPreview(target.dataset.literacyPreviewId, target.dataset.literacyPreviewMove);
   if (target.dataset.literacyPreview) showLiteracyPreviewModal(target.dataset.literacyPreview);
   if (target.dataset.literacyEdit) showLiteracyModal(target.dataset.literacyEdit);
-  if (target.dataset.literacyMore) showLiteracyModal(target.dataset.literacyMore);
+  if (target.dataset.cardMoreKind) {
+    openCardActionMenu(target.closest('.literacy-card, .rule-card'), target);
+    return;
+  }
   if (target.dataset.wordCreate !== undefined) showCreateWordModal();
   if (target.dataset.wordDelete) deleteWordItem(target.dataset.wordDelete);
   if (target.dataset.wordPreviewMove) moveWordPreview(target.dataset.wordPreviewId, target.dataset.wordPreviewMove);
   if (target.dataset.wordPreview) showWordPreviewModal(target.dataset.wordPreview);
   if (target.dataset.wordEdit) showWordModal(target.dataset.wordEdit);
-  if (target.dataset.wordMore) showWordModal(target.dataset.wordMore);
   if (target.dataset.literacyColor) {
     const form = target.closest('form');
     form?.querySelectorAll('[data-literacy-color]').forEach(option => {
@@ -2107,6 +2319,7 @@ document.addEventListener('keydown', event => {
 });
 
 window.addEventListener('resize', syncDrawerForViewport);
+window.addEventListener('resize', closeRuleContextMenu);
 
 modal.addEventListener('touchstart', event => {
   const previewModal = event.target.closest('[data-literacy-preview-active], [data-word-preview-active]');
