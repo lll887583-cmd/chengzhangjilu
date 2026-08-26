@@ -1,5 +1,5 @@
 import { DEDUCT_RULES, POINT_RULES } from '../data.js?v=20260526h';
-import { formatPoints, iconSvg } from './shared.js?v=20260526h';
+import { formatPoints, iconSvg } from './shared.js?v=20260826f';
 
 function sortRulesByPoints(rules) {
   return [...rules].sort((left, right) => {
@@ -19,6 +19,7 @@ export function pointsView(state) {
       title: rule.title,
       points: rule.points,
       description: rule.description || '',
+      planType: rule.planType === 'longTerm' ? 'longTerm' : 'single',
       order: 1000 + index
     }));
   const longTermPlans = (state.plans || [])
@@ -47,7 +48,10 @@ export function pointsView(state) {
         <article class="rule-card ${isDeduct ? 'deduct' : ''}" role="button" tabindex="0" data-speak="${rule.title}，${isDeduct ? '会减分' : '完成后可以加分'} ${formatPoints(rule.points)} 积分">
           <button class="rule-delete" type="button" data-delete-rule-kind="${rule.kind}" data-delete-rule-id="${rule.deleteId || rule.id}" aria-label="删除${rule.title}">${iconSvg('close')}</button>
           <div class="rule-score">${isDeduct ? '-' : '+'}${formatPoints(rule.points)}</div>
-          <h3>${rule.title}</h3>
+          <div class="rule-title-row">
+            <h3>${rule.title}</h3>
+            ${!['point', 'deduct', 'plan'].includes(rule.kind) && rule.planType !== 'longTerm' ? '<span class="rule-type-badge">次</span>' : ''}
+          </div>
           ${rule.description ? `<p>${rule.description}</p>` : ''}
           <button class="btn ${isDeduct ? 'danger' : 'ghost'}" ${isDeduct
             ? (rule.kind === 'deduct-custom' ? `data-deduct-custom="${rule.id}"` : `data-deduct="${rule.index}"`)

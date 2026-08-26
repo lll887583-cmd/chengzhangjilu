@@ -40,7 +40,7 @@ export function statCard(icon, value, label) {
 
 export function formatPoints(value) {
   const number = Number(value);
-  return Number.isFinite(number) ? number.toFixed(1) : '0.0';
+  return Number.isFinite(number) ? String(Math.round(number)) : '0';
 }
 
 export function recordTitle(text) {

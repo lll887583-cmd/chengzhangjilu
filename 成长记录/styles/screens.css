@@ -96,6 +96,25 @@
   font-family: "Quicksand", system-ui, sans-serif;
   font-weight: 700;
 }
+.rule-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: #667085;
+  background: #eef0f2;
+  font-size: 14px;
+  font-weight: 700;
+}
+.rule-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rule-title-row h3 { margin: 0; }
 .rule-card.deduct {
   border-color: var(--outline-variant);
   background: var(--surface-container-lowest);
@@ -377,7 +396,7 @@
   margin-bottom: 0;
   color: var(--on-surface-variant);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.45;
 }
 .my-entry-card small {
@@ -729,6 +748,8 @@
   gap: 10px;
   padding-right: 18px;
   text-align: left;
+  font-size: 16px;
+  font-weight: 700;
   border-color: var(--outline-variant) !important;
 }
 .plan-type-arrow {
@@ -776,19 +797,16 @@
   margin-top: 4px;
 }
 .plan-type-option.is-active {
-  color: #fff;
-  background: #73c257;
+  color: var(--on-surface);
+  background: #f1f3f5;
 }
 .plan-type-check {
-  width: 14px;
-  display: inline-flex;
-  justify-content: center;
-  color: transparent;
-  font-size: 18px;
-  line-height: 1;
+  display: none;
 }
-.plan-type-option.is-active .plan-type-check {
-  color: currentColor;
+.plan-type-option:hover,
+.plan-type-option:focus-visible {
+  color: var(--on-surface);
+  background: #f1f3f5;
 }
 .plan-list {
   display: grid;

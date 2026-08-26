@@ -146,7 +146,7 @@ function pointsBoardSection(state) {
     </div>
     <div class="points-board-summary">
       ${statCard('trendingUp', `+${formatPoints(board.totalEarned)}`, `${board.viewText}加分总数`)}
-      ${statCard('star', board.maxTotal ? `+${formatPoints(board.topBucket.total)}` : '+0.0', `峰值：${board.topBucket.label}`)}
+      ${statCard('star', board.maxTotal ? `+${formatPoints(board.topBucket.total)}` : '+0', `峰值：${board.topBucket.label}`)}
       ${statCard('checklist', board.activeDays, '有积分的时间点')}
     </div>
     <section class="points-board-chart card">

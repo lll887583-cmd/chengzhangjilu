@@ -106,7 +106,12 @@ export function spend(state, cost, onFail, failMessage = '积分还不够哦，�
 }
 
 export function normalizeState(state) {
+  state.points = Math.round(Number(state.points) || 0);
   state.records ||= [];
+  state.records = state.records.map(record => ({
+    ...record,
+    delta: Math.round(Number(record.delta) || 0)
+  }));
   state.exchangedRewards ||= [];
   state.collectedPets ||= [];
   if (!Array.isArray(state.plans) || state.plans.length === 0) {
@@ -147,7 +152,7 @@ export function normalizeState(state) {
   }
   state.plans = state.plans.map((plan, index) => ({
     title: plan.title || '学习任务',
-    points: Number(plan.points) || 0,
+    points: Math.round(Number(plan.points) || 0),
     category: plan.category || 'study',
     planType: plan.planType === 'longTerm' ? 'longTerm' : 'single',
     id: plan.id || `plan-${plan.createdAt || Date.now()}-${index}`,
@@ -158,7 +163,7 @@ export function normalizeState(state) {
   state.customPointRules = state.customPointRules.map((rule, index) => ({
     id: rule.id || `custom-point-${Date.now()}-${index}`,
     title: rule.title || '自定义任务',
-    points: Math.max(1, Number(rule.points) || 1),
+    points: Math.max(1, Math.round(Number(rule.points) || 1)),
     description: rule.description || '',
     planType: rule.planType === 'longTerm' ? 'longTerm' : 'single'
   }));
@@ -226,7 +231,7 @@ export function normalizeState(state) {
   state.customDeductRules = state.customDeductRules.map((rule, index) => ({
     id: rule.id || `custom-deduct-${Date.now()}-${index}`,
     title: rule.title || '自定义减分',
-    points: Math.max(1, Number(rule.points) || 1),
+    points: Math.max(1, Math.round(Number(rule.points) || 1)),
     description: rule.description || '',
     planType: rule.planType === 'longTerm' ? 'longTerm' : 'single'
   }));

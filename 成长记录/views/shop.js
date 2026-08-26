@@ -12,11 +12,12 @@ const LOTTERY_QUESTION_POSITIONS = [
 
 export function shopView(state) {
   const shopSection = state.shopSection || 'exchange';
+  const sortedRewards = [...REWARDS].sort((left, right) => left.cost - right.cost);
   return `
     <section class="shop-page">
       ${shopSection === 'exchange' ? `
       <section class="shop-panel">
-        <div class="reward-list">${REWARDS.map(reward => `
+        <div class="reward-list">${sortedRewards.map(reward => `
           <div class="reward-card" role="button" tabindex="0" data-speak="${reward.name}，需要 ${formatPoints(reward.cost)} 积分">
             <div class="reward-cost-badge"><strong>${formatPoints(reward.cost)}</strong></div>
             <h3><span class="inline-title-icon">${iconSvg(reward.icon)}</span>${reward.name}</h3>
@@ -32,7 +33,7 @@ export function shopView(state) {
             ${LOTTERY_QUESTION_POSITIONS.slice(2).map(position => `<span class="lottery-question ${position}">${LOTTERY_QUESTION}</span>`).join('')}
           </div>
         </div>
-        <button class="btn lottery-draw-btn" data-action="lottery">开始抽奖 20.0 积分</button>
+        <button class="btn lottery-draw-btn" data-action="lottery">开始抽奖 20 积分</button>
       </section>`}
     </section>`;
 }

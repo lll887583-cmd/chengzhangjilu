@@ -1,8 +1,8 @@
-import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260602f';
+import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260826k';
 import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
 import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602e';
-import { additionView, calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260603b';
-import { formatPoints } from './views/shared.js?v=20260526h';
+import { additionView, calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260826g';
+import { formatPoints } from './views/shared.js?v=20260826f';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -907,18 +907,18 @@ function showCustomRuleModal(ruleType, errorMessage = '') {
         <span>内容</span>
         <input name="title" type="text" maxlength="24" autocomplete="off" placeholder="${isDeduct ? '例如：顶嘴' : '例如：主动整理书包'}" aria-label="内容" required>
       </label>
-      <div class="plan-type-select" data-rule-type>
+      <label class="custom-rule-field">
+        <span>积分数</span>
+        <input name="points" type="number" min="1" max="1000" step="1" inputmode="numeric" placeholder="请输入积分数" aria-label="积分数" required>
+      </label>
+      <label class="custom-rule-field custom-rule-select-field"><span>类型</span><div class="plan-type-select" data-rule-type>
         <input type="hidden" name="planType" value="${draftRuleType}">
         <button class="plan-type-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" data-rule-type-trigger><span data-rule-type-label>${draftRuleTypeLabel}</span><span class="plan-type-arrow" aria-hidden="true"></span></button>
         <div class="plan-type-menu hidden" role="listbox" aria-label="项目类型" data-rule-type-menu>
           <button class="plan-type-option ${draftRuleType === 'single' ? 'is-active' : ''}" type="button" role="option" aria-selected="${draftRuleType === 'single' ? 'true' : 'false'}" data-rule-type-option="single"><span class="plan-type-check" aria-hidden="true">✓</span><span>单次</span></button>
           <button class="plan-type-option ${draftRuleType === 'longTerm' ? 'is-active' : ''}" type="button" role="option" aria-selected="${draftRuleType === 'longTerm' ? 'true' : 'false'}" data-rule-type-option="longTerm"><span class="plan-type-check" aria-hidden="true">✓</span><span>长期</span></button>
         </div>
-      </div>
-      <label class="custom-rule-field">
-        <span>积分数</span>
-        <input name="points" type="number" min="0.1" max="1000" step="0.1" inputmode="decimal" placeholder="请输入积分数" aria-label="积分数" required>
-      </label>
+      </div></label>
       ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
       <div class="actions">
         <button class="btn secondary" type="submit">提交</button>
@@ -933,13 +933,13 @@ function submitCustomRuleForm(form) {
   const data = new FormData(form);
   const title = String(data.get('title') || '').trim();
   const pointsValue = Number(data.get('points'));
-  const points = Math.max(0.1, Math.min(1000, Math.round((pointsValue || 0) * 10) / 10));
+  const points = Math.max(1, Math.min(1000, Math.round(pointsValue || 0)));
 
   if (!title) {
     showCustomRuleModal(ruleType, '请先填写内容。');
     return;
   }
-  if (!Number.isFinite(pointsValue) || pointsValue < 0.1) {
+  if (!Number.isFinite(pointsValue) || pointsValue < 1) {
     showCustomRuleModal(ruleType, '请输入正确的积分数。');
     return;
   }
@@ -1558,9 +1558,9 @@ function showPlanModal() {
         <h2>新增学习任务</h2>
       </div>
       <div class="plan-form plan-form-modal">
-        <input name="title" type="text" maxlength="24" placeholder="例如：背 5 个单词" aria-label="任务名称" required>
-        <input name="points" type="number" min="1" max="50" value="5" aria-label="任务积分" required>
-        <div class="plan-type-select" data-plan-type>
+        <label class="custom-rule-field"><span>内容</span><input name="title" type="text" maxlength="24" placeholder="例如：背 5 个单词" aria-label="任务名称" required></label>
+        <label class="custom-rule-field"><span>积分数</span><input name="points" type="number" min="1" max="50" step="1" placeholder="请输入积分数" aria-label="任务积分" required></label>
+        <label class="custom-rule-field custom-rule-select-field"><span>类型</span><div class="plan-type-select" data-plan-type>
           <input type="hidden" name="planType" value="${draftPlanType}">
           <button class="plan-type-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" data-plan-type-trigger>
             <span data-plan-type-label>${draftPlanTypeLabel}</span>
@@ -1576,7 +1576,7 @@ function showPlanModal() {
               <span>长期</span>
             </button>
           </div>
-        </div>
+        </div></label>
       </div>
       <div class="actions">
         <button class="btn secondary" type="submit">提交</button>
@@ -1751,7 +1751,7 @@ function deleteRuleCard(kind, id) {
 function addPlan(form) {
   const data = new FormData(form);
   const title = String(data.get('title') || '').trim();
-  const points = Math.max(1, Math.min(50, Number(data.get('points')) || 5));
+  const points = Math.max(1, Math.min(50, Math.round(Number(data.get('points')) || 5)));
   const planType = data.get('planType') === 'longTerm' ? 'longTerm' : 'single';
   if (!title) return;
   state.plans.unshift({
@@ -1835,7 +1835,7 @@ document.addEventListener('click', event => {
     return;
   }
 
-  if (!event.target.closest('[data-plan-type]')) {
+  if (!event.target.closest('[data-plan-type], [data-rule-type]')) {
     closePlanTypeMenus();
   }
 

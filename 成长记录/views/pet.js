@@ -61,13 +61,13 @@ export function petView(state) {
             ${state.pet ? `
             <div class="care-actions side">
               <button class="care-card" data-action="feed" ${state.pet.status === 'planet' ? 'disabled' : ''}>
-                <span class="care-icon feed">${iconSvg('restaurant')}</span><strong>喂食</strong><small>10.0 积分</small>
+                <span class="care-icon feed">${iconSvg('restaurant')}</span><strong>喂食</strong><small>10 积分</small>
               </button>
               <button class="care-card primary" data-action="play" ${state.pet.status === 'planet' ? 'disabled' : ''}>
-                <span class="care-icon play">${iconSvg('game')}</span><strong>玩耍</strong><small>8.0 积分</small>
+                <span class="care-icon play">${iconSvg('game')}</span><strong>玩耍</strong><small>8 积分</small>
               </button>
               <button class="care-card" data-action="rest" ${state.pet.status === 'planet' ? 'disabled' : ''}>
-                <span class="care-icon sleep">${iconSvg('bedtime')}</span><strong>睡觉</strong><small>5.0 积分</small>
+                <span class="care-icon sleep">${iconSvg('bedtime')}</span><strong>睡觉</strong><small>5 积分</small>
               </button>
             </div>
             ${state.pet.status === 'planet' ? `<button class="btn danger revive-wide" data-action="revive">复活 ${formatPoints(state.pet.reviveCost)} 积分</button>` : ''}
