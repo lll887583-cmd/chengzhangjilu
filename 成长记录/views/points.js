@@ -1,5 +1,5 @@
 import { DEDUCT_RULES, POINT_RULES } from '../data.js?v=20260526h';
-import { iconSvg } from './shared.js?v=20260526h';
+import { formatPoints, iconSvg } from './shared.js?v=20260526h';
 
 function sortRulesByPoints(rules) {
   return [...rules].sort((left, right) => {
@@ -44,9 +44,9 @@ export function pointsView(state) {
   return `
     <section class="points-page">
       <div class="rule-list adaptive">${rules.map(rule => `
-        <article class="rule-card ${isDeduct ? 'deduct' : ''}" role="button" tabindex="0" data-speak="${rule.title}，${isDeduct ? '会减分' : '完成后可以加分'} ${rule.points} 积分">
+        <article class="rule-card ${isDeduct ? 'deduct' : ''}" role="button" tabindex="0" data-speak="${rule.title}，${isDeduct ? '会减分' : '完成后可以加分'} ${formatPoints(rule.points)} 积分">
           <button class="rule-delete" type="button" data-delete-rule-kind="${rule.kind}" data-delete-rule-id="${rule.deleteId || rule.id}" aria-label="删除${rule.title}">${iconSvg('close')}</button>
-          <div class="rule-score">${isDeduct ? '-' : '+'}${rule.points}</div>
+          <div class="rule-score">${isDeduct ? '-' : '+'}${formatPoints(rule.points)}</div>
           <h3>${rule.title}</h3>
           ${rule.description ? `<p>${rule.description}</p>` : ''}
           <button class="btn ${isDeduct ? 'danger' : 'ghost'}" ${isDeduct

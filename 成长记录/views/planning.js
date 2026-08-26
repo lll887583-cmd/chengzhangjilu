@@ -1,4 +1,4 @@
-import { iconSvg } from './shared.js?v=20260526h';
+import { formatPoints, iconSvg } from './shared.js?v=20260526h';
 
 function planCard(plan) {
   const planTypeLabel = plan.planType === 'longTerm' ? '长期' : '单次';
@@ -7,7 +7,7 @@ function planCard(plan) {
       <span class="plan-status">${iconSvg(plan.done ? 'checklist' : 'task')}</span>
       <div>
         <h3>${plan.title}</h3>
-        <p>${plan.done ? `已完成 · ${new Date(plan.completedAt).toLocaleDateString('zh-CN')} · ${planTypeLabel}` : `${planTypeLabel} · 完成后加分 ${plan.points} 积分`}</p>
+        <p>${plan.done ? `已完成 · ${new Date(plan.completedAt).toLocaleDateString('zh-CN')} · ${planTypeLabel}` : `${planTypeLabel} · 完成后加分 ${formatPoints(plan.points)} 积分`}</p>
       </div>
       <button class="plan-delete" type="button" data-delete-plan="${plan.id}" aria-label="删除${plan.title}">${iconSvg('trash')}</button>
       <button class="btn plan-complete-btn ${plan.done ? 'redeemed-btn' : 'secondary'}" ${plan.done ? 'disabled' : `data-complete-plan="${plan.id}"`}>

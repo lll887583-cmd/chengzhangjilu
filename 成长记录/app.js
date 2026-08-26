@@ -2,6 +2,7 @@ import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } fro
 import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
 import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602e';
 import { additionView, calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260603b';
+import { formatPoints } from './views/shared.js?v=20260526h';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -139,7 +140,7 @@ function normalizeUiState() {
 function persist() {
   normalizeUiState();
   saveState(state);
-  pointsText.textContent = state.points;
+  pointsText.textContent = formatPoints(state.points);
   pointsPill.classList.toggle('negative', state.points < 0);
 }
 
@@ -373,7 +374,7 @@ function applyInstantDailyPointBoost(multiplier) {
   const totalNetPoints = getEffectiveDailyNetPoints(dateKey());
   const bonus = totalNetPoints * (multiplier - 1);
   state.points += bonus;
-  addRecord(state, `今日净积分${multiplier}倍卡生效，立刻奖励 ${bonus} 积分`, bonus, {
+    addRecord(state, `今日净积分${multiplier}倍卡生效，立刻奖励 ${formatPoints(bonus)} 积分`, bonus, {
     category: 'points',
     source: 'lottery-boost'
   });
@@ -845,9 +846,9 @@ function earnPoints(ruleIndex) {
   const [name, points, , category = 'points'] = POINT_RULES[ruleIndex];
   awardPoints(
     points,
-    `${name}，加分 ${points} 积分`,
+    `${name}，加分 ${formatPoints(points)} 积分`,
     { category, source: 'points-rule' },
-    `太棒了！加分 ${points} 积分。`,
+    `太棒了！加分 ${formatPoints(points)} 积分。`,
     'points'
   );
 }
@@ -855,8 +856,8 @@ function earnPoints(ruleIndex) {
 function deductPoints(ruleIndex) {
   const [name, points] = DEDUCT_RULES[ruleIndex];
   state.points -= points;
-  addRecord(state, `${name}，减分 ${points} 积分`, -points, { category: 'deduct' });
-  showToast(`已减分 ${points} 积分。`);
+  addRecord(state, `${name}，减分 ${formatPoints(points)} 积分`, -points, { category: 'deduct' });
+  showToast(`已减分 ${formatPoints(points)} 积分。`);
   persist();
   render('points');
 }
@@ -866,9 +867,9 @@ function earnCustomPoints(ruleId) {
   if (!rule) return;
   awardPoints(
     rule.points,
-    `${rule.title}，加分 ${rule.points} 积分`,
+    `${rule.title}，加分 ${formatPoints(rule.points)} 积分`,
     { category: 'points', source: 'custom-points-rule' },
-    `太棒了！加分 ${rule.points} 积分。`,
+    `太棒了！加分 ${formatPoints(rule.points)} 积分。`,
     'points'
   );
 }
@@ -877,8 +878,8 @@ function deductCustomPoints(ruleId) {
   const rule = (state.customDeductRules || []).find(item => item.id === ruleId);
   if (!rule) return;
   state.points -= rule.points;
-  addRecord(state, `${rule.title}，减分 ${rule.points} 积分`, -rule.points, { category: 'deduct', source: 'custom-deduct-rule' });
-  showToast(`已减分 ${rule.points} 积分。`);
+  addRecord(state, `${rule.title}，减分 ${formatPoints(rule.points)} 积分`, -rule.points, { category: 'deduct', source: 'custom-deduct-rule' });
+  showToast(`已减分 ${formatPoints(rule.points)} 积分。`);
   persist();
   render('points');
 }
@@ -898,7 +899,7 @@ function showCustomRuleModal(ruleType, errorMessage = '') {
       </label>
       <label class="custom-rule-field">
         <span>积分数</span>
-        <input name="points" type="number" min="1" max="1000" inputmode="numeric" placeholder="请输入积分数" aria-label="积分数" required>
+        <input name="points" type="number" min="0.1" max="1000" step="0.1" inputmode="decimal" placeholder="请输入积分数" aria-label="积分数" required>
       </label>
       ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
       <div class="actions">
@@ -914,7 +915,7 @@ function submitCustomRuleForm(form) {
   const data = new FormData(form);
   const title = String(data.get('title') || '').trim();
   const pointsValue = Number(data.get('points'));
-  const points = Math.max(1, Math.min(1000, pointsValue || 0));
+  const points = Math.max(0.1, Math.min(1000, Math.round((pointsValue || 0) * 10) / 10));
 
   if (!title) {
     showCustomRuleModal(ruleType, '请先填写内容。');
@@ -2090,7 +2091,7 @@ modal.addEventListener('touchend', event => {
   literacyPreviewTouch = null;
 }, { passive: true });
 
-pointsText.textContent = state.points;
+  pointsText.textContent = formatPoints(state.points);
 pointsPill.classList.toggle('negative', state.points < 0);
 syncShellVisibility();
 render(state.selectedTab || 'points');

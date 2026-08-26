@@ -1,5 +1,5 @@
 import { PETS } from '../pets.js';
-import { getPetInfo, getPetStatus, iconSvg, metricBar, statCard } from './shared.js';
+import { formatPoints, getPetInfo, getPetStatus, iconSvg, metricBar, statCard } from './shared.js';
 
 function petImage(state, pet = state.pet || getPetInfo(state)) {
   const info = getPetInfo(state, pet.type);
@@ -23,7 +23,7 @@ export function petView(state) {
             <button class="pet-avatar ${collectedPets.has(pet.type) ? 'collected' : 'uncollected'}" data-pet-detail="${pet.type}" aria-label="查看${pet.name}详情">
               <img src="${pet.image}" alt="" />
               <strong>${pet.name}${pet.featured ? ' ⭐' : ''}</strong>
-              <small>${collectedPets.has(pet.type) ? '已收集' : `未收集 · ${pet.adoptCost}积分`}</small>
+              <small>${collectedPets.has(pet.type) ? '已收集' : `未收集 · ${formatPoints(pet.adoptCost)}积分`}</small>
             </button>
           `).join('')}
           </div>
@@ -47,7 +47,7 @@ export function petView(state) {
   const canAdoptSelected = !state.pet || state.pet.status === 'planet';
   const petStatusLine = selectedCurrentPet
     ? `${status.label} · Lv.${state.pet.level}`
-    : `${isCollected ? '已收集' : '未收集'} · 领养需要 ${activeInfo.adoptCost} 积分`;
+    : `${isCollected ? '已收集' : '未收集'} · 领养需要 ${formatPoints(activeInfo.adoptCost)} 积分`;
   const showPetMeters = petSection !== 'hall' || isCollected;
 
   return `
@@ -61,16 +61,16 @@ export function petView(state) {
             ${state.pet ? `
             <div class="care-actions side">
               <button class="care-card" data-action="feed" ${state.pet.status === 'planet' ? 'disabled' : ''}>
-                <span class="care-icon feed">${iconSvg('restaurant')}</span><strong>喂食</strong><small>10 积分</small>
+                <span class="care-icon feed">${iconSvg('restaurant')}</span><strong>喂食</strong><small>10.0 积分</small>
               </button>
               <button class="care-card primary" data-action="play" ${state.pet.status === 'planet' ? 'disabled' : ''}>
-                <span class="care-icon play">${iconSvg('game')}</span><strong>玩耍</strong><small>8 积分</small>
+                <span class="care-icon play">${iconSvg('game')}</span><strong>玩耍</strong><small>8.0 积分</small>
               </button>
               <button class="care-card" data-action="rest" ${state.pet.status === 'planet' ? 'disabled' : ''}>
-                <span class="care-icon sleep">${iconSvg('bedtime')}</span><strong>睡觉</strong><small>5 积分</small>
+                <span class="care-icon sleep">${iconSvg('bedtime')}</span><strong>睡觉</strong><small>5.0 积分</small>
               </button>
             </div>
-            ${state.pet.status === 'planet' ? `<button class="btn danger revive-wide" data-action="revive">复活 ${state.pet.reviveCost} 积分</button>` : ''}
+            ${state.pet.status === 'planet' ? `<button class="btn danger revive-wide" data-action="revive">复活 ${formatPoints(state.pet.reviveCost)} 积分</button>` : ''}
             ` : `
               <button class="btn adopt-wide" data-adopt="${activeInfo.type}">领养</button>
             `}

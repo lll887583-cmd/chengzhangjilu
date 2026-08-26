@@ -38,10 +38,15 @@ export function statCard(icon, value, label) {
   return `<div class="stat-card"><span class="stat-icon ${icon}">${iconSvg(icon)}</span><div><strong>${value}</strong><small>${label}</small></div></div>`;
 }
 
+export function formatPoints(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(1) : '0.0';
+}
+
 export function recordTitle(text) {
-  return text.replace(/(加分|减分)\s*(\d+)\s*积分/g, (_, action, points) => {
+  return text.replace(/(加分|减分)\s*(-?\d+(?:\.\d+)?)\s*积分/g, (_, action, points) => {
     const tone = action === '加分' ? 'positive' : 'negative';
-    return `<span class="record-delta ${tone}">${action} ${points} 积分</span>`;
+    return `<span class="record-delta ${tone}">${action} ${formatPoints(points)} 积分</span>`;
   });
 }
 
