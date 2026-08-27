@@ -56,6 +56,15 @@
 }
 
 * { box-sizing: border-box; }
+
+/* Keep tablet swipe gestures on the page vertical. Components that genuinely
+   need horizontal scrolling define their own overflow container locally. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
 [hidden] { display: none !important; }
 
 body {
