@@ -45,11 +45,16 @@
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  align-self: start;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--gutter);
   padding: 10px 18px;
+  padding-top: calc(10px + env(safe-area-inset-top));
   border-bottom: 1px solid #e5e7eb;
   background: #ffffff;
 }
