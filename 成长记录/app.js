@@ -226,27 +226,31 @@ function currentCalendarMonthLabel() {
   return `${monthBase.getMonth() + 1}月`;
 }
 
+function headerAddButton(dataset, label = '新增') {
+  return `<button class="header-add-button" type="button" ${dataset} aria-label="${label}">${label}</button>`;
+}
+
 function renderHeaderSwitch(tab) {
   const switchers = {
-    points: sectionSwitch([
+    points: `${sectionSwitch([
       { value: 'earn', label: '加分' },
       { value: 'deduct', label: '减分' }
-    ], state.pointsSection || 'earn', 'points-section', 'section-switch--header'),
+    ], state.pointsSection || 'earn', 'points-section', 'section-switch--header')}${headerAddButton('data-open-custom-rule="shared"')}`,
     shop: sectionSwitch([
       { value: 'exchange', label: '积分兑换' },
       { value: 'lottery', label: '积分抽奖' }
     ], state.shopSection || 'exchange', 'shop-section', 'section-switch--header'),
-    planning: sectionSwitch([
+    planning: `${sectionSwitch([
       { value: 'active', label: '任务中' },
       { value: 'done', label: '已完成' }
-    ], state.planningSection || 'active', 'planning-section', 'section-switch--header'),
+    ], state.planningSection || 'active', 'planning-section', 'section-switch--header')}${state.planningSection !== 'done' ? headerAddButton('data-open-plan-modal') : ''}`,
     calendar: `<div class="calendar-month-badge" aria-live="polite">${currentCalendarMonthLabel()}</div>`,
-    literacy: `<div class="status-badge" aria-live="polite">${currentLiteracyCountLabel()}</div>`,
+    literacy: `<div class="status-badge" aria-live="polite">${currentLiteracyCountLabel()}</div>${headerAddButton('data-literacy-create')}`,
     numbers: `<div class="status-badge" aria-live="polite">${currentNumbersCountLabel()}</div>`,
     addition: `<div class="status-badge" aria-live="polite">${currentAdditionLabel()}</div>`,
     pinyin: `<div class="status-badge" aria-live="polite">${currentPinyinLabel()}</div>`,
     letters: `<div class="status-badge" aria-live="polite">${currentLettersLabel()}</div>`,
-    words: `<div class="status-badge" aria-live="polite">${currentWordsLabel()}</div>`
+    words: `<div class="status-badge" aria-live="polite">${currentWordsLabel()}</div>${headerAddButton('data-word-create')}`
   };
 
   headerSwitch.innerHTML = switchers[tab] || '';
@@ -918,7 +922,8 @@ function deductCustomPoints(ruleId) {
 }
 
 function showCustomRuleModal(ruleType, errorMessage = '', editId = '') {
-  const isDeduct = ruleType === 'deduct';
+  const isShared = ruleType === 'shared';
+  const isDeduct = isShared ? state.pointsSection === 'deduct' : ruleType === 'deduct';
   const rules = isDeduct ? (state.customDeductRules || []) : (state.customPointRules || []);
   const editingRule = editId ? rules.find(rule => rule.id === editId) : null;
   const draftRuleType = editingRule?.planType === 'longTerm' || state.customRuleDraftType === 'longTerm' ? 'longTerm' : 'single';
@@ -928,7 +933,7 @@ function showCustomRuleModal(ruleType, errorMessage = '', editId = '') {
     <form class="modal-card custom-rule-modal" data-custom-rule-form="${ruleType}" data-custom-rule-edit="${editId}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
       <div class="custom-rule-head">
-        <h2>${editId ? (isDeduct ? '编辑减分项目' : '编辑加分项目') : (isDeduct ? '新增减分项目' : '新增加分项目')}</h2>
+        <h2>${editId ? (isDeduct ? '编辑减分项目' : '编辑加分项目') : (isShared ? '新增项目' : (isDeduct ? '新增减分项目' : '新增加分项目'))}</h2>
       </div>
       <label class="custom-rule-field">
         <span>内容</span>
@@ -938,13 +943,14 @@ function showCustomRuleModal(ruleType, errorMessage = '', editId = '') {
         <span>积分数</span>
         <input name="points" type="number" min="1" max="1000" step="1" inputmode="numeric" value="${editingRule ? editingRule.points : ''}" placeholder="请输入积分数" aria-label="积分数" required>
       </label>
-      <label class="custom-rule-field custom-rule-select-field"><span>类型</span><div class="plan-type-select" data-rule-type>
+      ${isShared ? `<label class="custom-rule-field custom-rule-select-field"><span>类型</span><div class="inline-radio-group" role="radiogroup" aria-label="项目类型">
+        <label class="inline-radio-option ${!isDeduct ? 'is-active' : ''}"><input type="radio" name="ruleAction" value="earn" ${!isDeduct ? 'checked' : ''}><span class="inline-radio-dot" aria-hidden="true"></span><span>加分</span></label>
+        <label class="inline-radio-option ${isDeduct ? 'is-active' : ''}"><input type="radio" name="ruleAction" value="deduct" ${isDeduct ? 'checked' : ''}><span class="inline-radio-dot" aria-hidden="true"></span><span>减分</span></label>
+      </div></label>` : ''}
+      <label class="custom-rule-field custom-rule-select-field"><span>时效</span><div class="inline-radio-group" data-rule-type role="radiogroup" aria-label="时效选项">
         <input type="hidden" name="planType" value="${draftRuleType}">
-        <button class="plan-type-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" data-rule-type-trigger><span data-rule-type-label>${draftRuleTypeLabel}</span><span class="plan-type-arrow" aria-hidden="true"></span></button>
-        <div class="plan-type-menu hidden" role="listbox" aria-label="项目类型" data-rule-type-menu>
-          <button class="plan-type-option ${draftRuleType === 'single' ? 'is-active' : ''}" type="button" role="option" aria-selected="${draftRuleType === 'single' ? 'true' : 'false'}" data-rule-type-option="single"><span class="plan-type-check" aria-hidden="true">✓</span><span>单次</span></button>
-          <button class="plan-type-option ${draftRuleType === 'longTerm' ? 'is-active' : ''}" type="button" role="option" aria-selected="${draftRuleType === 'longTerm' ? 'true' : 'false'}" data-rule-type-option="longTerm"><span class="plan-type-check" aria-hidden="true">✓</span><span>长期</span></button>
-        </div>
+        <button class="inline-radio-option ${draftRuleType === 'single' ? 'is-active' : ''}" type="button" role="radio" aria-checked="${draftRuleType === 'single' ? 'true' : 'false'}" data-rule-type-option="single"><span class="inline-radio-dot" aria-hidden="true"></span><span>单次</span></button>
+        <button class="inline-radio-option ${draftRuleType === 'longTerm' ? 'is-active' : ''}" type="button" role="radio" aria-checked="${draftRuleType === 'longTerm' ? 'true' : 'false'}" data-rule-type-option="longTerm"><span class="inline-radio-dot" aria-hidden="true"></span><span>长期</span></button>
       </div></label>
       ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
       <div class="actions">
@@ -952,12 +958,35 @@ function showCustomRuleModal(ruleType, errorMessage = '', editId = '') {
         <button class="btn ghost" type="button" data-action="close-modal">取消</button>
       </div>
     </form>`;
+  modal.querySelectorAll('[data-rule-action-option]').forEach(option => {
+    option.addEventListener('click', event => {
+      event.preventDefault();
+      const root = option.closest('[data-rule-action]');
+      const nextValue = option.dataset.ruleActionOption;
+      const hiddenInput = root?.querySelector('input[name="ruleAction"]');
+      if (hiddenInput) hiddenInput.value = nextValue;
+      root?.querySelectorAll('[data-rule-action-option]').forEach(item => {
+        const active = item.dataset.ruleActionOption === nextValue;
+        item.classList.toggle('is-active', active);
+        item.setAttribute('aria-checked', active ? 'true' : 'false');
+      });
+    });
+  });
+  modal.querySelectorAll('input[name="ruleAction"]').forEach(input => {
+    input.addEventListener('change', () => {
+      modal.querySelectorAll('input[name="ruleAction"]').forEach(item => {
+        item.closest('.inline-radio-option')?.classList.toggle('is-active', item.checked);
+      });
+    });
+  });
   setTimeout(() => modal.querySelector('input[name="title"]')?.focus(), 0);
 }
 
 function submitCustomRuleForm(form) {
-  const ruleType = form.dataset.customRuleForm === 'deduct' ? 'deduct' : 'earn';
   const data = new FormData(form);
+  const ruleType = form.dataset.customRuleForm === 'shared'
+    ? (data.get('ruleAction') === 'deduct' ? 'deduct' : 'earn')
+    : (form.dataset.customRuleForm === 'deduct' ? 'deduct' : 'earn');
   const title = String(data.get('title') || '').trim();
   const pointsValue = Number(data.get('points'));
   const points = Math.max(1, Math.min(1000, Math.round(pointsValue || 0)));
@@ -1580,8 +1609,8 @@ function openMy() {
 
 
 function closePlanTypeMenus() {
-  document.querySelectorAll('[data-plan-type-menu], [data-rule-type-menu]').forEach(menu => menu.classList.add('hidden'));
-  document.querySelectorAll('[data-plan-type-trigger], [data-rule-type-trigger]').forEach(trigger => trigger.setAttribute('aria-expanded', 'false'));
+  document.querySelectorAll('[data-plan-type-menu], [data-rule-type-menu], [data-rule-action-menu]').forEach(menu => menu.classList.add('hidden'));
+  document.querySelectorAll('[data-plan-type-trigger], [data-rule-type-trigger], [data-rule-action-trigger]').forEach(trigger => trigger.setAttribute('aria-expanded', 'false'));
 }
 
 function showPlanModal() {
@@ -1597,13 +1626,13 @@ function showPlanModal() {
       <div class="plan-form plan-form-modal">
         <label class="custom-rule-field"><span>内容</span><input name="title" type="text" maxlength="24" placeholder="例如：背 5 个单词" aria-label="任务名称" required></label>
         <label class="custom-rule-field"><span>积分数</span><input name="points" type="number" min="1" max="50" step="1" placeholder="请输入积分数" aria-label="任务积分" required></label>
-        <label class="custom-rule-field custom-rule-select-field"><span>类型</span><div class="plan-type-select" data-plan-type>
+        <label class="custom-rule-field custom-rule-select-field"><span>时效</span><div class="plan-type-select" data-plan-type>
           <input type="hidden" name="planType" value="${draftPlanType}">
           <button class="plan-type-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" data-plan-type-trigger>
             <span data-plan-type-label>${draftPlanTypeLabel}</span>
             <span class="plan-type-arrow" aria-hidden="true"></span>
           </button>
-          <div class="plan-type-menu hidden" role="listbox" aria-label="任务类型" data-plan-type-menu>
+          <div class="plan-type-menu hidden" role="listbox" aria-label="时效选项" data-plan-type-menu>
             <button class="plan-type-option ${draftPlanType === 'single' ? 'is-active' : ''}" type="button" role="option" aria-selected="${draftPlanType === 'single' ? 'true' : 'false'}" data-plan-type-option="single">
               <span class="plan-type-check" aria-hidden="true">✓</span>
               <span>单次</span>
@@ -1853,6 +1882,12 @@ function openCardActionMenu(card, trigger) {
   const kind = trigger?.dataset.cardMoreKind;
   const id = trigger?.dataset.cardMoreId;
   if (!kind || !id) return;
+  if (!cardActionMenu.classList.contains('hidden')
+    && activeCardAction?.kind === kind
+    && activeCardAction?.id === id) {
+    closeCardActionMenu();
+    return;
+  }
   activeCardAction = { kind, id };
   cardActionMenu.classList.remove('hidden');
   const editButton = cardActionMenu.querySelector('[data-card-action="edit"]');
@@ -1860,7 +1895,7 @@ function openCardActionMenu(card, trigger) {
   editButton.hidden = !editable;
   const rect = trigger.getBoundingClientRect();
   const gap = 8;
-  const isPointsCard = ['point', 'deduct', 'point-custom', 'deduct-custom', 'plan'].includes(kind);
+  const isPointsCard = ['point', 'deduct', 'point-custom', 'deduct-custom', 'plan', 'literacy', 'word'].includes(kind);
   const preferredLeft = isPointsCard ? rect.left - cardActionMenu.offsetWidth + rect.width : rect.right - cardActionMenu.offsetWidth;
   const left = Math.max(gap, Math.min(preferredLeft, window.innerWidth - cardActionMenu.offsetWidth - gap));
   const preferredTop = isPointsCard ? rect.bottom + gap : rect.top - cardActionMenu.offsetHeight - gap;
@@ -1870,11 +1905,6 @@ function openCardActionMenu(card, trigger) {
   cardActionMenu.style.left = `${left}px`;
   cardActionMenu.style.top = `${Math.max(gap, top)}px`;
 }
-
-app.addEventListener('pointerup', event => {
-  const trigger = event.target.closest?.('[data-card-more-kind]');
-  if (trigger) openCardActionMenu(trigger.closest('.literacy-card, .rule-card'), trigger);
-}, true);
 
 function getRuleCardFromEvent(event) {
   const card = event.target.closest?.('.rule-card[data-rule-context-kind]');
@@ -1907,10 +1937,22 @@ app.addEventListener('touchstart', event => {
 app.addEventListener('touchmove', event => {
   if (!ruleLongPressStart || event.touches.length !== 1) return cancelRuleLongPress();
   const [touch] = event.touches;
-  if (Math.hypot(touch.clientX - ruleLongPressStart.clientX, touch.clientY - ruleLongPressStart.clientY) > 10) cancelRuleLongPress();
+  if (Math.hypot(touch.clientX - ruleLongPressStart.clientX, touch.clientY - ruleLongPressStart.clientY) > 10) {
+    cancelRuleLongPress();
+    closeCardActionMenu();
+    closeRuleContextMenu();
+  }
 }, { passive: true });
 app.addEventListener('touchend', cancelRuleLongPress, { passive: true });
 app.addEventListener('touchcancel', cancelRuleLongPress, { passive: true });
+
+// Both the page and inner scroll containers can scroll on touch devices.
+// Close floating card menus as soon as scrolling starts so they never cover
+// content after the user moves to another part of the list.
+document.addEventListener('scroll', () => {
+  closeCardActionMenu();
+  closeRuleContextMenu();
+}, { passive: true, capture: true });
 
 app.addEventListener('contextmenu', event => {
   const card = getRuleCardFromEvent(event);
@@ -2067,6 +2109,21 @@ document.addEventListener('click', event => {
   const target = event.target.closest('button');
   if (!target) return;
 
+  if (target.dataset.ruleActionOption) {
+    const root = target.closest('[data-rule-action]');
+    const hiddenInput = root?.querySelector('input[name="ruleAction"]');
+    const label = root?.querySelector('[data-rule-action-label]');
+    const nextValue = target.dataset.ruleActionOption;
+    if (hiddenInput) hiddenInput.value = nextValue;
+    if (label) label.textContent = nextValue === 'deduct' ? '减分' : '加分';
+    root?.querySelectorAll('[data-rule-action-option]').forEach(option => {
+      const active = option.dataset.ruleActionOption === nextValue;
+      option.classList.toggle('is-active', active);
+      option.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+    return;
+  }
+
   if (target.dataset.planTypeTrigger !== undefined) {
     const root = target.closest('[data-plan-type]');
     const menu = root?.querySelector('[data-plan-type-menu]');
@@ -2082,6 +2139,18 @@ document.addEventListener('click', event => {
   if (target.dataset.ruleTypeTrigger !== undefined) {
     const root = target.closest('[data-rule-type]');
     const menu = root?.querySelector('[data-rule-type-menu]');
+    const willOpen = menu?.classList.contains('hidden');
+    closePlanTypeMenus();
+    if (menu && willOpen) {
+      menu.classList.remove('hidden');
+      target.setAttribute('aria-expanded', 'true');
+    }
+    return;
+  }
+
+  if (target.dataset.ruleActionTrigger !== undefined) {
+    const root = target.closest('[data-rule-action]');
+    const menu = root?.querySelector('[data-rule-action-menu]');
     const willOpen = menu?.classList.contains('hidden');
     closePlanTypeMenus();
     if (menu && willOpen) {
@@ -2126,6 +2195,7 @@ document.addEventListener('click', event => {
     closePlanTypeMenus();
     return;
   }
+
 
   if (target.dataset.tab) goToTab(target.dataset.tab);
   if (target.dataset.tabJump) jumpToTab(target.dataset.tabJump);

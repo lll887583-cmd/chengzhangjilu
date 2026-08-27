@@ -208,6 +208,86 @@
   font-weight: 400;
 }
 .custom-rule-select-field { min-width: 0; }
+.inline-radio-group,
+.custom-rule-select-field .plan-type-select {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-height: 52px;
+}
+.inline-radio-group input[type="hidden"] { display: none; }
+.inline-radio-option input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
+.inline-radio-option,
+.custom-rule-select-field .plan-type-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 0;
+  border: 0;
+  color: var(--on-surface-variant);
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.inline-radio-dot,
+.custom-rule-select-field .plan-type-check {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  border: 2px solid #98a2b3;
+  border-radius: 50%;
+  color: transparent;
+  font-size: 0;
+  line-height: 1;
+}
+.inline-radio-option.is-active,
+.inline-radio-option:has(input:checked),
+.custom-rule-select-field .plan-type-option.is-active { color: var(--primary); }
+.inline-radio-option.is-active .inline-radio-dot,
+.inline-radio-option:has(input:checked) .inline-radio-dot,
+.custom-rule-select-field .plan-type-option.is-active .plan-type-check {
+  border-color: var(--primary);
+  color: #fff;
+  background: var(--primary);
+}
+.custom-rule-select-field .plan-type-option.is-active .plan-type-check::after {
+  content: '✓';
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+.inline-radio-option.is-active .inline-radio-dot::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  transform: translate(-50%, -54%);
+}
+.inline-radio-option:has(input:checked) .inline-radio-dot::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  transform: translate(-50%, -54%);
+}
+.custom-rule-select-field .plan-type-trigger { display: none; }
+.custom-rule-select-field .plan-type-menu { position: static; display: flex; gap: 28px; padding: 0; border: 0; box-shadow: none; background: transparent; }
+.custom-rule-select-field .plan-type-menu.hidden { display: flex; }
+.custom-rule-select-field:has(.plan-type-menu:not(.hidden)) {
+  position: relative;
+  z-index: 30;
+}
 
 .plan-modal {
   position: relative;

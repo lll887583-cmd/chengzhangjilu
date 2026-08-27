@@ -100,7 +100,6 @@ export function wordsView(state) {
     <section class="literacy-page">
       <section class="literacy-grid words-grid">
         ${items.map(wordCard).join('')}
-        ${wordAddCard()}
       </section>
     </section>`;
 }

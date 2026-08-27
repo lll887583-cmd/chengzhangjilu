@@ -64,9 +64,6 @@ export function pointsView(state) {
           </button>
         </article>
       `).join('')}
-        <button class="rule-card rule-card-add" type="button" data-open-custom-rule="${isDeduct ? 'deduct' : 'earn'}" aria-label="${isDeduct ? '新增减分项目' : '新增加分项目'}">
-          <span class="rule-card-add-icon">${iconSvg('add')}</span>
-        </button>
       </div>
     </section>`;
 }

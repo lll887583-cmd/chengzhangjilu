@@ -31,10 +31,6 @@ export function planningView(state) {
           <p>${planningSection === 'done' ? '完成学习任务后，会自动放到这里。' : '单次任务会显示在这里，长期任务会显示到积分-加分。'}</p>
         </div>
       `}
-      ${planningSection === 'active' ? `
-        <button class="plan-add-card rule-card-add" type="button" data-open-plan-modal aria-label="新增学习任务">
-          <span class="rule-card-add-icon">${iconSvg('add')}</span>
-        </button>
-      ` : ''}</div>
+      </div>
     </section>`;
 }

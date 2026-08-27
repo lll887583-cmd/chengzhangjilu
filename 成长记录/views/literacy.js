@@ -42,7 +42,6 @@ export function literacyView(state) {
     <section class="literacy-page">
       <section class="literacy-grid">
         ${items.map(literacyCard).join('')}
-        ${literacyAddCard()}
       </section>
     </section>`;
 }
