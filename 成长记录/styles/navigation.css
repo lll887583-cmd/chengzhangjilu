@@ -1,14 +1,15 @@
 /* Sidebar navigation and mobile drawer */
 .side-nav {
-  position: sticky;
+  position: fixed;
   /* Keep the first navigation item below the sticky topbar while scrolling. */
-  top: 62px;
+  top: var(--topbar-height);
+  left: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   align-content: stretch;
-  width: max-content;
+  width: 242px;
   gap: 18px;
-  height: calc(100vh - 62px);
+  height: calc(100vh - var(--topbar-height));
   padding: 12px 10px 0;
   border-right: 1px solid #e5e7eb;
   border-radius: 0;
@@ -53,8 +54,10 @@
 
 .side-nav-menu {
   min-height: 0;
+  /* The navigation owns its own adaptive-height scroll area. */
   overflow-y: auto;
   overflow-x: visible;
+  overscroll-behavior-y: contain;
   padding-bottom: 16px;
   scrollbar-width: none;
 }
@@ -235,7 +238,7 @@
 }
 
 .side-nav.collapsed {
-  width: max-content;
+  width: 72px;
   padding-left: 8px;
   padding-right: 8px;
 }

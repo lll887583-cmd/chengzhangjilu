@@ -53,6 +53,7 @@
   --space-xl: 64px;
   --gutter: 16px;
   --depth: 0 6px 0;
+  --topbar-height: 62px;
 }
 
 * { box-sizing: border-box; }

@@ -3,10 +3,8 @@
   width: 100%;
   min-height: 100vh;
   margin: 0 auto;
-  padding: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 0;
+  padding: var(--topbar-height) 0 0;
+  display: block;
 }
 
 .app-shell.logged-out {
@@ -17,18 +15,18 @@
 .workspace-shell {
   min-width: 0;
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-columns: 242px minmax(0, 1fr);
   gap: 0;
   align-items: stretch;
-  min-height: calc(100vh - 90px);
   transition: grid-template-columns 0.22s ease;
 }
 
 .app-shell.side-collapsed .workspace-shell {
-  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
 }
 
 .content-shell {
+  grid-column: 2;
   min-width: 0;
   min-height: 0;
   background: #f3f4f6;
@@ -45,8 +43,11 @@
 }
 
 .topbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 30;
   align-self: start;
   display: grid;

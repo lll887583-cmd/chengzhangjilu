@@ -147,6 +147,7 @@ function renderNavigation(activeTab) {
   sideNavToggle?.setAttribute('aria-pressed', navCollapsed ? 'true' : 'false');
   sideNavToggle?.setAttribute('aria-label', navCollapsed ? '展开主导航' : '收起主导航');
   sideNavMenu.innerHTML = renderNavMenu(activeTab, 'desktop');
+  sideNavMenu.scrollTop = 0;
   navDrawerMenu.innerHTML = `${renderNavMenu(activeTab, 'drawer')}${DRAWER_EXTRA_ITEMS.map(actionButton).join('')}`;
 }
 
