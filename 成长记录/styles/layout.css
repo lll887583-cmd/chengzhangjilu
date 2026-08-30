@@ -7,6 +7,10 @@
   display: block;
 }
 
+:root {
+  --side-nav-width: 154px;
+}
+
 .app-shell.logged-out {
   width: 100%;
   padding-bottom: var(--space-md);
@@ -15,14 +19,14 @@
 .workspace-shell {
   min-width: 0;
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-columns: var(--side-nav-width) minmax(0, 1fr);
   gap: 0;
   align-items: stretch;
   transition: grid-template-columns 0.22s ease;
 }
 
 .app-shell.side-collapsed .workspace-shell {
-  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
 }
 
 .content-shell {

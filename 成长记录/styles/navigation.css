@@ -1,13 +1,13 @@
 /* Sidebar navigation and mobile drawer */
 .side-nav {
-  position: sticky;
+  position: fixed;
   /* Keep the first navigation item below the sticky topbar while scrolling. */
   top: var(--topbar-height);
   left: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   align-content: stretch;
-  width: max-content;
+  width: var(--side-nav-width);
   gap: 18px;
   height: calc(100vh - var(--topbar-height));
   padding: 12px 10px 0;
