@@ -52,6 +52,7 @@
   left: 0;
   right: 0;
   width: 100%;
+  height: var(--topbar-height);
   z-index: 30;
   align-self: start;
   display: grid;
