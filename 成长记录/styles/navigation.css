@@ -1,20 +1,23 @@
 /* Sidebar navigation and mobile drawer */
 .side-nav {
-  position: fixed;
+  position: sticky;
   /* Keep the first navigation item below the sticky topbar while scrolling. */
   top: var(--topbar-height);
   left: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   align-content: stretch;
-  width: 242px;
+  width: max-content;
   gap: 18px;
   height: calc(100vh - var(--topbar-height));
   padding: 12px 10px 0;
   border-right: 1px solid #e5e7eb;
   border-radius: 0;
   background: #ffffff;
-  overflow: hidden;
+  /* Do not clip the navigation buttons at the sidebar edge. The menu below
+     owns vertical scrolling; clipping here makes active backgrounds look cut
+     off on the right side. */
+  overflow: visible;
   isolation: isolate;
   z-index: 12;
   box-shadow: none;
@@ -56,13 +59,14 @@
   min-height: 0;
   /* The navigation owns its own adaptive-height scroll area. */
   overflow-y: auto;
-  overflow-x: visible;
+  overflow-x: hidden;
   overscroll-behavior-y: contain;
   padding-bottom: 16px;
   scrollbar-width: none;
 }
 
-.side-nav-menu::-webkit-scrollbar:horizontal {
+.side-nav-menu::-webkit-scrollbar {
+  width: 0;
   height: 0;
 }
 
@@ -123,7 +127,7 @@
   padding: 0 14px;
   display: flex !important;
   flex-direction: row !important;
-  border-radius: 8px;
+  border-radius: 6px;
   align-items: center;
   gap: 12px;
   color: #495467;
@@ -133,6 +137,11 @@
   font-size: 18px;
   font-weight: 500;
   justify-content: flex-start;
+}
+
+.side-nav-menu button span,
+.nav-drawer-menu button span {
+  white-space: nowrap;
 }
 
 .side-nav-menu button svg,
@@ -148,6 +157,10 @@
 .nav-parent-btn.active {
   color: #1758a6;
   background: #e6f4ff;
+  /* Set all four corners explicitly; do not let a button/browser default or
+     an inherited corner value create an asymmetric active panel. */
+  border-radius: 6px !important;
+  overflow: visible;
 }
 
 .side-nav-menu button.nav-tone-green.active,
@@ -260,7 +273,7 @@
   min-height: 46px;
   padding: 0 !important;
   justify-content: center !important;
-  border-radius: 14px;
+  border-radius: 6px;
   position: relative;
   overflow: visible;
 }
