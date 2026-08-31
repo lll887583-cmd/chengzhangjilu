@@ -23,13 +23,13 @@ export const DEDUCT_RULES = [
 ];
 
 export const REWARDS = [
-  { id: 'snacks', icon: 'cookie', name: '买 2 个零食', cost: 20 },
-  { id: 'toy', icon: 'toys', name: '买 1 个玩具', cost: 30 },
-  { id: 'kfc', icon: 'restaurant', name: '吃肯德基', cost: 40 },
-  { id: 'aeon', icon: 'celebration', name: '去永旺玩', cost: 90 },
-  { id: 'tv', icon: 'tv', name: '看 40 分钟电视', cost: 80 },
-  { id: 'all-star-park', icon: 'celebration', name: '全明星公园', cost: 450 },
-  { id: 'rainbow-park', icon: 'celebration', name: '彩虹乐园', cost: 350 }
+  { id: 'snacks', icon: 'cookie', name: '买 2 个零食', cost: 10 },
+  { id: 'toy', icon: 'toys', name: '买 1 个玩具', cost: 15 },
+  { id: 'kfc', icon: 'restaurant', name: '吃肯德基', cost: 20 },
+  { id: 'aeon', icon: 'celebration', name: '去永旺玩', cost: 40 },
+  { id: 'tv', icon: 'tv', name: '看 40 分钟电视', cost: 40 },
+  { id: 'all-star-park', icon: 'celebration', name: '全明星公园', cost: 120 },
+  { id: 'rainbow-park', icon: 'celebration', name: '彩虹乐园', cost: 100 }
 ];
 
 export const LOTTERY = [

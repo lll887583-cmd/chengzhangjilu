@@ -1450,7 +1450,7 @@ function writeOffReward(exchangeId) {
 }
 
 function drawLottery() {
-  if (!spendPoints(20)) return;
+  if (!spendPoints(10)) return;
   const total = LOTTERY.reduce((sum, item) => sum + item.weight, 0);
   let pick = Math.random() * total;
   const reward = LOTTERY.find(item => (pick -= item.weight) <= 0) || LOTTERY[0];
@@ -1472,7 +1472,7 @@ function drawLottery() {
     });
   }
 
-  addRecord(state, `积分抽奖：${reward.name}`, (reward.type === 'points' ? reward.points : 0) - 20, { category: 'shop' });
+  addRecord(state, `积分抽奖：${reward.name}`, (reward.type === 'points' ? reward.points : 0) - 10, { category: 'shop' });
 
   let toastMessage = `抽到了：${reward.name}`;
   if (reward.type === 'points' && reward.points) {
