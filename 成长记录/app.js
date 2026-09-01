@@ -228,7 +228,19 @@ function currentCalendarMonthLabel() {
 }
 
 function headerAddButton(dataset, label = '新增') {
-  return `<button class="header-add-button" type="button" ${dataset} aria-label="${label}">${label}</button>`;
+  return `<button class="header-add-button" type="button" ${dataset} aria-label="${label}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" fill="currentColor"/></svg></button>`;
+}
+
+function pointsSortButton() {
+  const labels = { asc: '积分正序', desc: '积分倒序', latest: '最新新增', manual: '手动排序' };
+  return `<div class="points-sort-control"><button class="points-sort-button" type="button" data-sort-toggle aria-label="排序" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v13.17l-2.59-2.58L3 16l5 5 5-5-1.41-1.41L9 17.17V4H7Zm8 0-5 5 1.41 1.41L14 7.83V21h2V7.83l2.59 2.58L20 9l-5-5Z" fill="currentColor"/></svg></button><div class="points-sort-menu hidden" data-sort-menu>${Object.entries(labels).map(([value, label]) => `<button type="button" data-points-sort="${value}">${label}</button>`).join('')}</div></div>`;
+}
+
+function closePointsSortMenu() {
+  document.querySelectorAll('[data-sort-menu]:not(.hidden)').forEach(menu => {
+    menu.classList.add('hidden');
+    menu.parentElement?.querySelector('[data-sort-toggle]')?.setAttribute('aria-expanded', 'false');
+  });
 }
 
 function renderHeaderSwitch(tab) {
@@ -236,7 +248,7 @@ function renderHeaderSwitch(tab) {
     points: `${sectionSwitch([
       { value: 'earn', label: '加分' },
       { value: 'deduct', label: '减分' }
-    ], state.pointsSection || 'earn', 'points-section', 'section-switch--header')}${headerAddButton('data-open-custom-rule="shared"')}`,
+    ], state.pointsSection || 'earn', 'points-section', 'section-switch--header')}${pointsSortButton()}${headerAddButton('data-open-custom-rule="shared"')}`,
     shop: sectionSwitch([
       { value: 'exchange', label: '积分兑换' },
       { value: 'lottery', label: '积分抽奖' }
@@ -1002,12 +1014,16 @@ function submitCustomRuleForm(form) {
   }
 
   const editId = form.dataset.customRuleEdit || '';
+  const existingRule = editId
+    ? [...(state.customPointRules || []), ...(state.customDeductRules || [])].find(rule => rule.id === editId)
+    : null;
   const nextRule = {
     id: editId || `custom-${ruleType}-${Date.now()}`,
     title,
     points,
     description: '',
-    planType: data.get('planType') === 'longTerm' ? 'longTerm' : 'single'
+    planType: data.get('planType') === 'longTerm' ? 'longTerm' : 'single',
+    createdAt: existingRule?.createdAt || Date.now()
   };
   const collection = ruleType === 'deduct' ? state.customDeductRules : state.customPointRules;
   if (editId) {
@@ -2070,7 +2086,69 @@ pointsPill.addEventListener('click', event => {
   openRecordsDetail();
 });
 
+let ruleDrag = null;
+document.addEventListener('pointerdown', event => {
+  if (!event.target.closest?.('.points-sort-control')) closePointsSortMenu();
+  const card = event.target.closest?.('.rule-card');
+  if (!card || event.target.closest('button')) return;
+  const list = card.closest('.rule-list');
+  ruleDrag = { card, list, startX: event.clientX, startY: event.clientY, timer: setTimeout(() => {
+    ruleDrag.active = true;
+    card.classList.add('is-dragging');
+    card.style.touchAction = 'none';
+    card.setPointerCapture?.(event.pointerId);
+    suppressRuleCardClickUntil = Date.now() + 1000;
+  }, 450), pointerId: event.pointerId };
+});
+document.addEventListener('pointermove', event => {
+  if (!ruleDrag) return;
+  if (!ruleDrag.active) {
+    if (Math.hypot(event.clientX - ruleDrag.startX, event.clientY - ruleDrag.startY) > 10) {
+      clearTimeout(ruleDrag.timer);
+      ruleDrag = null;
+    }
+    return;
+  }
+  const sibling = [...ruleDrag.list.querySelectorAll('.rule-card:not(.is-dragging)')]
+    .find(item => {
+      const rect = item.getBoundingClientRect();
+      const withinRow = event.clientY >= rect.top && event.clientY <= rect.bottom;
+      return withinRow ? event.clientX < rect.left + rect.width / 2 : event.clientY < rect.top;
+    });
+  if (sibling) ruleDrag.list.insertBefore(ruleDrag.card, sibling);
+  else ruleDrag.list.append(ruleDrag.card);
+});
+document.addEventListener('pointerup', () => {
+  if (!ruleDrag) return;
+  clearTimeout(ruleDrag.timer);
+  if (ruleDrag.active) {
+    const ids = [...ruleDrag.list.querySelectorAll('.rule-card')].map(card => card.dataset.ruleId);
+    const key = state.pointsSection === 'deduct' ? 'deductRuleOrder' : 'pointRuleOrder';
+    state[key] = ids;
+    persist();
+    ruleDrag.card.classList.remove('is-dragging');
+    ruleDrag.card.style.touchAction = '';
+    suppressRuleCardClickUntil = Date.now() + 500;
+  }
+  ruleDrag = null;
+});
+
 document.addEventListener('click', event => {
+  const sortToggle = event.target.closest?.('[data-sort-toggle]');
+  if (sortToggle) {
+    const menu = sortToggle.parentElement?.querySelector('[data-sort-menu]');
+    menu?.classList.toggle('hidden');
+    sortToggle.setAttribute('aria-expanded', menu?.classList.contains('hidden') ? 'false' : 'true');
+    return;
+  }
+  if (!event.target.closest?.('.points-sort-control')) closePointsSortMenu();
+  const sortOption = event.target.closest?.('[data-points-sort]');
+  if (sortOption) {
+    state.pointsSort = sortOption.dataset.pointsSort;
+    persist();
+    render('points');
+    return;
+  }
   const cardMoreTrigger = event.target.closest?.('[data-card-more-kind]');
   if (cardMoreTrigger) {
     openCardActionMenu(cardMoreTrigger.closest('.literacy-card, .rule-card'), cardMoreTrigger);
@@ -2315,6 +2393,13 @@ document.addEventListener('click', event => {
     });
   }
 });
+
+document.addEventListener('pointermove', event => {
+  if (event.pointerType === 'touch') closePointsSortMenu();
+}, { passive: true });
+
+document.addEventListener('touchmove', closePointsSortMenu, { passive: true });
+window.addEventListener('scroll', closePointsSortMenu, { passive: true });
 
 document.addEventListener('submit', event => {
   if (event.target.matches('[data-plan-form]')) {

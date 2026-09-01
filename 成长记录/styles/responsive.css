@@ -47,13 +47,35 @@
   .topbar { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
   .header-switch {
     width: 100%;
+    min-height: 72px;
     justify-content: center;
     padding: 0;
+    box-sizing: border-box;
   }
   .header-switch .section-switch {
     width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .header-switch .section-switch--header {
+    position: absolute;
+    left: 0;
+    right: auto;
+    width: max-content;
+    grid-template-columns: repeat(2, max-content);
+    gap: 10px;
+    justify-self: start;
+  }
+  .header-switch .points-sort-control {
+    position: absolute;
+    right: 64px;
+    top: 50%;
+  }
+  .header-switch .points-sort-button {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+  }
+  .header-switch .header-add-button { top: 50%; transform: translateY(-50%); }
   .section-switch {
     width: 100%;
     display: grid;
@@ -63,9 +85,12 @@
   .section-switch button { min-height: 44px; border-width: 2px; border-radius: 12px; font-size: 14px; }
   .section-switch--header { gap: 0; }
   .section-switch--header {
-    width: 160px;
-    grid-template-columns: repeat(2, 80px);
+    width: max-content;
+    grid-template-columns: repeat(2, max-content);
+    gap: 10px;
     justify-self: center;
+    top: 50%;
+    transform: translateY(-50%);
   }
   .section-switch--header button { min-height: 44px; border-width: 0; border-radius: 0; font-size: 20px; }
   .section-title-card { align-items: start; flex-direction: column; }

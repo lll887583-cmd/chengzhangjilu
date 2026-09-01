@@ -141,6 +141,9 @@ export function normalizeState(state) {
   state.customDeductRules = Array.isArray(state.customDeductRules) ? state.customDeductRules : [];
   state.hiddenPointRuleIds = Array.isArray(state.hiddenPointRuleIds) ? state.hiddenPointRuleIds : [];
   state.hiddenDeductRuleIds = Array.isArray(state.hiddenDeductRuleIds) ? state.hiddenDeductRuleIds : [];
+  state.pointRuleOrder = Array.isArray(state.pointRuleOrder) ? state.pointRuleOrder : [];
+  state.deductRuleOrder = Array.isArray(state.deductRuleOrder) ? state.deductRuleOrder : [];
+  state.pointsSort = ['manual', 'asc', 'desc', 'latest'].includes(state.pointsSort) ? state.pointsSort : 'manual';
   state.petSection ||= 'cloud';
   state.calendarMonth ||= null;
   if (state.selectedTab === 'pet') state.selectedTab = 'points';
@@ -165,7 +168,8 @@ export function normalizeState(state) {
     title: rule.title || '自定义任务',
     points: Math.max(1, Math.round(Number(rule.points) || 1)),
     description: rule.description || '',
-    planType: rule.planType === 'longTerm' ? 'longTerm' : 'single'
+    planType: rule.planType === 'longTerm' ? 'longTerm' : 'single',
+    createdAt: Number(rule.createdAt) || Date.now() + index
   }));
   state.literacyItems = state.literacyItems.map((item, index) => ({
     id: item.id || `literacy-${item.createdAt || Date.now()}-${index}`,
@@ -233,7 +237,8 @@ export function normalizeState(state) {
     title: rule.title || '自定义减分',
     points: Math.max(1, Math.round(Number(rule.points) || 1)),
     description: rule.description || '',
-    planType: rule.planType === 'longTerm' ? 'longTerm' : 'single'
+    planType: rule.planType === 'longTerm' ? 'longTerm' : 'single',
+    createdAt: Number(rule.createdAt) || Date.now() + index
   }));
   state.exchangedRewards = state.exchangedRewards.map((reward, index) => ({
     ...reward,

@@ -53,7 +53,7 @@
   right: 0;
   width: 100%;
   height: var(--topbar-height);
-  z-index: 30;
+  z-index: 100;
   align-self: start;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -152,7 +152,7 @@ p { color: var(--on-surface-variant); }
   border-radius: var(--radius-full);
   color: var(--on-secondary-container);
   background: var(--secondary-container);
-  box-shadow: var(--depth) var(--shadow-yellow);
+  box-shadow: 0 4px 0 var(--shadow-yellow);
   font-family: "Quicksand", system-ui, sans-serif;
   font-size: 22px;
   font-weight: 700;
@@ -180,7 +180,7 @@ p { color: var(--on-surface-variant); }
   border-color: #9ca3af;
   color: #4b5563;
   background: #e5e7eb;
-  box-shadow: var(--depth) #9ca3af;
+  box-shadow: 0 4px 0 #9ca3af;
 }
 
 .screen { animation: rise 0.28s ease both; }
@@ -203,6 +203,7 @@ p { color: var(--on-surface-variant); }
 
 .header-switch {
   position: relative;
+  z-index: 30;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -212,18 +213,21 @@ p { color: var(--on-surface-variant); }
 .header-add-button {
   position: absolute;
   right: 0;
-  min-height: 44px;
-  padding: 0 22px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: 16px;
   color: var(--accent-blue);
   background: var(--accent-blue-soft);
-  box-shadow: 0 3px 0 var(--shadow-blue);
+  box-shadow: 0 4px 0 var(--shadow-blue);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
 }
+.header-add-button svg { width: 32px; height: 32px; display: block; margin: auto; }
 .header-add-button:active { transform: translateY(3px); box-shadow: none; }
+.header-switch .points-sort-control { position: absolute; right: 64px; top: 50%; transform: translateY(-50%); }
 .header-switch:empty { display: none; }
 .section-switch {
   width: auto;
@@ -346,7 +350,7 @@ p { color: var(--on-surface-variant); }
   border-radius: 14px;
   color: var(--on-primary-container);
   background: #bdf58b;
-  box-shadow: 0 5px 0 var(--shadow-green);
+  box-shadow: 0 4px 0 var(--shadow-green);
   transition: transform .14s ease, box-shadow .14s ease;
 }
 .avatar-btn:active {
