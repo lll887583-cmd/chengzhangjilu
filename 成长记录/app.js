@@ -1,7 +1,7 @@
 import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260826k';
 import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
 import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602e';
-import { additionView, calendarView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260826n';
+import { additionView, calendarView, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260826n';
 import { formatPoints, iconSvg } from './views/shared.js?v=20260826l';
 
 // Interaction controller for the static demo.
@@ -71,6 +71,7 @@ const views = {
   letters: () => lettersView(state),
   words: () => wordsView(state),
   shop: () => shopView(state),
+  goals: () => goalsView(state),
   my: () => myView(state)
 };
 
@@ -88,7 +89,8 @@ const NAV_ITEMS = [
   ...LEARNING_ITEMS,
   { value: 'planning', label: '任务', ...SIDEBAR_ICONS.planning },
   { value: 'calendar', label: '日历', ...SIDEBAR_ICONS.calendar },
-  { value: 'shop', label: '商城', ...SIDEBAR_ICONS.shop }
+  { value: 'shop', label: '商城', ...SIDEBAR_ICONS.shop },
+  { value: 'goals', label: '目标', viewBox: '0 0 24 24', icon: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>' }
 ];
 
 const DRAWER_EXTRA_ITEMS = [

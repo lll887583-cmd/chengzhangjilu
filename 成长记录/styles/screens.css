@@ -211,6 +211,14 @@
   display: grid;
   gap: 10px;
 }
+.goals-page { display: grid; gap: 20px; }
+.goals-intro { padding: 8px 4px 0; }
+.goals-intro h2 { margin: 0 0 6px; font-size: clamp(28px, 4vw, 38px); }
+.goals-intro p { margin: 0; color: #6b7280; font-weight: 400; }
+.goals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 16px; }
+.goal-card { padding: 22px; }
+.goal-card h3 { margin: 0 0 14px; color: var(--primary); font-size: 23px; }
+.goal-card ul { margin: 0; padding-left: 1.35em; display: grid; gap: 11px; line-height: 1.55; font-weight: 400; }
 .record-revert-button { position: absolute; right: 18px; top: 50%; width: 36px; height: 36px; transform: translateY(-50%); border: 0; border-radius: 50%; background: #eef0f2; color: #8a929b; font-size: 22px; font-weight: 800; cursor: pointer; }
 .record-revert-button:hover { background: #e1e5e9; color: #66707a; }
 .revert-question { margin: 20px 0; color: var(--primary); font-size: 34px; font-weight: 900; text-align: center; }
