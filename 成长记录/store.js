@@ -143,7 +143,7 @@ export function normalizeState(state) {
   state.hiddenDeductRuleIds = Array.isArray(state.hiddenDeductRuleIds) ? state.hiddenDeductRuleIds : [];
   state.pointRuleOrder = Array.isArray(state.pointRuleOrder) ? state.pointRuleOrder : [];
   state.deductRuleOrder = Array.isArray(state.deductRuleOrder) ? state.deductRuleOrder : [];
-  state.pointsSort = ['manual', 'asc', 'desc', 'latest'].includes(state.pointsSort) ? state.pointsSort : 'manual';
+  state.pointsSort = ['asc', 'desc', 'latest'].includes(state.pointsSort) ? state.pointsSort : 'latest';
   state.petSection ||= 'cloud';
   state.calendarMonth ||= null;
   if (state.selectedTab === 'pet') state.selectedTab = 'points';
@@ -169,7 +169,8 @@ export function normalizeState(state) {
     points: Math.max(1, Math.round(Number(rule.points) || 1)),
     description: rule.description || '',
     planType: rule.planType === 'longTerm' ? 'longTerm' : 'single',
-    createdAt: Number(rule.createdAt) || Date.now() + index
+    createdAt: Number(rule.createdAt) || Date.now() + index,
+    updatedAt: Number(rule.updatedAt) || Number(rule.createdAt) || Date.now() + index
   }));
   state.literacyItems = state.literacyItems.map((item, index) => ({
     id: item.id || `literacy-${item.createdAt || Date.now()}-${index}`,
@@ -238,7 +239,8 @@ export function normalizeState(state) {
     points: Math.max(1, Math.round(Number(rule.points) || 1)),
     description: rule.description || '',
     planType: rule.planType === 'longTerm' ? 'longTerm' : 'single',
-    createdAt: Number(rule.createdAt) || Date.now() + index
+    createdAt: Number(rule.createdAt) || Date.now() + index,
+    updatedAt: Number(rule.updatedAt) || Number(rule.createdAt) || Date.now() + index
   }));
   state.exchangedRewards = state.exchangedRewards.map((reward, index) => ({
     ...reward,

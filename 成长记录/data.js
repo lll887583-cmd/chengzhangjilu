@@ -124,7 +124,7 @@ export const defaultState = {
   hiddenDeductRuleIds: [],
   pointRuleOrder: [],
   deductRuleOrder: [],
-  pointsSort: 'manual',
+  pointsSort: 'latest',
   petSection: 'cloud',
   calendarMonth: null,
   previewPet: 'sonicHummingbird',

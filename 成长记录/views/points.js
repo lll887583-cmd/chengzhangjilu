@@ -4,7 +4,7 @@ import { formatPoints, iconSvg } from './shared.js?v=20260826f';
 function sortRules(rules, savedOrder, mode) {
   if (mode === 'asc') return [...rules].sort((left, right) => left.points - right.points);
   if (mode === 'desc') return [...rules].sort((left, right) => right.points - left.points);
-  if (mode === 'latest') return [...rules].sort((left, right) => (right.createdAt || 0) - (left.createdAt || 0));
+  if (mode === 'latest') return [...rules].sort((left, right) => (right.updatedAt || right.createdAt || 0) - (left.updatedAt || left.createdAt || 0));
   const order = new Map(savedOrder.map((id, index) => [id, index]));
   return [...rules].sort((left, right) => {
     const leftOrder = order.get(left.id);
@@ -28,6 +28,7 @@ export function pointsView(state) {
       points: rule.points,
       description: rule.description || '',
       createdAt: rule.createdAt || 0,
+      updatedAt: rule.updatedAt || rule.createdAt || 0,
       planType: rule.planType === 'longTerm' ? 'longTerm' : 'single',
       order: 1000 + index
     }));
@@ -48,7 +49,7 @@ export function pointsView(state) {
       ...longTermPlans.map(plan => ({ ...plan, deleteId: plan.id }))
     ]);
   const savedOrder = isDeduct ? (state.deductRuleOrder || []) : (state.pointRuleOrder || []);
-  const rules = sortRules([...baseRules, ...customRules].filter(rule => !hiddenRuleIds.has(rule.id)), savedOrder, state.pointsSort || 'manual');
+  const rules = sortRules([...baseRules, ...customRules].filter(rule => !hiddenRuleIds.has(rule.id)), savedOrder, state.pointsSort || 'latest');
 
   return `
     <section class="points-page">

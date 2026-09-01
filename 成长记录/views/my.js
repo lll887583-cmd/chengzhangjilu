@@ -238,6 +238,7 @@ export function myView(state) {
         <div class="record-card">
           <h3>${recordTitle(record.text)}</h3>
           <p>${new Date(record.time).toLocaleString('zh-CN')} ${record.delta ? ` · ${record.delta > 0 ? '+' : ''}${formatPoints(record.delta)} 积分` : ''}</p>
+          <button class="record-revert-button" type="button" data-revert-record="${record.id || record.time}" aria-label="撤回操作">?</button>
         </div>
       `).join('')}</div>
     `);

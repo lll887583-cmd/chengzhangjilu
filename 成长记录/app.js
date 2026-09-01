@@ -23,6 +23,7 @@ const navDrawerMenu = document.querySelector('#navDrawerMenu');
 const navBackdrop = document.querySelector('.nav-drawer-backdrop');
 const navTrigger = document.querySelector('.nav-trigger');
 let pendingWriteOff = null;
+let pendingRevertRecord = null;
 const ruleContextMenu = document.createElement('div');
 ruleContextMenu.id = 'ruleContextMenu';
 ruleContextMenu.className = 'rule-context-menu hidden';
@@ -232,7 +233,7 @@ function headerAddButton(dataset, label = '新增') {
 }
 
 function pointsSortButton() {
-  const labels = { asc: '积分正序', desc: '积分倒序', latest: '最新新增', manual: '手动排序' };
+  const labels = { asc: '正序', desc: '倒序', latest: '最新' };
   return `<div class="points-sort-control"><button class="points-sort-button" type="button" data-sort-toggle aria-label="排序" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v13.17l-2.59-2.58L3 16l5 5 5-5-1.41-1.41L9 17.17V4H7Zm8 0-5 5 1.41 1.41L14 7.83V21h2V7.83l2.59 2.58L20 9l-5-5Z" fill="currentColor"/></svg></button><div class="points-sort-menu hidden" data-sort-menu>${Object.entries(labels).map(([value, label]) => `<button type="button" data-points-sort="${value}">${label}</button>`).join('')}</div></div>`;
 }
 
@@ -1023,7 +1024,8 @@ function submitCustomRuleForm(form) {
     points,
     description: '',
     planType: data.get('planType') === 'longTerm' ? 'longTerm' : 'single',
-    createdAt: existingRule?.createdAt || Date.now()
+    createdAt: existingRule?.createdAt || Date.now(),
+    updatedAt: Date.now()
   };
   const collection = ruleType === 'deduct' ? state.customDeductRules : state.customPointRules;
   if (editId) {
@@ -1617,6 +1619,21 @@ function openRecordsDetail() {
   render('my');
 }
 
+function showRevertConfirm(recordId) {
+  const record = state.records.find(item => String(item.id || item.time) === String(recordId));
+  if (!record) return;
+  pendingRevertRecord = record;
+  modal.classList.remove('hidden');
+  modal.innerHTML = `<div class="modal-card"><button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button><h2>确认撤回这次操作？</h2><p>撤回后，积分会恢复到操作前。</p><div class="actions"><button class="btn danger-soft" type="button" data-revert-confirm>是，继续</button><button class="btn ghost" type="button" data-action="close-modal">取消</button></div></div>`;
+}
+
+function showRevertQuestion(errorMessage = '') {
+  const challenge = createMathChallenge();
+  pendingRevertRecord.questionAnswer = challenge.answer;
+  modal.classList.remove('hidden');
+  modal.innerHTML = `<form class="modal-card math-verify-card" data-revert-form><h2>撤回验证</h2><p class="big-copy">答对 10 以内加减法后，才可以撤回这次积分操作。</p><label class="math-question"><span>${challenge.a} ${challenge.op} ${challenge.b} = ?</span><input name="answer" type="number" inputmode="numeric" autocomplete="off" placeholder="答案" aria-label="请输入答案" required></label>${errorMessage ? `<p class="math-error">${errorMessage}</p>` : '<p class="math-hint">答错也没关系，可以继续尝试。</p>'}<div class="actions"><button class="btn secondary" type="submit">提交答案</button><button class="btn ghost" type="button" data-action="close-modal">稍后再撤回</button></div></form>`;
+}
+
 function openMy() {
   state.mySection = null;
   persist();
@@ -1857,7 +1874,9 @@ function editRuleCard(kind, id) {
     title: source.title,
     points: Number(source.points),
     description: source.description || '',
-    planType: 'longTerm'
+    planType: 'longTerm',
+    createdAt: Date.now(),
+    updatedAt: Date.now()
   });
   if (kind === 'point') {
     state.hiddenPointRuleIds ||= [];
@@ -2086,54 +2105,10 @@ pointsPill.addEventListener('click', event => {
   openRecordsDetail();
 });
 
-let ruleDrag = null;
-document.addEventListener('pointerdown', event => {
-  if (!event.target.closest?.('.points-sort-control')) closePointsSortMenu();
-  const card = event.target.closest?.('.rule-card');
-  if (!card || event.target.closest('button')) return;
-  const list = card.closest('.rule-list');
-  ruleDrag = { card, list, startX: event.clientX, startY: event.clientY, timer: setTimeout(() => {
-    ruleDrag.active = true;
-    card.classList.add('is-dragging');
-    card.style.touchAction = 'none';
-    card.setPointerCapture?.(event.pointerId);
-    suppressRuleCardClickUntil = Date.now() + 1000;
-  }, 450), pointerId: event.pointerId };
-});
-document.addEventListener('pointermove', event => {
-  if (!ruleDrag) return;
-  if (!ruleDrag.active) {
-    if (Math.hypot(event.clientX - ruleDrag.startX, event.clientY - ruleDrag.startY) > 10) {
-      clearTimeout(ruleDrag.timer);
-      ruleDrag = null;
-    }
-    return;
-  }
-  const sibling = [...ruleDrag.list.querySelectorAll('.rule-card:not(.is-dragging)')]
-    .find(item => {
-      const rect = item.getBoundingClientRect();
-      const withinRow = event.clientY >= rect.top && event.clientY <= rect.bottom;
-      return withinRow ? event.clientX < rect.left + rect.width / 2 : event.clientY < rect.top;
-    });
-  if (sibling) ruleDrag.list.insertBefore(ruleDrag.card, sibling);
-  else ruleDrag.list.append(ruleDrag.card);
-});
-document.addEventListener('pointerup', () => {
-  if (!ruleDrag) return;
-  clearTimeout(ruleDrag.timer);
-  if (ruleDrag.active) {
-    const ids = [...ruleDrag.list.querySelectorAll('.rule-card')].map(card => card.dataset.ruleId);
-    const key = state.pointsSection === 'deduct' ? 'deductRuleOrder' : 'pointRuleOrder';
-    state[key] = ids;
-    persist();
-    ruleDrag.card.classList.remove('is-dragging');
-    ruleDrag.card.style.touchAction = '';
-    suppressRuleCardClickUntil = Date.now() + 500;
-  }
-  ruleDrag = null;
-});
-
 document.addEventListener('click', event => {
+  const revertButton = event.target.closest?.('[data-revert-record]');
+  if (revertButton) { showRevertConfirm(revertButton.dataset.revertRecord); return; }
+  if (event.target.closest?.('[data-revert-confirm]')) { showRevertQuestion(); return; }
   const sortToggle = event.target.closest?.('[data-sort-toggle]');
   if (sortToggle) {
     const menu = sortToggle.parentElement?.querySelector('[data-sort-menu]');
@@ -2402,6 +2377,25 @@ document.addEventListener('touchmove', closePointsSortMenu, { passive: true });
 window.addEventListener('scroll', closePointsSortMenu, { passive: true });
 
 document.addEventListener('submit', event => {
+  if (event.target.matches('[data-revert-form]')) {
+    event.preventDefault();
+    const answer = Number(new FormData(event.target).get('answer'));
+    if (answer !== pendingRevertRecord?.questionAnswer) {
+      showRevertQuestion('答案不对，再试一次。');
+      return;
+    }
+    const index = state.records.indexOf(pendingRevertRecord);
+    if (index >= 0) {
+      state.points -= pendingRevertRecord.delta || 0;
+      state.records.splice(index, 1);
+      pendingRevertRecord = null;
+      closeModal();
+      persist();
+      render('my');
+      showToast('操作已撤回，积分已回滚。');
+    }
+    return;
+  }
   if (event.target.matches('[data-plan-form]')) {
     event.preventDefault();
     addPlan(event.target);
