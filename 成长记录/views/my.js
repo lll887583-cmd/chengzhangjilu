@@ -1,6 +1,6 @@
 import { petView } from './pet.js';
 import { formatPoints, getPetStatus, iconSvg, recordTitle, sectionSwitch, statCard } from './shared.js';
-import { cloudIsBusy, cloudLocalBackup, cloudOverviewMetaText, cloudPendingEmail, cloudStateText, cloudStatus, cloudStatusText } from '../cloud.js?v=20260930f';
+import { cloudIsBusy, cloudLastEmail, cloudLocalBackup, cloudOverviewMetaText, cloudPendingEmail, cloudStateText, cloudStatus, cloudStatusText } from '../cloud.js?v=20260930g';
 
 function myOverviewCard(section, icon, title, summary, meta, metaLive = '') {
   return `
@@ -247,7 +247,8 @@ function cloudSectionBody(status, cloudUi) {
       <div class="actions">
         <button class="btn secondary" data-action="cloud-sync" ${syncBusy ? 'disabled' : ''}><span data-cloud-live="sync-btn">${syncBusy ? '同步中…' : '立即同步'}</span></button>
         <button class="btn ghost" data-action="cloud-signout">退出账号</button>
-      </div>`;
+      </div>
+      <div class="cloud-note">退出后本机积分和记录仍保留在这台设备上，云端数据也还在原邮箱里。想换邮箱，退出后用新邮箱登录即可。</div>`;
   }
 
   // 未登录：四个表单共用同一套字段渲染
@@ -270,7 +271,13 @@ function cloudSectionBody(status, cloudUi) {
     <div class="cloud-links">
       ${items.map(([value, label]) => `<button class="cloud-link" type="button" data-cloud-mode="${value}">${label}</button>`).join('')}
     </div>`;
+  // 刚退出过账号：告诉用户是哪个邮箱，以及「继续用」还是「换一个」
+  const lastEmail = cloudLastEmail();
+  const signedOutNote = lastEmail
+    ? `<div class="cloud-note">刚退出的是 ${escapeHtml(lastEmail)}。用同一个邮箱登录可以继续同步；换成别的邮箱登录，就按新账号的规则重新初始化。</div>`
+    : (status.message ? `<div class="cloud-note">${escapeHtml(status.message)}</div>` : '');
   const intro = `
+    ${signedOutNote}
     <div class="cloud-intro">
       <p>用邮箱登录后，孩子在平板上攒的积分会自动同步到云端。用同一个邮箱在手机上登录，就能看到当前积分。</p>
       <p>登录是可选的：不登录也照常记录，数据保存在这台设备上。</p>

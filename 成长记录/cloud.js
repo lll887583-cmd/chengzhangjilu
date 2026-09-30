@@ -267,6 +267,7 @@ export async function cloudInit() {
     client.auth.onAuthStateChange((event, nextSession) => {
       session = nextSession || null;
       if (!session) {
+        lastSignedOutEmail = status.email || lastSignedOutEmail;
         setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', message: '已退出同步账号' });
       }
     });
@@ -303,6 +304,16 @@ function startAutoSync() {
 /* ---------- 登录 / 注册 / 改密 ---------- */
 
 let pendingEmailOtp = null;
+// 刚退出的邮箱，显示在登录页上，避免用户不知道自己刚才用的是哪个号
+let lastSignedOutEmail = '';
+
+// 用来判断「这台设备当前在给哪个账号同步」。优先用账号 id，退回邮箱。
+function currentAccountKey(current = session) {
+  return current?.user?.id
+    || current?.user?.email
+    || current?.email
+    || '';
+}
 
 function describeAuthError(error, fallback) {
   if (!error) return fallback;
@@ -315,6 +326,7 @@ function describeAuthError(error, fallback) {
 
 // 登录成功后统一处理：记住账号、开始自动同步
 function markSignedIn(email) {
+  lastSignedOutEmail = '';
   setStatus({ mode: 'ready', email: email || status.email || '', syncing: false, quiet: false, error: '', message: '' });
   startAutoSync();
 }
@@ -425,6 +437,7 @@ export async function cloudCompletePasswordReset(email, code, newPassword) {
 
 export async function cloudSignOut() {
   if (!client) return { ok: true, message: '已退出' };
+  lastSignedOutEmail = status.email || '';
   try {
     await client.auth.signOut();
   } catch {
@@ -434,6 +447,11 @@ export async function cloudSignOut() {
   pendingEmailOtp = null;
   setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', message: '已退出同步账号' });
   return { ok: true, message: '已退出同步账号' };
+}
+
+// 退出后给登录界面用的提示：让用户知道刚从哪个账号退出来
+export function cloudLastEmail() {
+  return lastSignedOutEmail;
 }
 
 /* ---------- 同步主流程 ---------- */
@@ -475,6 +493,21 @@ async function runSync({ silent = false } = {}) {
     status = { ...status, syncing: true, quiet: true };
   } else {
     setStatus({ syncing: true, quiet: false, mode: 'ready', message: '', error: '' });
+  }
+
+  // 0. 换邮箱账号的判定：同步元数据（首次同步基线、快照时间戳、待同步队列）
+  //    在这台设备上只有一份，但它们是「针对某个账号」的。换了账号还沿用旧的一套，
+  //    新账号会被当成已经初始化过、还会把上个账号的待同步流水推给新账号。
+  const accountKey = currentAccountKey();
+  const beforeMeta = cloudMeta();
+  if (accountKey && beforeMeta.accountId !== accountKey) {
+    cloudQueueClear();
+    cloudMetaPatch({
+      accountId: accountKey,
+      baselineDone: false,
+      remoteSnapshotTs: 0,
+      contentHash: ''
+    });
   }
 
   // 1. 先看云端现状

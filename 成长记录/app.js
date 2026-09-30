@@ -1,8 +1,8 @@
 import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260826k';
 import { SIDEBAR_ICONS } from './icons.js?v=20260930b';
 import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20260930b';
-import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930f';
-import { additionView, calendarView, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260930c';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930g';
+import { additionView, calendarView, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260930g';
 import { formatPoints, iconSvg } from './views/shared.js?v=20260826l';
 
 // Interaction controller for the static demo.
@@ -319,6 +319,22 @@ async function submitCloudForm(form) {
   const result = await runCloudTask(() => cloudSignInWithPassword(email, cloudFormValue(form, 'password')));
   if (result?.ok) cloudUi = { mode: 'password', busy: false };
   await afterCloudAuth();
+}
+
+function showCloudSignOutConfirm() {
+  const email = cloudStatus().email;
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <div class="modal-card">
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <h2>退出同步账号？</h2>
+      <p>${email ? `当前账号：${escapeHtml(email)}。<br />` : ''}退出后，这台设备上的积分和记录都还在本机，云端数据也仍然保存在原来的邮箱账号里，用同一个邮箱登录就能继续同步。</p>
+      <p>想换邮箱的话：退出后直接用新邮箱登录即可。新邮箱第一次使用时，会用这台设备当前的数据初始化云端；如果那个邮箱已经有云端数据，则会采用云端那一份，本机数据会自动留一份备份。</p>
+      <div class="actions">
+        <button class="btn danger-soft" type="button" data-action="cloud-signout-confirm">退出账号</button>
+        <button class="btn ghost" type="button" data-action="close-modal">取消</button>
+      </div>
+    </div>`;
 }
 
 async function afterCloudAuth() {
@@ -2255,9 +2271,16 @@ const actions = {
     const now = cloudStatus();
     showToast(now.error ? '同步失败了，稍后会自动重试' : '已同步到云端');
   },
-  'cloud-signout': async () => {
+  'cloud-signout': () => {
+    showCloudSignOutConfirm();
+  },
+  // 退出登录：本机数据保留，云端数据不动，回到登录界面可以换邮箱
+  'cloud-signout-confirm': async () => {
+    closeModal();
     await cloudSignOut();
+    cloudUi = { mode: 'password', busy: false };
     renderCloudSection();
+    showToast('已退出同步账号，本机数据保留');
   }
 };
 

@@ -324,3 +324,18 @@ http://localhost:5173/成长记录/
 
 目的是让「先在平板上用起来、之后手机再登录」这个顺序不会把平板的积分弄丢或翻倍。
 
+### 退出登录与换邮箱
+
+- 「退出账号」会先弹确认框（`app.js` 的 `showCloudSignOutConfirm`），说明本机数据保留、云端数据不动；
+  确认后走 `cloudSignOut`，模式回到 `signed-out`，页面回到登录表单，可以换别的邮箱登录。
+- 退出后 `cloudLastEmail()` 记住刚退出的邮箱，登录页会提示「刚退出的是 xxx」，避免用户不知道刚才用的是哪个号。
+- **换账号必须重置「首次同步」判定**。`growth-record-cloud-meta`（`accountId` / `baselineDone` /
+  `remoteSnapshotTs` / `contentHash`）和待同步队列在这台设备上只有一份，但它们是**针对某个账号**的。
+  `runSync` 开头会比较 `meta.accountId` 与当前 session 的账号 id，不一致就清空队列并把
+  `baselineDone` 重置为 false、`remoteSnapshotTs`/`contentHash` 归零，让首次同步规则重新跑一遍：
+  新账号云端为空 → 用本机数据初始化；新账号云端已有数据 → 采用云端并备份本机。
+  不做这一步的话，新账号会被当成「已初始化过」，还会把上个账号的待同步流水推给新账号。
+- 判断账号用 `user.id`，退回 `user.email`（`cloud.js` 的 `currentAccountKey`）。
+- 回归测试脚本：`/tmp/wb-smoke/smoke2.mjs`（把项目拷到 /tmp 去掉 `?v=` 后跑，模拟云端 SDK 驱动
+  登录/同步/退出/换账号/断网全流程，27 项断言）。
+
