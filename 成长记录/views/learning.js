@@ -1,4 +1,4 @@
-import { ADDITION_MODES } from '../data.js?v=20260930i';
+import { ADDITION_MODES } from '../data.js?v=20260930j';
 
 function gridCell(value, selectedValues, datasetName, ariaSuffix = '') {
   const isSelected = selectedValues.has(value);
