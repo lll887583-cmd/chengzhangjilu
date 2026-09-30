@@ -1,5 +1,5 @@
-import { formatPoints, iconSvg, recordTitle, statCard } from './shared.js?v=20261001b';
-import { cloudIsBusy, cloudLastEmail, cloudLocalBackup, cloudOverviewMetaText, cloudPendingEmail, cloudStateText, cloudStatus, cloudStatusText } from '../cloud.js?v=20261001b';
+import { formatPoints, iconSvg, recordTitle, statCard } from './shared.js?v=20261001c';
+import { cloudIsBusy, cloudLastEmail, cloudLocalBackup, cloudOverviewMetaText, cloudPendingEmail, cloudStateText, cloudStatus, cloudStatusText } from '../cloud.js?v=20261001c';
 
 function myOverviewCard(section, icon, title, summary, meta, metaLive = '') {
   return `

@@ -102,6 +102,20 @@
   line-height: 1;
 }
 
+/* 商城只剩「积分兑换」一个页签，顶部不再用切换按钮，直接显示常规黑字标题 */
+.shop-section-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  color: var(--on-surface);
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;

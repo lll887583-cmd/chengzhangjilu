@@ -1,4 +1,4 @@
-import { DEFAULT_WORD_ITEMS, defaultState } from './data.js?v=20261001b';
+import { DEFAULT_WORD_ITEMS, defaultState } from './data.js?v=20261001c';
 
 const LEGACY_STORAGE_KEY = 'growth-record-demo';
 const BACKUP_SCHEMA_VERSION = 1;

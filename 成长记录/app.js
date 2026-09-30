@@ -1,9 +1,9 @@
-import { ADDITION_MODES, DEDUCT_RULES, POINT_RULES, REWARDS } from './data.js?v=20261001b';
-import { SIDEBAR_ICONS } from './icons.js?v=20261001b';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20261001b';
-import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20261001b';
-import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20261001b';
-import { formatPoints, iconSvg } from './views/shared.js?v=20261001b';
+import { ADDITION_MODES, DEDUCT_RULES, POINT_RULES, REWARDS } from './data.js?v=20261001c';
+import { SIDEBAR_ICONS } from './icons.js?v=20261001c';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20261001c';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20261001c';
+import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20261001c';
+import { formatPoints, iconSvg } from './views/shared.js?v=20261001c';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -435,10 +435,8 @@ function renderHeaderSwitch(tab) {
       { value: 'earn', label: '加分' },
       { value: 'deduct', label: '减分' }
     ], state.pointsSection || 'earn', 'points-section', 'section-switch--header')}${pointsSortButton()}${headerAddButton('data-open-custom-rule="shared"')}`,
-    // 积分抽奖已下线，只保留积分兑换；单个标签保持居中，排序/新增常驻
-    shop: `${sectionSwitch([
-      { value: 'exchange', label: '积分兑换' }
-    ], 'exchange', 'shop-section', 'section-switch--header')}${shopSortButton()}${headerAddButton('data-open-shop-item', '新增兑换项目')}`,
+    // 积分抽奖已下线，只剩一个页签，不再用切换按钮，直接显示常规黑字标题
+    shop: `<div class="shop-section-label">积分兑换</div>${shopSortButton()}${headerAddButton('data-open-shop-item', '新增兑换项目')}`,
     planning: `${sectionSwitch([
       { value: 'active', label: '任务中' },
       { value: 'done', label: '已完成' }
