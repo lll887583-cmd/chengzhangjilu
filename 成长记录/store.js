@@ -83,6 +83,7 @@ export function loadState() {
 
 export function saveState(state) {
   normalizeState(state);
+  capturePointsDelta(state);
   storage().setItem(LEGACY_STORAGE_KEY, JSON.stringify(serializeState(state)));
 }
 
@@ -281,4 +282,117 @@ export function importPersistedState(payload) {
   }
 
   return normalizeState({ ...clone(defaultState), ...clone(rawState) });
+}
+
+/* ---------- 云端同步用到的本地记账 ----------
+ * 这一节只做本地记账，不引用任何云端代码。
+ * 积分每变一次就记一条「待同步流水」，单独存在另一个 localStorage 键里：
+ * 断网、没登录、云端暂时不可用，都不会丢，下次同步补推即可。
+ */
+
+const CLOUD_QUEUE_KEY = 'growth-record-cloud-queue';
+const CLOUD_META_KEY = 'growth-record-cloud-meta';
+const MAX_CLOUD_QUEUE = 1000;
+
+let lastPersistedPoints = null;
+let pendingRevertOpId = null;
+let opSeed = 0;
+
+function cloudRead(key, fallback) {
+  try {
+    const raw = storage().getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return parsed ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function cloudWrite(key, value) {
+  try {
+    storage().setItem(key, JSON.stringify(value));
+  } catch {
+    // 存储不可用时静默跳过，不能拖累本地主流程
+  }
+}
+
+export function newOpId() {
+  opSeed += 1;
+  return `${Date.now().toString(36)}-${opSeed.toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function cloudQueueList() {
+  const queue = cloudRead(CLOUD_QUEUE_KEY, []);
+  return Array.isArray(queue) ? queue : [];
+}
+
+export function cloudQueuePush(op) {
+  const queue = cloudQueueList();
+  queue.push(op);
+  cloudWrite(CLOUD_QUEUE_KEY, queue.slice(-MAX_CLOUD_QUEUE));
+}
+
+export function cloudQueueDropIds(opIds) {
+  const drop = new Set(opIds);
+  cloudWrite(CLOUD_QUEUE_KEY, cloudQueueList().filter(op => !drop.has(op.op_id)));
+}
+
+export function cloudQueueClear() {
+  cloudWrite(CLOUD_QUEUE_KEY, []);
+}
+
+export function cloudMeta() {
+  const meta = cloudRead(CLOUD_META_KEY, {});
+  if (!meta.deviceId) {
+    meta.deviceId = newOpId();
+    cloudWrite(CLOUD_META_KEY, meta);
+  }
+  return meta;
+}
+
+export function cloudMetaPatch(patch) {
+  const meta = { ...cloudMeta(), ...patch };
+  cloudWrite(CLOUD_META_KEY, meta);
+  return meta;
+}
+
+// 撤回时把被撤回那条流水的 op_id 记下来，
+// 下一次 saveState 捕获到的增量会带上这个标记，两台设备都能看出这两条互相抵消。
+export function markRevertOp(opId) {
+  pendingRevertOpId = typeof opId === 'string' && opId ? opId : null;
+}
+
+// 从云端合并回来的积分不是本机新挣的，不能当成一条新流水再记一遍
+export function markPointsBaseline(points) {
+  lastPersistedPoints = Math.round(Number(points) || 0);
+}
+
+// 积分增量的唯一捕获点：任何一处改动积分，最终都会经过 saveState，
+// 所以在这里比对前后差值，就能覆盖加分、减分、兑换、抽奖、游戏奖励、撤回、重置等所有路径。
+function capturePointsDelta(state) {
+  const points = Math.round(Number(state.points) || 0);
+  if (lastPersistedPoints === null) {
+    lastPersistedPoints = points;
+    return;
+  }
+
+  const delta = points - lastPersistedPoints;
+  lastPersistedPoints = points;
+
+  const newest = Array.isArray(state.records) ? state.records[0] : null;
+  const revertedOpId = pendingRevertOpId;
+  pendingRevertOpId = null;
+
+  // 撤回 0 分记录时 delta 为 0，也要留一条撤回流水，明细里才能对应上
+  if (!delta && !revertedOpId) return;
+
+  cloudQueuePush({
+    op_id: newOpId(),
+    occurred_at: new Date().toISOString(),
+    delta,
+    label: revertedOpId ? `撤回：${newest?.text || '积分变动'}` : (newest?.text || '积分变动'),
+    category: revertedOpId ? 'revert' : (newest?.category || 'points'),
+    meta: revertedOpId ? { revertedOpId } : null
+  });
 }

@@ -1495,3 +1495,118 @@
   flex-wrap: wrap;
   gap: 14px;
 }
+
+/* ---------- 我的 · 账号与同步 ---------- */
+.my-card-icon.cloud {
+  color: #164d86;
+  background: #bfe1ff;
+  box-shadow: none;
+}
+.cloud-intro {
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: var(--accent-blue-soft);
+}
+.cloud-intro p {
+  margin: 0 0 8px;
+  color: var(--on-surface);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.cloud-intro p:last-child {
+  margin-bottom: 0;
+  color: var(--on-surface-variant);
+  font-size: 14px;
+}
+.cloud-form {
+  display: grid;
+  gap: 14px;
+  margin-top: var(--space-md);
+}
+.cloud-field {
+  display: grid;
+  gap: 8px;
+}
+.cloud-field span {
+  color: var(--on-surface-variant);
+  font-size: 14px;
+  font-weight: 600;
+}
+.cloud-field input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  font-family: inherit;
+  font-size: 17px;
+}
+.cloud-field input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+.cloud-send { justify-self: start; }
+.cloud-submit { width: 100%; }
+.cloud-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 14px;
+}
+.cloud-link {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--accent-blue);
+  font-family: inherit;
+  font-size: 15px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.cloud-account {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 2px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
+}
+.cloud-account-icon {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  color: var(--accent-blue);
+  background: var(--accent-blue-soft);
+}
+.cloud-account-icon svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+  fill: currentColor;
+}
+.cloud-account strong {
+  display: block;
+  color: var(--on-surface);
+  font-family: "Quicksand", system-ui, sans-serif;
+  font-size: 18px;
+  word-break: break-all;
+}
+.cloud-account p {
+  margin: 4px 0 0;
+  color: var(--on-surface-variant);
+  font-size: 14px;
+}
+.cloud-note {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--surface-container-low);
+  color: var(--on-surface-variant);
+  font-size: 14px;
+  line-height: 1.5;
+}

@@ -1,7 +1,8 @@
 import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260826k';
-import { SIDEBAR_ICONS } from './icons.js?v=20260601p';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, resetState, saveState, spend } from './store.js?v=20260602e';
-import { additionView, calendarView, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260826n';
+import { SIDEBAR_ICONS } from './icons.js?v=20260930b';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20260930b';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudOnChange, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStatus, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930b';
+import { additionView, calendarView, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260930b';
 import { formatPoints, iconSvg } from './views/shared.js?v=20260826l';
 
 // Interaction controller for the static demo.
@@ -24,6 +25,8 @@ const navBackdrop = document.querySelector('.nav-drawer-backdrop');
 const navTrigger = document.querySelector('.nav-trigger');
 let pendingWriteOff = null;
 let pendingRevertRecord = null;
+// 「我的 - 账号与同步」里当前显示的表单：password / otp / signup / reset
+let cloudUi = { mode: 'password', busy: false };
 const ruleContextMenu = document.createElement('div');
 ruleContextMenu.id = 'ruleContextMenu';
 ruleContextMenu.className = 'rule-context-menu hidden';
@@ -72,7 +75,7 @@ const views = {
   words: () => wordsView(state),
   shop: () => shopView(state),
   goals: () => goalsView(state),
-  my: () => myView(state)
+  my: () => myView(state, cloudUi)
 };
 
 const LEARNING_ITEMS = [
@@ -172,6 +175,128 @@ function persist() {
   saveState(state);
   pointsText.textContent = formatPoints(state.points);
   pointsPill.classList.toggle('negative', state.points < 0);
+  // 每次本地写入后，通知同步层「有东西要推」。没登录或云端不可用时它自己会安静返回。
+  cloudAfterLocalChange();
+}
+
+/* ---------- 账号与同步 ---------- */
+
+function renderCloudSection({ keepInputs = false } = {}) {
+  if (state.mySection !== 'cloud') return;
+
+  // 同步状态一变就会重绘这一块。重绘前先把用户已经填的内容记下来，
+  // 重绘后按 name 填回去，免得正在输入的邮箱、验证码被状态刷新清空。
+  const draft = keepInputs
+    ? Array.from(app.querySelectorAll('[data-cloud-section] [name]')).reduce((acc, field) => {
+      acc[field.name] = field.value;
+      return acc;
+    }, {})
+    : null;
+
+  render('my');
+
+  if (!draft) return;
+  app.querySelectorAll('[data-cloud-section] [name]').forEach(field => {
+    if (draft[field.name] !== undefined) field.value = draft[field.name];
+  });
+}
+
+function setCloudMode(mode) {
+  cloudUi = { ...cloudUi, mode, busy: false };
+  renderCloudSection();
+}
+
+function setCloudBusy(busy) {
+  cloudUi = { ...cloudUi, busy };
+  renderCloudSection({ keepInputs: true });
+}
+
+async function runCloudTask(task) {
+  setCloudBusy(true);
+  try {
+    const result = await task();
+    if (result?.message) showToast(result.message);
+    return result;
+  } catch (error) {
+    console.error('Cloud action failed:', error);
+    showToast('操作失败，稍后再试');
+    return null;
+  } finally {
+    setCloudBusy(false);
+  }
+}
+
+function cloudFormValue(form, name) {
+  const value = new FormData(form).get(name);
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+async function sendCloudCode(form, purpose) {
+  const email = cloudFormValue(form, 'email');
+  if (!email) {
+    showToast('请先填写邮箱');
+    return;
+  }
+  if (purpose === 'reset') {
+    await runCloudTask(() => cloudRequestPasswordReset(email));
+    return;
+  }
+  await runCloudTask(() => cloudSendEmailCode(email));
+}
+
+async function submitCloudForm(form) {
+  const kind = form.dataset.cloudForm;
+  const email = cloudFormValue(form, 'email');
+
+  if (kind === 'signup') {
+    const result = await runCloudTask(() => cloudVerifyEmailCode({
+      email,
+      code: cloudFormValue(form, 'code'),
+      password: cloudFormValue(form, 'password')
+    }));
+    if (result?.ok) cloudUi = { mode: 'password', busy: false };
+    await afterCloudAuth();
+    return;
+  }
+
+  if (kind === 'otp') {
+    const result = await runCloudTask(() => cloudVerifyEmailCode({ email, code: cloudFormValue(form, 'code') }));
+    // 这个邮箱还差一个密码：切到注册表单让用户补上，验证码还能继续用
+    if (result?.needPassword) {
+      cloudUi = { ...cloudUi, mode: 'signup', busy: false };
+      renderCloudSection();
+      return;
+    }
+    if (result?.ok) cloudUi = { mode: 'password', busy: false };
+    await afterCloudAuth();
+    return;
+  }
+
+  if (kind === 'reset') {
+    const result = await runCloudTask(() => cloudCompletePasswordReset(
+      email,
+      cloudFormValue(form, 'code'),
+      cloudFormValue(form, 'password')
+    ));
+    if (result?.ok) cloudUi = { mode: 'password', busy: false };
+    await afterCloudAuth();
+    return;
+  }
+
+  const result = await runCloudTask(() => cloudSignInWithPassword(email, cloudFormValue(form, 'password')));
+  if (result?.ok) cloudUi = { mode: 'password', busy: false };
+  await afterCloudAuth();
+}
+
+async function afterCloudAuth() {
+  const status = cloudStatus();
+  if (status.mode !== 'ready') {
+    renderCloudSection();
+    return;
+  }
+  await cloudSync();
+  renderCloudSection();
+  showToast('已开启云端同步');
 }
 
 function currentLiteracyCountLabel() {
@@ -2083,6 +2208,21 @@ const actions = {
   },
   import: () => {
     openImportPicker();
+  },
+  'cloud-sync': async () => {
+    if (cloudStatus().mode !== 'ready') {
+      showToast('请先登录同步账号');
+      return;
+    }
+    setCloudBusy(true);
+    await cloudSync();
+    setCloudBusy(false);
+    renderCloudSection();
+    showToast('已同步到云端');
+  },
+  'cloud-signout': async () => {
+    await cloudSignOut();
+    renderCloudSection();
   }
 };
 
@@ -2363,6 +2503,15 @@ document.addEventListener('click', event => {
     persist();
     render('my');
   }
+  if (target.dataset.cloudMode) {
+    setCloudMode(target.dataset.cloudMode);
+    return;
+  }
+  if (target.dataset.cloudSend) {
+    const form = target.closest('form');
+    if (form) void sendCloudCode(form, target.dataset.cloudSend);
+    return;
+  }
   const action = actions[target.dataset.action];
   if (action) {
     Promise.resolve(action()).catch(error => {
@@ -2380,6 +2529,11 @@ document.addEventListener('touchmove', closePointsSortMenu, { passive: true });
 window.addEventListener('scroll', closePointsSortMenu, { passive: true });
 
 document.addEventListener('submit', event => {
+  if (event.target.matches('[data-cloud-form]')) {
+    event.preventDefault();
+    void submitCloudForm(event.target);
+    return;
+  }
   if (event.target.matches('[data-revert-form]')) {
     event.preventDefault();
     const answer = Number(new FormData(event.target).get('answer'));
@@ -2390,6 +2544,8 @@ document.addEventListener('submit', event => {
     const index = state.records.indexOf(pendingRevertRecord);
     if (index >= 0) {
       state.points -= pendingRevertRecord.delta || 0;
+      // 告诉同步层这次是撤回：云端会记一条互相抵消的流水，两台设备的明细都能对上
+      markRevertOp(pendingRevertRecord.id);
       state.records.splice(index, 1);
       pendingRevertRecord = null;
       closeModal();
@@ -2512,3 +2668,22 @@ pointsPill.classList.toggle('negative', state.points < 0);
 syncShellVisibility();
 render(state.selectedTab || 'points');
 syncDrawerForViewport();
+
+/* ---------- 启动云端同步（可选能力，失败不影响本地使用） ---------- */
+
+cloudAttachHost({
+  getState: () => state,
+  applyState: merged => {
+    // 从云端合并回来的积分不是本机新挣的，先打基线再落盘，避免被记成一条新流水
+    markPointsBaseline(merged.points);
+    state = merged;
+    persist();
+    render(state.selectedTab || 'points');
+  }
+});
+
+cloudOnChange(() => {
+  if (state.mySection === 'cloud') renderCloudSection({ keepInputs: true });
+});
+
+void cloudInit();
