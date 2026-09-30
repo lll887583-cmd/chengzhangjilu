@@ -1616,3 +1616,17 @@
   color: #c5221f;
   font-weight: 600;
 }
+
+/* 商城兑换卡片：沿用「加减分」卡片的排版（左侧积分胶囊 + 右上更多按钮 + 底部按钮），
+   配色保持商城原有的粉色，不跟加减分抢绿色 */
+.rule-card.shop .rule-score {
+  color: hsl(322 70% 38%);
+  background: hsl(323 100% 96%);
+}
+.shop-empty {
+  margin: 0;
+  padding: 30px 6px;
+  color: var(--on-surface-variant);
+  font-weight: 400;
+  text-align: center;
+}

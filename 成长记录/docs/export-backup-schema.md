@@ -37,7 +37,6 @@
   "pointsSection": "earn",
   "shopSection": "exchange",
   "planningSection": "active",
-  "pointsBoardView": "week",
   "planningDraftType": "single",
   "literacyItems": [],
   "numberBoardSelections": [],
@@ -48,11 +47,7 @@
   "customDeductRules": [],
   "hiddenPointRuleIds": [],
   "hiddenDeductRuleIds": [],
-  "petSection": "cloud",
   "calendarMonth": null,
-  "previewPet": "sonicHummingbird",
-  "collectedPets": [],
-  "pet": null,
   "plans": [],
   "exchangedRewards": [],
   "records": []
@@ -64,13 +59,11 @@
 这些字段是近期 UI / 学习成长 / 任务 / 日历能力扩展后需要特别关注的：
 
 - `planningSection`: 任务页当前分段，`active` 或 `done`
-- `pointsBoardView`: 我的-积分看板当前维度，`week` / `month` / `year`
 - `planningDraftType`: 新建任务时默认类型，`single` / `longTerm`
 - `numberBoardSelections`: 数字页当前选中项
 - `pinyinSelections`: 拼音页当前选中项
 - `letterSelections`: 英文字母页当前选中项
 - `calendarMonth`: 日历当前浏览月份
-- `petSection`: 我的-宠物页当前分段
 - `hiddenPointRuleIds`: 已隐藏的加分项
 - `hiddenDeductRuleIds`: 已隐藏的减分项
 

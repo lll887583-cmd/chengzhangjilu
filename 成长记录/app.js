@@ -1,9 +1,9 @@
-import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260826k';
-import { SIDEBAR_ICONS } from './icons.js?v=20260930b';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20260930b';
-import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930g';
-import { additionView, calendarView, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260930g';
-import { formatPoints, iconSvg } from './views/shared.js?v=20260826l';
+import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, POINT_RULES, REWARDS } from './data.js?v=20260930i';
+import { SIDEBAR_ICONS } from './icons.js?v=20260930i';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20260930i';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930i';
+import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260930i';
+import { formatPoints, iconSvg } from './views/shared.js?v=20260930i';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -186,14 +186,11 @@ const VIEW_ONLY_KEYS = [
   'pointsSection',
   'shopSection',
   'planningSection',
-  'petSection',
-  'pointsBoardView',
   'pointsSort',
   'calendarMonth',
   'additionGame',
   'planningDraftType',
   'customRuleDraftType',
-  'previewPet'
 ];
 
 function pickViewState(source) {
@@ -427,10 +424,10 @@ function renderHeaderSwitch(tab) {
       { value: 'earn', label: '加分' },
       { value: 'deduct', label: '减分' }
     ], state.pointsSection || 'earn', 'points-section', 'section-switch--header')}${pointsSortButton()}${headerAddButton('data-open-custom-rule="shared"')}`,
-    shop: sectionSwitch([
+    shop: `${sectionSwitch([
       { value: 'exchange', label: '积分兑换' },
       { value: 'lottery', label: '积分抽奖' }
-    ], state.shopSection || 'exchange', 'shop-section', 'section-switch--header'),
+    ], state.shopSection || 'exchange', 'shop-section', 'section-switch--header')}${(state.shopSection || 'exchange') === 'exchange' ? headerAddButton('data-open-shop-item', '新增兑换项目') : ''}`,
     planning: `${sectionSwitch([
       { value: 'active', label: '任务中' },
       { value: 'done', label: '已完成' }
@@ -483,82 +480,6 @@ function speakMessage(message, { onend } = {}) {
     utterance.onerror = () => onend();
   }
   window.speechSynthesis.speak(utterance);
-}
-
-function selectPreviewPet(type) {
-  if (!PETS[type]) return;
-  state.previewPet = type;
-  persist();
-  render(state.selectedTab);
-}
-
-function petDetailMetrics(info, type) {
-  const currentPet = state.pet?.type === type ? state.pet : null;
-  const health = currentPet ? currentPet.energy : info.baseHealth;
-  const happiness = currentPet
-    ? Math.min(100, Math.round(76 + currentPet.energy / 5 + currentPet.level * 4))
-    : info.baseHappiness;
-
-  return { currentPet, health, happiness };
-}
-
-function showPetDetailModal(type) {
-  const info = PETS[type];
-  if (!info) return;
-
-  const collectedPets = new Set([...(state.collectedPets || []), ...(state.pet?.type ? [state.pet.type] : [])]);
-  const isCollected = collectedPets.has(type);
-  const { currentPet, health, happiness } = petDetailMetrics(info, type);
-  const statusText = currentPet
-    ? `正在云宠物里 · Lv.${currentPet.level}`
-    : `${isCollected ? '已收集' : '未收集'} · 领养需要 ${info.adoptCost} 积分`;
-
-  state.previewPet = type;
-  persist();
-  modal.classList.remove('hidden');
-  modal.innerHTML = `
-    <div class="modal-card pet-detail-sheet">
-      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
-      <div class="pet-detail-hero ${isCollected ? 'is-collected' : 'is-uncollected'}">
-        <span class="collection-badge">${isCollected ? '已收集' : '未收集'}</span>
-        <img src="${info.image}" alt="${info.name}" />
-      </div>
-      <div class="pet-detail-copy">
-        <span class="panel-kicker">宠物详情</span>
-        <h2>${info.name}${info.featured ? ' ⭐镇馆之宝' : ''}</h2>
-        <p class="big-copy">${info.intro}</p>
-        <p class="pet-state-line">${statusText}</p>
-      </div>
-      <div class="pet-detail-stats" aria-label="宠物状态">
-        <div><strong>${info.attack}</strong><span>攻击</span></div>
-        <div><strong>${info.defense}</strong><span>防御</span></div>
-        <div><strong>${info.speed}</strong><span>速度</span></div>
-        <div><strong>${health}%</strong><span>健康值</span></div>
-        <div><strong>${happiness}%</strong><span>幸福感</span></div>
-        <div><strong>${info.reviveCost}</strong><span>复活积分</span></div>
-      </div>
-    </div>`;
-}
-
-function syncPetTime() {
-  if (!state.pet || state.pet.status === 'planet') return;
-  const now = Date.now();
-  const hours = Math.floor((now - state.pet.lastFedAt) / 36e5);
-  const energyLoss = Math.floor(hours / 12) * 10;
-  const newEnergy = Math.max(0, 80 - energyLoss + state.pet.energyBoost);
-  state.pet.energy = Math.min(100, newEnergy);
-  if (hours >= 72) {
-    state.pet.status = 'planet';
-    addRecord(state, `${state.pet.name}因为太久没来，已经去宠物星球了`, 0);
-    setTimeout(() => showPlanetModal(), 200);
-  }
-}
-
-function levelFromGrowth(growth) {
-  const levels = [0, 50, 120, 250, 450, 700];
-  let level = 0;
-  levels.forEach((need, index) => { if (growth >= need) level = index; });
-  return level;
 }
 
 function spendPoints(cost, failMessage) {
@@ -967,99 +888,6 @@ function openImportPicker() {
   if (!window.confirm('导入会覆盖当前本地数据，是否继续？')) return;
   importInput.value = '';
   importInput.click();
-}
-
-function adoptPet(type) {
-  const info = PETS[type];
-  if (state.pet && state.pet.status !== 'planet') {
-    showToast('你已经有宠物伙伴啦，先好好照顾它吧。');
-    return;
-  }
-  if (!spendPoints(info.adoptCost)) return;
-  state.pet = {
-    ...info,
-    level: 0,
-    growth: 0,
-    energy: 80,
-    energyBoost: 0,
-    status: 'alive',
-    adoptedAt: Date.now(),
-    lastFedAt: Date.now(),
-    lastPlayedAt: Date.now()
-  };
-  state.collectedPets ||= [];
-  if (!state.collectedPets.includes(type)) state.collectedPets.push(type);
-  state.previewPet = type;
-  state.petSection = 'cloud';
-  addRecord(state, `领养了${info.name}`, -info.adoptCost, { category: 'pet' });
-  showToast(`恭喜你领养了${info.name}！`);
-  closeModal();
-  persist();
-  state.mySection = 'pet';
-  render('my');
-}
-
-function feedPet() {
-  if (!state.pet) return showToast('先去领养一个宠物伙伴吧。');
-  if (state.pet.status === 'planet') return showPlanetModal();
-  if (state.pet.energy >= 100) return showToast('它已经吃饱啦，晚点再来看看吧。');
-  if (!spendPoints(10)) return;
-  state.pet.energyBoost += 20;
-  state.pet.energy = Math.min(100, state.pet.energy + 20);
-  state.pet.growth += 10;
-  state.pet.level = levelFromGrowth(state.pet.growth);
-  state.pet.lastFedAt = Date.now();
-  addRecord(state, `喂养了${state.pet.name}，能量 +20`, -10, { category: 'pet' });
-  showToast(`喂养成功，${state.pet.name}能量 +20！`);
-  persist();
-  render(state.selectedTab);
-}
-
-function playPet() {
-  if (!state.pet) return showToast('先去领养一个宠物伙伴吧。');
-  if (state.pet.status === 'planet') return showPlanetModal();
-  if (!spendPoints(8)) return;
-  state.pet.energyBoost += 6;
-  state.pet.energy = Math.min(100, state.pet.energy + 6);
-  state.pet.growth += 8;
-  state.pet.level = levelFromGrowth(state.pet.growth);
-  state.pet.lastPlayedAt = Date.now();
-  addRecord(state, `陪${state.pet.name}玩耍，成长值 +8`, -8, { category: 'pet' });
-  showToast('你们玩得很开心，宠物心情变好啦！');
-  persist();
-  render(state.selectedTab);
-}
-
-function restPet() {
-  if (!state.pet) return showToast('先去领养一个宠物伙伴吧。');
-  if (state.pet.status === 'planet') return showPlanetModal();
-  if (!spendPoints(5)) return;
-  state.pet.energyBoost += 12;
-  state.pet.energy = Math.min(100, state.pet.energy + 12);
-  state.pet.growth += 5;
-  state.pet.level = levelFromGrowth(state.pet.growth);
-  addRecord(state, `陪${state.pet.name}好好睡觉，能量 +12`, -5, { category: 'pet' });
-  showToast(`${state.pet.name}睡了一个好觉，精神回来啦。`);
-  persist();
-  render(state.selectedTab);
-}
-
-function revivePet() {
-  if (!state.pet || state.pet.status !== 'planet') return;
-  if (!spendPoints(state.pet.reviveCost, '复活积分还不够，先去完成任务吧。')) return;
-  state.pet.level = 0;
-  state.pet.growth = 0;
-  state.pet.energy = 60;
-  state.pet.energyBoost = 0;
-  state.pet.status = 'alive';
-  state.pet.lastFedAt = Date.now();
-  state.pet.lastPlayedAt = Date.now();
-  addRecord(state, `复活了${state.pet.name}，从 Lv.0 重新开始`, -state.pet.reviveCost, { category: 'pet' });
-  closeModal();
-  showToast(`${state.pet.name}回来了，要重新开始成长啦。`);
-  persist();
-  state.mySection = 'pet';
-  render('my');
 }
 
 function earnPoints(ruleIndex) {
@@ -1565,11 +1393,21 @@ function deleteWordItem(itemId) {
 }
 
 function exchangeReward(id) {
-  const reward = REWARDS.find(item => item.id === id);
+  // 内置项目和自定义项目都能兑换，所以统一从合并后的列表里找
+  const reward = getShopRewards(state).find(item => item.id === id);
   if (!reward) return;
   if (!spendPoints(reward.cost)) return;
   const time = Date.now();
-  state.exchangedRewards.unshift({ ...reward, exchangeId: `${reward.id}-${time}`, time, redeemedAt: null });
+  state.exchangedRewards.unshift({
+    id: reward.id,
+    name: reward.name,
+    cost: reward.cost,
+    // 自定义项目没有图标，统一补一个礼物图标，「我的 → 我的兑换」里才不会空着
+    icon: reward.icon || 'gift',
+    exchangeId: `${reward.id}-${time}`,
+    time,
+    redeemedAt: null
+  });
   addRecord(state, `兑换了「${reward.name}」`, -reward.cost, { category: 'shop' });
   showToast(`兑换成功：${reward.name}，可在我的里查看。`);
   persist();
@@ -1688,7 +1526,6 @@ function drawLottery() {
 
 function render(tab = state.selectedTab) {
   state.selectedTab = tab;
-  syncPetTime();
   persist();
   clearInterval(additionTimerId);
   appShell.classList.toggle('skip-render-animation', skipNextRenderAnimation);
@@ -1706,21 +1543,6 @@ function render(tab = state.selectedTab) {
   ensureAdditionTimer();
   skipNextRenderAnimation = false;
   requestAnimationFrame(() => appShell.classList.remove('skip-render-animation'));
-}
-
-function showPlanetModal() {
-  if (!state.pet) return;
-  modal.classList.remove('hidden');
-  modal.innerHTML = `
-    <div class="modal-card">
-      <h2>哎呀</h2>
-      <p class="big-copy">你的${state.pet.name}因为太久没来，已经去宠物星球了。</p>
-      <p>如果你想复活它，需要花费 <strong>${state.pet.reviveCost} 积分</strong>。复活后等级回到 Lv.0，需要重新养。</p>
-      <div class="actions">
-        <button class="btn danger" data-action="revive">复活它</button>
-        <button class="btn ghost" data-action="close-modal">先等等</button>
-      </div>
-    </div>`;
 }
 
 function closeModal() {
@@ -2068,6 +1890,113 @@ function editRuleCard(kind, id) {
   showCustomRuleModal(isDeduct ? 'deduct' : 'earn', '', nextId);
 }
 
+/* ---------- 商城兑换项目：新增 / 编辑 / 删除 ----------
+ * 交互与「加减分」卡片保持一致：
+ * - 内置项目来自 data.js 的 REWARDS，改不动，所以「编辑」= 复制成一条自定义项目 + 隐藏原项目
+ * - 删除内置项目只把 id 记进 hiddenRewardIds，代码不动、随时能恢复
+ */
+
+function deleteRewardCard(kind, id) {
+  if (!kind || !id) return;
+  if (kind === 'shop-custom') {
+    const beforeCount = state.customShopRewards.length;
+    state.customShopRewards = state.customShopRewards.filter(item => item.id !== id);
+    if (state.customShopRewards.length === beforeCount) return;
+  } else if (kind === 'shop') {
+    state.hiddenRewardIds ||= [];
+    if (state.hiddenRewardIds.includes(id)) return;
+    state.hiddenRewardIds.push(id);
+  } else {
+    return;
+  }
+  showToast('卡片项目已删除。');
+  persist();
+  render('shop');
+}
+
+function editRewardCard(id) {
+  const source = REWARDS.find(item => item.id === id);
+  if (!source) return;
+  const nextId = `custom-reward-${Date.now()}`;
+  state.customShopRewards.unshift({
+    id: nextId,
+    name: source.name,
+    cost: source.cost,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  });
+  state.hiddenRewardIds ||= [];
+  state.hiddenRewardIds.push(id);
+  persist();
+  showShopItemModal(nextId);
+}
+
+function showShopItemModal(editId = '', errorMessage = '') {
+  const editingItem = editId
+    ? (state.customShopRewards || []).find(item => item.id === editId)
+    : null;
+  modal.classList.remove('hidden');
+  modal.innerHTML = `
+    <form class="modal-card custom-rule-modal" data-shop-item-form data-shop-item-edit="${editId}">
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
+      <div class="custom-rule-head">
+        <h2>${editId ? '编辑兑换项目' : '新增兑换项目'}</h2>
+      </div>
+      <label class="custom-rule-field">
+        <span>名称</span>
+        <input name="name" type="text" maxlength="24" autocomplete="off" value="${editingItem ? escapeHtml(editingItem.name) : ''}" placeholder="例如：去游乐场玩一次" aria-label="名称" required>
+      </label>
+      <label class="custom-rule-field">
+        <span>所需积分</span>
+        <input name="cost" type="number" min="1" max="1000" step="1" inputmode="numeric" value="${editingItem ? editingItem.cost : ''}" placeholder="请输入积分" aria-label="所需积分" required>
+      </label>
+      ${errorMessage ? `<p class="math-error">${errorMessage}</p>` : ''}
+      <div class="actions">
+        <button class="btn secondary" type="submit">提交</button>
+        <button class="btn ghost" type="button" data-action="close-modal">取消</button>
+      </div>
+    </form>`;
+  setTimeout(() => modal.querySelector('input[name="name"]')?.focus(), 0);
+}
+
+function submitShopItemForm(form) {
+  const data = new FormData(form);
+  const name = String(data.get('name') || '').trim();
+  const costValue = Number(data.get('cost'));
+  const cost = Math.max(1, Math.min(1000, Math.round(costValue || 0)));
+  const editId = form.dataset.shopItemEdit || '';
+
+  if (!name) {
+    showShopItemModal(editId, '请先填写名称。');
+    return;
+  }
+  if (!Number.isFinite(costValue) || costValue < 1) {
+    showShopItemModal(editId, '请输入正确的积分数。');
+    return;
+  }
+
+  const existingItem = editId
+    ? (state.customShopRewards || []).find(item => item.id === editId)
+    : null;
+  const nextItem = {
+    id: editId || `custom-reward-${Date.now()}`,
+    name: name.slice(0, 24),
+    cost,
+    createdAt: existingItem?.createdAt || Date.now(),
+    updatedAt: Date.now()
+  };
+  if (editId) {
+    const index = state.customShopRewards.findIndex(item => item.id === editId);
+    if (index >= 0) state.customShopRewards[index] = nextItem;
+  } else {
+    state.customShopRewards.unshift(nextItem);
+  }
+  closeModal();
+  showToast(editId ? '兑换项目已更新。' : '新的兑换项目已添加。');
+  persist();
+  render('shop');
+}
+
 function closeRuleContextMenu() {
   ruleContextMenu.classList.add('hidden');
   activeRuleContext = null;
@@ -2103,12 +2032,13 @@ function openCardActionMenu(card, trigger) {
   }
   activeCardAction = { kind, id };
   cardActionMenu.classList.remove('hidden');
+  // 卡片类（加减分 / 商城兑换 / 识字 / 单词）的菜单都从右上角按钮下方展开、右对齐
+  const cardKinds = ['point', 'deduct', 'point-custom', 'deduct-custom', 'plan', 'literacy', 'word', 'shop', 'shop-custom'];
   const editButton = cardActionMenu.querySelector('[data-card-action="edit"]');
-  const editable = ['literacy', 'word', 'point-custom', 'deduct-custom', 'point', 'deduct', 'plan'].includes(kind);
-  editButton.hidden = !editable;
+  editButton.hidden = !cardKinds.includes(kind);
   const rect = trigger.getBoundingClientRect();
   const gap = 8;
-  const isPointsCard = ['point', 'deduct', 'point-custom', 'deduct-custom', 'plan', 'literacy', 'word'].includes(kind);
+  const isPointsCard = cardKinds.includes(kind);
   const preferredLeft = isPointsCard ? rect.left - cardActionMenu.offsetWidth + rect.width : rect.right - cardActionMenu.offsetWidth;
   const left = Math.max(gap, Math.min(preferredLeft, window.innerWidth - cardActionMenu.offsetWidth - gap));
   const preferredTop = isPointsCard ? rect.bottom + gap : rect.top - cardActionMenu.offsetHeight - gap;
@@ -2120,8 +2050,10 @@ function openCardActionMenu(card, trigger) {
 }
 
 function getRuleCardFromEvent(event) {
-  const card = event.target.closest?.('.rule-card[data-rule-context-kind]');
-  return card && !card.classList.contains('rule-card-add') ? card : null;
+  const card = event.target.closest?.('.rule-card, .reward-card');
+  if (!card || card.classList.contains('rule-card-add')) return null;
+  // 长按 = 打开「更多」菜单，卡片上得真有更多按钮才算数
+  return card.querySelector('[data-card-more-kind]') ? card : null;
 }
 
 function cancelRuleLongPress() {
@@ -2196,12 +2128,15 @@ cardActionMenu.addEventListener('click', event => {
     if (kind === 'point-custom') showCustomRuleModal('earn', '', id);
     if (kind === 'deduct-custom') showCustomRuleModal('deduct', '', id);
     if (kind === 'point' || kind === 'deduct' || kind === 'plan') editRuleCard(kind, id);
+    if (kind === 'shop-custom') showShopItemModal(id);
+    if (kind === 'shop') editRewardCard(id);
     return;
   }
   if (action === 'delete') {
     if (kind === 'literacy') deleteLiteracyItem(id);
     if (kind === 'word') deleteWordItem(id);
     if (kind === 'point-custom' || kind === 'deduct-custom' || kind === 'point' || kind === 'deduct' || kind === 'plan') deleteRuleCard(kind, id);
+    if (kind === 'shop-custom' || kind === 'shop') deleteRewardCard(kind, id);
   }
 });
 
@@ -2229,10 +2164,6 @@ function addPlan(form) {
 }
 
 const actions = {
-  feed: feedPet,
-  play: playPet,
-  rest: restPet,
-  revive: revivePet,
   lottery: drawLottery,
   home: goHome,
   'open-records': openRecordsDetail,
@@ -2469,25 +2400,10 @@ document.addEventListener('click', event => {
     persist();
     render('planning');
   }
-  if (target.dataset.pointsBoardView) {
-    state.pointsBoardView = target.dataset.pointsBoardView;
-    persist();
-    skipNextRenderAnimation = true;
-    render('my');
-  }
-  if (target.dataset.petSection) {
-    state.petSection = target.dataset.petSection;
-    persist();
-    state.mySection = 'pet';
-    render('my');
-  }
   if (target.dataset.openPlanModal !== undefined) {
     showPlanModal();
     return;
   }
-  if (target.dataset.adopt) adoptPet(target.dataset.adopt);
-  if (target.dataset.petPick) selectPreviewPet(target.dataset.petPick);
-  if (target.dataset.petDetail) showPetDetailModal(target.dataset.petDetail);
   if (target.dataset.literacyCreate !== undefined) showCreateLiteracyModal();
   if (target.dataset.literacyDelete) deleteLiteracyItem(target.dataset.literacyDelete);
   if (target.dataset.literacyPreviewMove) moveLiteracyPreview(target.dataset.literacyPreviewId, target.dataset.literacyPreviewMove);
@@ -2546,6 +2462,7 @@ document.addEventListener('click', event => {
   if (target.dataset.deduct) deductPoints(Number(target.dataset.deduct));
   if (target.dataset.deductCustom) deductCustomPoints(target.dataset.deductCustom);
   if (target.dataset.openCustomRule) showCustomRuleModal(target.dataset.openCustomRule);
+  if (target.dataset.openShopItem !== undefined) showShopItemModal();
   if (target.dataset.exchange) exchangeReward(target.dataset.exchange);
   if (target.dataset.deleteRuleKind) deleteRuleCard(target.dataset.deleteRuleKind, target.dataset.deleteRuleId);
   if (target.dataset.completePlan) completePlan(target.dataset.completePlan);
@@ -2553,10 +2470,6 @@ document.addEventListener('click', event => {
   if (target.dataset.deletePlan) deletePlan(target.dataset.deletePlan);
   if (target.dataset.writeOff) requestWriteOffVerification(target.dataset.writeOff);
   if (target.dataset.mySection) {
-    if (target.dataset.mySection === 'pet') {
-      showToast('宠物馆还在装修哦');
-      return;
-    }
     state.mySection = target.dataset.mySection;
     persist();
     render('my');
@@ -2621,6 +2534,11 @@ document.addEventListener('submit', event => {
   if (event.target.matches('[data-custom-rule-form]')) {
     event.preventDefault();
     submitCustomRuleForm(event.target);
+    return;
+  }
+  if (event.target.matches('[data-shop-item-form]')) {
+    event.preventDefault();
+    submitShopItemForm(event.target);
     return;
   }
   if (event.target.matches('[data-literacy-create-form]')) {

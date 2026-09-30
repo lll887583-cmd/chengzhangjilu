@@ -1,18 +1,4 @@
-import { PETS } from '../pets.js';
-import { iconSvg } from '../icons.js?v=20260601p';
-
-export function getPetStatus(pet) {
-  if (!pet) return { label: '还没有领养宠物', tone: 'normal' };
-  if (pet.status === 'planet') return { label: '去宠物星球了', tone: 'danger' };
-  if (pet.energy >= 70) return { label: '开心', tone: 'happy' };
-  if (pet.energy >= 40) return { label: '正常', tone: 'normal' };
-  if (pet.energy >= 15) return { label: '饿了', tone: 'hungry' };
-  return { label: '很饿', tone: 'danger' };
-}
-
-export function getPetInfo(state, type = state.pet?.type || state.previewPet || 'sonicHummingbird') {
-  return PETS[type] || PETS.sonicHummingbird;
-}
+import { iconSvg } from '../icons.js?v=20260930i';
 
 export function sectionSwitch(items, activeValue, dataName, extraClass = '') {
   const className = ['section-switch', extraClass].filter(Boolean).join(' ');

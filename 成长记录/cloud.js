@@ -13,7 +13,7 @@
 //    这类数据冲突代价低，配合数组按 id 求并集，双方的新增都能保住。
 
 // 注意：这里的版本号后缀必须和 app.js 里导入 store.js 的写法完全一致。
-// ES 模块按完整 URL 去重，'./store.js' 和 './store.js?v=xxx' 会被当成两个模块分别实例化，
+// ES 模块按完整 URL 去重，'./store.js' 和 './store.js?v=20260930i' 会被当成两个模块分别实例化，
 // 那样待同步队列就会出现「写进 A 份、读的是 B 份」的错乱。
 import {
   cloudMeta,
@@ -23,7 +23,7 @@ import {
   cloudQueueList,
   cloudQueuePush,
   newOpId
-} from './store.js?v=20260930b';
+} from './store.js?v=20260930i';
 
 // 两个 CDN 互为备用：国内访问 jsDelivr 偶尔不稳定，失败时换 unpkg 再试一次
 const SDK_SOURCES = [
@@ -61,14 +61,11 @@ const DEVICE_LOCAL_KEYS = new Set([
   'pointsSection',
   'shopSection',
   'planningSection',
-  'petSection',
-  'pointsBoardView',
   'pointsSort',
   'calendarMonth',
   'additionGame',
   'planningDraftType',
-  'customRuleDraftType',
-  'previewPet'
+  'customRuleDraftType'
 ]);
 
 // 同步时按 id 求并集的列表字段：两边新增的内容都能留住
@@ -78,7 +75,9 @@ const ARRAY_MERGE_KEYS = {
   literacyItems: 'id',
   wordItems: 'id',
   customPointRules: 'id',
-  customDeductRules: 'id'
+  customDeductRules: 'id',
+  // 商城自定义兑换项目：和「加减分」自定义项目一样，按 id 求并集，两端新增的都能留住
+  customShopRewards: 'id'
 };
 
 let client = null;
@@ -731,11 +730,6 @@ function mergeContent(local, remote) {
     });
     merged[key] = Array.from(table.values());
   });
-
-  // 宠物图鉴是简单字符串数组，直接求并集
-  const localPets = Array.isArray(local?.collectedPets) ? local.collectedPets : [];
-  const remotePets = Array.isArray(remote?.collectedPets) ? remote.collectedPets : [];
-  merged.collectedPets = Array.from(new Set([...remotePets, ...localPets]));
 
   return merged;
 }

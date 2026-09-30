@@ -1,4 +1,4 @@
-import { DEFAULT_WORD_ITEMS, PETS, defaultState } from './data.js';
+import { DEFAULT_WORD_ITEMS, defaultState } from './data.js?v=20260930i';
 
 const LEGACY_STORAGE_KEY = 'growth-record-demo';
 const BACKUP_SCHEMA_VERSION = 1;
@@ -114,7 +114,6 @@ export function normalizeState(state) {
     delta: Math.round(Number(record.delta) || 0)
   }));
   state.exchangedRewards ||= [];
-  state.collectedPets ||= [];
   if (!Array.isArray(state.plans) || state.plans.length === 0) {
     state.plans = DEFAULT_PLAN_ITEMS.map((plan, index) => ({
       ...plan,
@@ -127,7 +126,7 @@ export function normalizeState(state) {
   state.pointsSection ||= 'earn';
   state.shopSection ||= 'exchange';
   state.planningSection ||= 'active';
-  state.pointsBoardView = ['week', 'month', 'year'].includes(state.pointsBoardView) ? state.pointsBoardView : 'week';
+  state.pointsSort = ['asc', 'desc', 'latest'].includes(state.pointsSort) ? state.pointsSort : 'latest';
   state.planningDraftType = state.planningDraftType === 'longTerm' ? 'longTerm' : 'single';
   state.customRuleDraftType = state.customRuleDraftType === 'longTerm' ? 'longTerm' : 'single';
   state.customPointRules = Array.isArray(state.customPointRules) ? state.customPointRules : [];
@@ -142,18 +141,18 @@ export function normalizeState(state) {
   state.customDeductRules = Array.isArray(state.customDeductRules) ? state.customDeductRules : [];
   state.hiddenPointRuleIds = Array.isArray(state.hiddenPointRuleIds) ? state.hiddenPointRuleIds : [];
   state.hiddenDeductRuleIds = Array.isArray(state.hiddenDeductRuleIds) ? state.hiddenDeductRuleIds : [];
+  state.customShopRewards = Array.isArray(state.customShopRewards) ? state.customShopRewards : [];
+  state.hiddenRewardIds = Array.isArray(state.hiddenRewardIds) ? state.hiddenRewardIds : [];
   state.pointRuleOrder = Array.isArray(state.pointRuleOrder) ? state.pointRuleOrder : [];
   state.deductRuleOrder = Array.isArray(state.deductRuleOrder) ? state.deductRuleOrder : [];
-  state.pointsSort = ['asc', 'desc', 'latest'].includes(state.pointsSort) ? state.pointsSort : 'latest';
-  state.petSection ||= 'cloud';
   state.calendarMonth ||= null;
   if (state.selectedTab === 'pet') state.selectedTab = 'points';
-  if (!PETS[state.previewPet]) state.previewPet = defaultState.previewPet;
-  state.collectedPets = state.collectedPets.filter(type => PETS[type]);
-  if (state.pet?.type && !PETS[state.pet.type]) state.pet = null;
-  if (state.pet?.type && !state.collectedPets.includes(state.pet.type)) {
-    state.collectedPets.push(state.pet.type);
-  }
+  // 宠物馆、积分看板已下线：老数据里可能还带着这些字段，清掉避免继续参与云端快照
+  delete state.petSection;
+  delete state.previewPet;
+  delete state.collectedPets;
+  delete state.pet;
+  delete state.pointsBoardView;
   state.plans = state.plans.map((plan, index) => ({
     title: plan.title || '学习任务',
     points: Math.round(Number(plan.points) || 0),
@@ -242,6 +241,13 @@ export function normalizeState(state) {
     planType: rule.planType === 'longTerm' ? 'longTerm' : 'single',
     createdAt: Number(rule.createdAt) || Date.now() + index,
     updatedAt: Number(rule.updatedAt) || Number(rule.createdAt) || Date.now() + index
+  }));
+  state.customShopRewards = state.customShopRewards.map((item, index) => ({
+    id: item.id || `custom-reward-${Date.now()}-${index}`,
+    name: String(item.name || '').trim().slice(0, 24) || '自定义奖励',
+    cost: Math.max(1, Math.round(Number(item.cost) || 1)),
+    createdAt: Number(item.createdAt) || Date.now() + index,
+    updatedAt: Number(item.updatedAt) || Number(item.createdAt) || Date.now() + index
   }));
   state.exchangedRewards = state.exchangedRewards.map((reward, index) => ({
     ...reward,

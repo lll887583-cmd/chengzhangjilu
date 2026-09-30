@@ -1,6 +1,4 @@
-// Central config for content that changes often.
-// Pet IP lives in pets.js; point/reward/default app config stays here.
-export { PETS } from './pets.js';
+// Central config for point/reward/default app config.
 
 export const POINT_RULES = [
   ['画画', 3, '', 'creative'],
@@ -106,7 +104,6 @@ export const defaultState = {
   pointsSection: 'earn',
   shopSection: 'exchange',
   planningSection: 'active',
-  pointsBoardView: 'week',
   planningDraftType: 'single',
   literacyItems: [],
   numberBoardSelections: [],
@@ -122,14 +119,12 @@ export const defaultState = {
   customDeductRules: [],
   hiddenPointRuleIds: [],
   hiddenDeductRuleIds: [],
+  customShopRewards: [],
+  hiddenRewardIds: [],
   pointRuleOrder: [],
   deductRuleOrder: [],
   pointsSort: 'latest',
-  petSection: 'cloud',
   calendarMonth: null,
-  previewPet: 'sonicHummingbird',
-  collectedPets: [],
-  pet: null,
   plans: DEFAULT_PLANS.map((plan, index) => ({
     ...plan,
     id: `default-plan-${index + 1}`,
