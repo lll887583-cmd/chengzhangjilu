@@ -46,6 +46,11 @@ const TABLE_SNAPSHOT = 'growth_snapshot';
 const SYNC_DEBOUNCE_MS = 1500;
 const AUTO_SYNC_INTERVAL_MS = 180000;
 
+// 首次同步采用云端时，把本机原数据留一份；这是「别把用户数据弄丢」的最后一道保险
+const BACKUP_KEY = 'growth-record-cloud-backup';
+// 快照被云端覆盖前的兜底备份，单独一个键，不覆盖上面那份完整的
+const CONTENT_BACKUP_KEY = 'growth-record-cloud-content-backup';
+
 // 这些是「当前这台设备上的界面状态」，不参与同步。
 // 否则平板切到哪一页，家长手机也会跟着跳过去。
 const DEVICE_LOCAL_KEYS = new Set([
@@ -416,6 +421,7 @@ async function runSync() {
 
   // 2. 首次同步：决定「用本机初始化云端」还是「采用云端已有数据」
   let adoptCloud = false;
+  let seeded = false;
   if (!meta.baselineDone) {
     if (remote.ops.length === 0) {
       const localPoints = Math.round(Number(state.points) || 0);
@@ -429,6 +435,8 @@ async function runSync() {
           meta: null
         });
       }
+      // 本机是数据源头，这次连快照也以本机为准
+      seeded = true;
       cloudMetaPatch({ baselineDone: true });
     } else {
       // 云端已经有别人用过的数据：以云端为准，本机原数据留一份备份，不作废
@@ -455,7 +463,7 @@ async function runSync() {
   const localContent = contentOf(state);
   let snapshotResult;
   try {
-    snapshotResult = await syncSnapshot(localContent, meta, adoptCloud);
+    snapshotResult = await syncSnapshot(localContent, meta, adoptCloud, seeded);
   } catch {
     snapshotResult = {
       content: localContent,
@@ -554,7 +562,7 @@ async function pushLedger() {
   return queue;
 }
 
-async function syncSnapshot(localContent, meta, adoptCloud) {
+async function syncSnapshot(localContent, meta, adoptCloud, seeded) {
   const { data, error } = await client.database
     .from(TABLE_SNAPSHOT)
     .select('data, updated_at')
@@ -571,7 +579,14 @@ async function syncSnapshot(localContent, meta, adoptCloud) {
   }
 
   // 云端比我们上次见到的更新 → 说明别的设备推过，采用云端的
-  if (remoteTs > knownRemoteTs && data?.data) {
+  // 但有两种情况例外，必须推本机：
+  //   seeded    —— 这次刚用本机数据初始化了云端，本机才是源头
+  //   !data     —— 云端还没有快照
+  const shouldAdoptRemote = data?.data && remoteTs > knownRemoteTs && !seeded;
+
+  if (shouldAdoptRemote) {
+    // 覆盖本地之前先留个底，万一采用错了还能找回来
+    backupLocalState(localContent, 'snapshot-adopt-backup', CONTENT_BACKUP_KEY);
     return {
       content: mergeContent(localContent, data.data),
       remoteTs,
@@ -580,7 +595,7 @@ async function syncSnapshot(localContent, meta, adoptCloud) {
   }
 
   // 本机有改动 → 推上去
-  if (localChanged || !data) {
+  if (localChanged || !data || seeded) {
     const nowIso = new Date().toISOString();
     const { error: writeError } = await client.database
       .from(TABLE_SNAPSHOT)
@@ -637,15 +652,15 @@ function hashContent(content) {
   return `${text.length}-${hash}`;
 }
 
-function backupLocalState(state) {
+function backupLocalState(state, reason = 'cloud-adopt-backup', key = BACKUP_KEY) {
   try {
     const payload = {
       app: 'growth-record',
-      reason: 'cloud-adopt-backup',
+      reason,
       backedUpAt: new Date().toISOString(),
       state
     };
-    localStorage.setItem('growth-record-cloud-backup', JSON.stringify(payload));
+    localStorage.setItem(key, JSON.stringify(payload));
   } catch {
     // 备份失败不影响主流程
   }
@@ -653,7 +668,7 @@ function backupLocalState(state) {
 
 export function cloudLocalBackup() {
   try {
-    const raw = localStorage.getItem('growth-record-cloud-backup');
+    const raw = localStorage.getItem(BACKUP_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
