@@ -1,4 +1,4 @@
-import { DEFAULT_WORD_ITEMS, defaultState } from './data.js?v=20260930i';
+import { DEFAULT_WORD_ITEMS, defaultState } from './data.js?v=20260930k';
 
 const LEGACY_STORAGE_KEY = 'growth-record-demo';
 const BACKUP_SCHEMA_VERSION = 1;
@@ -127,6 +127,7 @@ export function normalizeState(state) {
   state.shopSection ||= 'exchange';
   state.planningSection ||= 'active';
   state.pointsSort = ['asc', 'desc', 'latest'].includes(state.pointsSort) ? state.pointsSort : 'latest';
+  state.shopSort = ['asc', 'desc', 'latest'].includes(state.shopSort) ? state.shopSort : 'asc';
   state.planningDraftType = state.planningDraftType === 'longTerm' ? 'longTerm' : 'single';
   state.customRuleDraftType = state.customRuleDraftType === 'longTerm' ? 'longTerm' : 'single';
   state.customPointRules = Array.isArray(state.customPointRules) ? state.customPointRules : [];

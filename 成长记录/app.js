@@ -1,9 +1,9 @@
-import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, POINT_RULES, REWARDS } from './data.js?v=20260930j';
-import { SIDEBAR_ICONS } from './icons.js?v=20260930j';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20260930j';
-import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930j';
-import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260930j';
-import { formatPoints, iconSvg } from './views/shared.js?v=20260930j';
+import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, POINT_RULES, REWARDS } from './data.js?v=20260930k';
+import { SIDEBAR_ICONS } from './icons.js?v=20260930k';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20260930k';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930k';
+import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260930k';
+import { formatPoints, iconSvg } from './views/shared.js?v=20260930k';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -187,6 +187,7 @@ const VIEW_ONLY_KEYS = [
   'shopSection',
   'planningSection',
   'pointsSort',
+  'shopSort',
   'calendarMonth',
   'additionGame',
   'planningDraftType',
@@ -406,9 +407,19 @@ function headerAddButton(dataset, label = '新增') {
   return `<button class="header-add-button" type="button" ${dataset} aria-label="${label}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" fill="currentColor"/></svg></button>`;
 }
 
+// 排序按钮：加减分和商城共用同一套外观与交互，只是作用的字段（scope）不同
+const SORT_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v13.17l-2.59-2.58L3 16l5 5 5-5-1.41-1.41L9 17.17V4H7Zm8 0-5 5 1.41 1.41L14 7.83V21h2V7.83l2.59 2.58L20 9l-5-5Z" fill="currentColor"/></svg>';
+
+function sortControl(scope, labels, active) {
+  return `<div class="points-sort-control" data-sort-scope="${scope}"><button class="points-sort-button" type="button" data-sort-toggle aria-label="排序" aria-expanded="false">${SORT_ICON}</button><div class="points-sort-menu hidden" data-sort-menu>${Object.entries(labels).map(([value, label]) => `<button type="button" data-sort-option="${value}">${label}</button>`).join('')}</div></div>`;
+}
+
 function pointsSortButton() {
-  const labels = { asc: '正序', desc: '倒序', latest: '最新' };
-  return `<div class="points-sort-control"><button class="points-sort-button" type="button" data-sort-toggle aria-label="排序" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v13.17l-2.59-2.58L3 16l5 5 5-5-1.41-1.41L9 17.17V4H7Zm8 0-5 5 1.41 1.41L14 7.83V21h2V7.83l2.59 2.58L20 9l-5-5Z" fill="currentColor"/></svg></button><div class="points-sort-menu hidden" data-sort-menu>${Object.entries(labels).map(([value, label]) => `<button type="button" data-points-sort="${value}">${label}</button>`).join('')}</div></div>`;
+  return sortControl('points', { asc: '正序', desc: '倒序', latest: '最新' }, state.pointsSort || 'latest');
+}
+
+function shopSortButton() {
+  return sortControl('shop', { asc: '正序', desc: '倒序', latest: '最新' }, state.shopSort || 'asc');
 }
 
 function closePointsSortMenu() {
@@ -427,7 +438,7 @@ function renderHeaderSwitch(tab) {
     shop: `${sectionSwitch([
       { value: 'exchange', label: '积分兑换' },
       { value: 'lottery', label: '积分抽奖' }
-    ], state.shopSection || 'exchange', 'shop-section', 'section-switch--header')}${(state.shopSection || 'exchange') === 'exchange' ? headerAddButton('data-open-shop-item', '新增兑换项目') : ''}`,
+    ], state.shopSection || 'exchange', 'shop-section', 'section-switch--header')}${(state.shopSection || 'exchange') === 'exchange' ? `${shopSortButton()}${headerAddButton('data-open-shop-item', '新增兑换项目')}` : ''}`,
     planning: `${sectionSwitch([
       { value: 'active', label: '任务中' },
       { value: 'done', label: '已完成' }
@@ -2249,11 +2260,19 @@ document.addEventListener('click', event => {
     return;
   }
   if (!event.target.closest?.('.points-sort-control')) closePointsSortMenu();
-  const sortOption = event.target.closest?.('[data-points-sort]');
+  const sortOption = event.target.closest?.('[data-sort-option]');
   if (sortOption) {
-    state.pointsSort = sortOption.dataset.pointsSort;
-    persist();
-    render('points');
+    const scope = sortOption.closest('[data-sort-scope]')?.dataset.sortScope;
+    const value = sortOption.dataset.sortOption;
+    if (scope === 'shop') {
+      state.shopSort = value;
+      persist();
+      render('shop');
+    } else {
+      state.pointsSort = value;
+      persist();
+      render('points');
+    }
     return;
   }
   const cardMoreTrigger = event.target.closest?.('[data-card-more-kind]');

@@ -124,6 +124,8 @@ export const defaultState = {
   pointRuleOrder: [],
   deductRuleOrder: [],
   pointsSort: 'latest',
+  // 商城兑换列表的排序：与加减分的 pointsSort 同一套取值（asc / desc / latest），默认「积分从少到多」
+  shopSort: 'asc',
   calendarMonth: null,
   plans: DEFAULT_PLANS.map((plan, index) => ({
     ...plan,

@@ -131,6 +131,7 @@
   .points-pill svg { width: 22px; height: 22px; }
   h1 { font-size: 36px; }
   .brand-logo img { height: 38px; }
+  .brand-name { font-size: 18px; }
   h2 { font-size: 28px; line-height: 34px; }
   .numbers-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .nav-trigger { display: inline-flex !important; }
