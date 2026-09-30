@@ -574,11 +574,14 @@ async function runSync({ silent = false } = {}) {
   merged.selectedTab = state.selectedTab;
   merged.mySection = state.mySection;
 
-  applyingRemote = true;
-  try {
-    host.applyState(merged);
-  } finally {
-    applyingRemote = false;
+  // 没有实质变化就不写回：applyState 会整页重绘，每次同步都闪一下没必要
+  if (!mergedSameAsLocal(merged, state)) {
+    applyingRemote = true;
+    try {
+      host.applyState(merged);
+    } finally {
+      applyingRemote = false;
+    }
   }
 
   const now = Date.now();
@@ -635,6 +638,22 @@ function recordsFromOps(ops) {
 }
 
 /* ---------- 数据库读写 ---------- */
+
+// 判断合并结果与本机当前状态是否实质相同（积分、流水、快照内容）。
+// 相同就跳过 applyState，避免「点进页面约 2 秒后闪一次」这种无意义重绘。
+function mergedSameAsLocal(merged, state) {
+  if (Math.round(Number(merged.points) || 0) !== Math.round(Number(state.points) || 0)) return false;
+  const sig = records => (records || [])
+    .map(record => `${Number(record.time) || 0}|${Number(record.delta) || 0}|${record.text || ''}`)
+    .sort()
+    .join('\n');
+  if (sig(merged.records) !== sig(state.records)) return false;
+  try {
+    return hashContent(contentOf(merged)) === hashContent(contentOf(state));
+  } catch {
+    return false;
+  }
+}
 
 async function pullLedger() {
   const { data, error } = await client.database.rpc('growth_sync_pull', { limit_ops: 400 });
