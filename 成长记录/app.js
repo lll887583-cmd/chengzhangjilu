@@ -1,7 +1,7 @@
 import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, PETS, POINT_RULES, REWARDS } from './data.js?v=20260826k';
 import { SIDEBAR_ICONS } from './icons.js?v=20260930b';
 import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20260930b';
-import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudOnChange, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStatus, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930e';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930f';
 import { additionView, calendarView, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260930c';
 import { formatPoints, iconSvg } from './views/shared.js?v=20260826l';
 
@@ -327,7 +327,7 @@ async function afterCloudAuth() {
     renderCloudSection();
     return;
   }
-  await cloudSync();
+  await cloudSync({ silent: true });
   renderCloudSection();
   showToast('已开启云端同步');
 }
@@ -2248,10 +2248,12 @@ const actions = {
       return;
     }
     setCloudBusy(true);
+    // 用户主动点的同步：这一路才显示「同步中…」，后台自动同步一律静默
     await cloudSync();
     setCloudBusy(false);
     renderCloudSection();
-    showToast('已同步到云端');
+    const now = cloudStatus();
+    showToast(now.error ? '同步失败了，稍后会自动重试' : '已同步到云端');
   },
   'cloud-signout': async () => {
     await cloudSignOut();
@@ -2704,6 +2706,47 @@ syncDrawerForViewport();
 
 /* ---------- 启动云端同步（可选能力，失败不影响本地使用） ---------- */
 
+/* ---------- 同步状态的就地更新 ---------- */
+//
+// 同步状态变化非常频繁（后台每隔几分钟自动同步一次）。
+// 以前的做法是整段重绘「账号与同步」，界面会跟着闪；
+// 现在只在原地替换文字节点，页面结构不动，后台同步对用户完全无感，
+// 只有出错时状态行才变成红字提示。
+
+function patchCloudDetailStatus(status) {
+  const host = app.querySelector('.cloud-detail-host');
+  if (!host) return false;
+  // 未登录 / 未就绪等状态的结构不一样，就地更新对不上，交回整段重绘
+  if (host.dataset.cloudMode !== status.mode || status.mode !== 'ready') return false;
+
+  const summary = host.querySelector('[data-cloud-live="summary"]');
+  const stateNode = host.querySelector('[data-cloud-live="state"]');
+  if (!summary || !stateNode) return false;
+
+  summary.textContent = cloudStatusText(status);
+  stateNode.textContent = cloudStateText(status);
+  stateNode.dataset.cloudState = status.error ? 'error' : 'ok';
+
+  const emailNode = host.querySelector('[data-cloud-live="email"]');
+  if (emailNode && status.email) emailNode.textContent = status.email;
+
+  // 按钮只在用户主动点的同步过程中变化
+  const button = host.querySelector('[data-action="cloud-sync"]');
+  if (button) {
+    const busy = Boolean(cloudUi?.busy) || cloudIsBusy(status);
+    button.disabled = busy;
+    const label = button.querySelector('[data-cloud-live="sync-btn"]');
+    if (label) label.textContent = busy ? '同步中…' : '立即同步';
+  }
+  return true;
+}
+
+function patchCloudOverviewMeta(status) {
+  const node = app.querySelector('[data-cloud-live="overview-cloud-meta"]');
+  if (!node) return;
+  node.textContent = cloudOverviewMetaText(status);
+}
+
 cloudAttachHost({
   getState: () => state,
   applyState: merged => {
@@ -2718,8 +2761,12 @@ cloudAttachHost({
   }
 });
 
-cloudOnChange(() => {
-  if (state.mySection === 'cloud') renderCloudSection({ keepInputs: true });
+cloudOnChange(status => {
+  if (state.mySection === 'cloud') {
+    if (!patchCloudDetailStatus(status)) renderCloudSection({ keepInputs: true });
+    return;
+  }
+  patchCloudOverviewMeta(status);
 });
 
 void cloudInit();

@@ -88,7 +88,10 @@ let status = {
   mode: 'checking',
   email: '',
   syncing: false,
+  // 后台自动同步为 true：界面不该因为「每分钟跑一次同步」而闪，只保持一行「已同步」
+  quiet: false,
   message: '',
+  error: '',
   lastSyncedAt: 0,
   pendingCount: 0
 };
@@ -124,6 +127,46 @@ export function cloudOnChange(listener) {
   return () => {
     listeners = listeners.filter(item => item !== listener);
   };
+}
+
+/* ---------- 给界面用的文案 ---------- */
+//
+// 「正在同步…」只在用户自己点「立即同步」时出现；后台自动同步一律静默，
+// 界面上只留一行稳定的「已同步」，出问题才变成红色的异常提示。
+
+export function cloudStatusText(current = cloudStatus()) {
+  if (!current.lastSyncedAt) return '还没有同步过';
+  const timeText = `上次同步：${new Date(current.lastSyncedAt).toLocaleString('zh-CN')}`;
+  return current.pendingCount ? `${timeText} · ${current.pendingCount} 条待同步` : timeText;
+}
+
+export function cloudStateText(current = cloudStatus()) {
+  return current.error ? current.error : '已同步';
+}
+
+// 「我的」首页那张卡片右上角的小字
+export function cloudOverviewMetaText(current = cloudStatus()) {
+  if (current.error) return '同步异常';
+  if (current.mode === 'ready') return '已开启同步';
+  if (current.mode === 'local-only') return '当前地址不可用';
+  if (current.mode === 'error') return '暂不可用';
+  return '未开启';
+}
+
+// 只有用户主动点的同步才需要「同步中…」这种过程反馈
+export function cloudIsBusy(current = cloudStatus()) {
+  return Boolean(current.syncing && !current.quiet);
+}
+
+function describeSyncError(error) {
+  const kind = error?.kind || '';
+  if (kind === 'unauthenticated' || kind === 'invalid_grant') {
+    return '同步异常：登录状态已失效，请退出后重新登录。';
+  }
+  if (kind === 'rate_limited') {
+    return '同步异常：云端请求太频繁，稍后会自动重试。';
+  }
+  return '同步异常：云端暂时连不上，积分已保存在本机，稍后会自动重试。';
 }
 
 function emit() {
@@ -224,7 +267,7 @@ export async function cloudInit() {
     client.auth.onAuthStateChange((event, nextSession) => {
       session = nextSession || null;
       if (!session) {
-        setStatus({ mode: 'signed-out', email: '', message: '已退出同步账号' });
+        setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', message: '已退出同步账号' });
       }
     });
     const { data } = await client.auth.getSession();
@@ -235,7 +278,8 @@ export async function cloudInit() {
 
   if (session) {
     setStatus({ mode: 'ready', email: session?.user?.email || '', message: '' });
-    await cloudSync();
+    // 首次同步也走静默：界面上只体现「已同步」，不闪「正在同步」
+    await cloudSync({ silent: true });
     startAutoSync();
   } else {
     setStatus({ mode: 'signed-out', email: '', message: '' });
@@ -247,11 +291,11 @@ function startAutoSync() {
   if (intervalTimer) return;
   intervalTimer = setInterval(() => {
     if (typeof document !== 'undefined' && document.hidden) return;
-    cloudSync();
+    cloudSync({ silent: true });
   }, AUTO_SYNC_INTERVAL_MS);
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && session) cloudSync();
+      if (!document.hidden && session) cloudSync({ silent: true });
     });
   }
 }
@@ -271,7 +315,7 @@ function describeAuthError(error, fallback) {
 
 // 登录成功后统一处理：记住账号、开始自动同步
 function markSignedIn(email) {
-  setStatus({ mode: 'ready', email: email || status.email || '', message: '' });
+  setStatus({ mode: 'ready', email: email || status.email || '', syncing: false, quiet: false, error: '', message: '' });
   startAutoSync();
 }
 
@@ -388,7 +432,7 @@ export async function cloudSignOut() {
   }
   session = null;
   pendingEmailOtp = null;
-  setStatus({ mode: 'signed-out', email: '', message: '已退出同步账号' });
+  setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', message: '已退出同步账号' });
   return { ok: true, message: '已退出同步账号' };
 }
 
@@ -404,16 +448,17 @@ export function cloudAfterLocalChange() {
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
-    cloudSync();
+    cloudSync({ silent: true });
   }, SYNC_DEBOUNCE_MS);
 }
 
-export function cloudSync() {
+// silent = true 表示后台自动同步：不广播「正在同步」，界面保持「已同步」，只有出错才变身红字
+export function cloudSync({ silent = false } = {}) {
   if (!client || !session) return Promise.resolve(null);
   if (inflight) return inflight;
-  inflight = runSync()
-    .catch(() => {
-      setStatus({ syncing: false, message: '云同步暂时不可用，积分仍在本地正常保存' });
+  inflight = runSync({ silent })
+    .catch(error => {
+      setStatus({ syncing: false, quiet: false, message: '', error: describeSyncError(error) });
     })
     .finally(() => {
       inflight = null;
@@ -421,11 +466,16 @@ export function cloudSync() {
   return inflight;
 }
 
-async function runSync() {
+async function runSync({ silent = false } = {}) {
   const state = host.getState();
   if (!state) return;
 
-  setStatus({ syncing: true, mode: 'ready', message: '' });
+  if (silent) {
+    // 静默同步：只改内部状态，不通知界面，避免「正在同步」来回闪
+    status = { ...status, syncing: true, quiet: true };
+  } else {
+    setStatus({ syncing: true, quiet: false, mode: 'ready', message: '', error: '' });
+  }
 
   // 1. 先看云端现状
   const remote = await pullLedger();
@@ -505,7 +555,9 @@ async function runSync() {
     remoteSnapshotTs: snapshotResult.remoteTs,
     contentHash: snapshotResult.contentHash
   });
-  setStatus({ syncing: false, mode: 'ready', message: pushed.length ? `已同步 ${pushed.length} 条积分变动` : '已同步' });
+  // 成功收尾：清掉异常标记，界面回到「已同步」。
+  // 不再输出「已同步 1 条积分变动」这类流水账，免得状态行来回变。
+  setStatus({ syncing: false, quiet: false, mode: 'ready', message: '', error: '' });
 }
 
 function toLedgerRow(op) {

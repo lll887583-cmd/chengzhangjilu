@@ -1610,3 +1610,9 @@
   font-size: 14px;
   line-height: 1.5;
 }
+/* 同步出问题时只在这一行变红，正常时保持安静的「已同步」 */
+.cloud-note[data-cloud-state="error"] {
+  background: #fdeceb;
+  color: #c5221f;
+  font-weight: 600;
+}

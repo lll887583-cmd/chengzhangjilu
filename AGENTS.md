@@ -300,6 +300,15 @@ http://localhost:5173/成长记录/
 - **云端写回本地时，界面状态（`selectedTab` / `mySection` / `pointsSection` 等）必须保留本机的**。
   `cloud.js` 的 `contentOf` 会把这些键排除在快照之外，`app.js` 的 `applyState` 再用
   `pickViewState` 兜一层，两边都不能省。
+- **同步状态变化不能触发「重绘 → 又排队同步」**。「账号与同步」页原来在 `cloudOnChange` 里
+  整段重绘，重绘内部的 `persist()` 又会调 `cloudAfterLocalChange`，于是「同步 → 重绘 → 再同步」
+  死循环，页面一直在「正在同步 / 已同步」之间闪。现在有两道闸：
+  `cloud.js` 的 `emitDepth`（广播期间排队的调用一律忽略）+ `app.js` 的
+  `patchCloudDetailStatus`（状态变化只就地改文字节点，不重绘页面）。
+- **后台同步一律静默，界面只展示「已同步」**。自动同步（定时、切回前台、本地改动后的防抖）
+  都传 `cloudSync({ silent: true })`：不广播 `syncing`，只有用户点「立即同步」才显示「同步中…」。
+  同步失败写 `status.error`，界面那一行变红字；下次同步成功自动清掉。
+  别再往成功状态里塞「已同步 N 条积分变动」这类流水账，状态行一变就是视觉闪烁。
 
 ### 怎么改云端相关的东西
 

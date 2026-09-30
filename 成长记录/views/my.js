@@ -1,20 +1,20 @@
 import { petView } from './pet.js';
 import { formatPoints, getPetStatus, iconSvg, recordTitle, sectionSwitch, statCard } from './shared.js';
-import { cloudLocalBackup, cloudPendingEmail, cloudStatus } from '../cloud.js?v=20260930e';
+import { cloudIsBusy, cloudLocalBackup, cloudOverviewMetaText, cloudPendingEmail, cloudStateText, cloudStatus, cloudStatusText } from '../cloud.js?v=20260930f';
 
-function myOverviewCard(section, icon, title, summary, meta) {
+function myOverviewCard(section, icon, title, summary, meta, metaLive = '') {
   return `
     <button class="my-entry-card" data-my-section="${section}">
       <span class="my-card-icon ${section}">${icon}</span>
       <strong>${title}</strong>
       <p>${summary}</p>
-      <small>${meta}</small>
+      <small${metaLive ? ` data-cloud-live="${metaLive}"` : ''}>${meta}</small>
     </button>`;
 }
 
-function myDetailShell(title, subtitle, content, extraClass = '') {
+function myDetailShell(title, subtitle, content, extraClass = '', attrs = '') {
   return `
-    <section class="card my-detail-card ${extraClass}">
+    <section class="card my-detail-card ${extraClass}"${attrs ? ` ${attrs}` : ''}>
       <div class="section-head my-back-row">
         <div>
           <h2>${title}</h2>
@@ -202,19 +202,14 @@ function cloudInput(name, label, options = {}) {
     </label>`;
 }
 
+// 状态行只展示「已同步」或异常提示，不展示「正在同步」——
+// 后台每隔几分钟自动同步一次，如果每次都提示在同步，页面会一直闪。
 function cloudSyncSummary(status) {
-  if (status.syncing) return '正在同步…';
-  const timeText = status.lastSyncedAt
-    ? `上次同步：${new Date(status.lastSyncedAt).toLocaleString('zh-CN')}`
-    : '还没有同步过';
-  return status.pendingCount ? `${timeText} · ${status.pendingCount} 条待同步` : timeText;
+  return cloudStatusText(status);
 }
 
 function cloudOverviewMeta(status) {
-  if (status.mode === 'ready') return '已开启同步';
-  if (status.mode === 'local-only') return '当前地址不可用';
-  if (status.mode === 'error') return '暂不可用';
-  return '未开启';
+  return cloudOverviewMetaText(status);
 }
 
 function cloudSectionBody(status, cloudUi) {
@@ -238,18 +233,19 @@ function cloudSectionBody(status, cloudUi) {
   // 已登录
   if (status.mode === 'ready') {
     const backup = cloudLocalBackup();
+    const syncBusy = Boolean(cloudUi?.busy) || cloudIsBusy(status);
     return `
       <div class="cloud-account">
         <span class="cloud-account-icon">${iconSvg('person')}</span>
         <div>
-          <strong>${escapeHtml(status.email || '已登录')}</strong>
-          <p>${escapeHtml(cloudSyncSummary(status))}</p>
+          <strong data-cloud-live="email">${escapeHtml(status.email || '已登录')}</strong>
+          <p data-cloud-live="summary">${escapeHtml(cloudSyncSummary(status))}</p>
         </div>
       </div>
-      ${status.message ? `<div class="cloud-note">${escapeHtml(status.message)}</div>` : ''}
+      <div class="cloud-note" data-cloud-live="state" data-cloud-state="${status.error ? 'error' : 'ok'}">${escapeHtml(cloudStateText(status))}</div>
       ${backup ? '<div class="cloud-note">首次登录时云端已有数据，本机原有记录已另存一份备份，需要时可导出查看。</div>' : ''}
       <div class="actions">
-        <button class="btn secondary" data-action="cloud-sync" ${busy || status.syncing ? 'disabled' : ''}>${status.syncing ? '同步中…' : '立即同步'}</button>
+        <button class="btn secondary" data-action="cloud-sync" ${syncBusy ? 'disabled' : ''}><span data-cloud-live="sync-btn">${syncBusy ? '同步中…' : '立即同步'}</span></button>
         <button class="btn ghost" data-action="cloud-signout">退出账号</button>
       </div>`;
   }
@@ -353,7 +349,13 @@ export function myView(state, cloudUi = {}) {
   const cloudState = cloudStatus();
 
   if (state.mySection === 'cloud') {
-    return myDetailShell('账号与同步', '', cloudSectionBody(cloudState, cloudUi), 'cloud-detail-host');
+    return myDetailShell(
+      '账号与同步',
+      '',
+      cloudSectionBody(cloudState, cloudUi),
+      'cloud-detail-host',
+      `data-cloud-mode="${cloudState.mode}"`
+    );
   }
 
   if (state.mySection === 'pet') {
@@ -408,7 +410,7 @@ export function myView(state, cloudUi = {}) {
     <section class="my-overview">
       <div class="my-overview-grid">
         ${myOverviewCard('profile', iconSvg('star'), '成长档案', '查看当前积分、累计加分、累计使用和宠物状态。', `${formatPoints(state.points)} 当前积分`)}
-        ${myOverviewCard('cloud', iconSvg('cloud'), '账号与同步', '登录后，平板和手机看到的是同一份积分。', cloudOverviewMeta(cloudState))}
+        ${myOverviewCard('cloud', iconSvg('cloud'), '账号与同步', '登录后，平板和手机看到的是同一份积分。', cloudOverviewMeta(cloudState), 'overview-cloud-meta')}
         ${myOverviewCard('redeemed', iconSvg('gift'), '我的兑换', '查看兑换奖励、等待核销和已核销记录。', `${exchangedRewards.length} 个奖励`)}
         ${myOverviewCard('dashboard', iconSvg('trendingUp'), '积分看板', '查看积分加分总数的年/月/周折线趋势。', '年 / 月 / 周')}
         ${myOverviewCard('records', iconSvg('checklist'), '积分记录', '查看每一次加分、兑换、抽奖和照顾宠物的明细。', `${state.records.length} 条记录`)}
