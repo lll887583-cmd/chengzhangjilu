@@ -1,4 +1,4 @@
-import { iconSvg } from './shared.js?v=20261001d';
+import { iconSvg } from './shared.js?v=20261001e';
 
 const GOAL_SECTIONS = [
   {

@@ -1,4 +1,4 @@
-import { formatPoints, iconSvg } from './shared.js?v=20261001d';
+import { formatPoints, iconSvg } from './shared.js?v=20261001e';
 
 function planCard(plan) {
   const planTypeLabel = plan.planType === 'longTerm' ? '长期' : '单次';

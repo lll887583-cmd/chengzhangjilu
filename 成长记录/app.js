@@ -1,9 +1,9 @@
-import { ADDITION_MODES, DEDUCT_RULES, POINT_RULES, REWARDS } from './data.js?v=20261001d';
-import { SIDEBAR_ICONS } from './icons.js?v=20261001d';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20261001d';
-import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20261001d';
-import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20261001d';
-import { formatPoints, iconSvg } from './views/shared.js?v=20261001d';
+import { ADDITION_MODES, DEDUCT_RULES, POINT_RULES, REWARDS } from './data.js?v=20261001e';
+import { SIDEBAR_ICONS } from './icons.js?v=20261001e';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20261001e';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20261001e';
+import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20261001e';
+import { formatPoints, iconSvg } from './views/shared.js?v=20261001e';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -94,7 +94,7 @@ const NAV_ITEMS = [
   // { value: 'planning', label: '任务', ...SIDEBAR_ICONS.planning },
   // { value: 'calendar', label: '日历', ...SIDEBAR_ICONS.calendar },
   { value: 'shop', label: '商城', ...SIDEBAR_ICONS.shop },
-  { value: 'goals', label: '目标', viewBox: '0 0 24 24', icon: '<path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 3.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm0 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" fill="currentColor"/>' }
+  { value: 'goals', label: '目标', viewBox: '0 0 24 24', icon: '<path d="M14.4 6 14 4H5v17h2v-7h5.6l.4 2h7V6h-5.6Z" fill="currentColor"/>' }
 ];
 
 const DRAWER_EXTRA_ITEMS = [
