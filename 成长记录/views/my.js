@@ -1,6 +1,6 @@
 import { petView } from './pet.js';
 import { formatPoints, getPetStatus, iconSvg, recordTitle, sectionSwitch, statCard } from './shared.js';
-import { cloudLocalBackup, cloudPendingEmail, cloudStatus } from '../cloud.js?v=20260930c';
+import { cloudLocalBackup, cloudPendingEmail, cloudStatus } from '../cloud.js?v=20260930e';
 
 function myOverviewCard(section, icon, title, summary, meta) {
   return `

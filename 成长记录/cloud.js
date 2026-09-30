@@ -99,6 +99,10 @@ let intervalTimer = null;
 // 标记「此刻正在把云端结果写回本地」。
 // 写回会触发一次 saveState → cloudAfterLocalChange，如果不拦一下就会变成同步死循环。
 let applyingRemote = false;
+// 标记「此刻正在广播状态变化」。
+// 广播会让页面重绘（比如账号与同步页），重绘内部又会 persist → cloudAfterLocalChange，
+// 如果不拦一下，就会变成「同步完成 → 重绘 → 又排队同步 → 又重绘」的闪烁死循环。
+let emitDepth = 0;
 let host = {
   getState: () => null,
   applyState: () => {}
@@ -124,13 +128,18 @@ export function cloudOnChange(listener) {
 
 function emit() {
   const snapshot = cloudStatus();
-  listeners.forEach(listener => {
-    try {
-      listener(snapshot);
-    } catch {
-      // 监听方出错不能影响同步本身
-    }
-  });
+  emitDepth += 1;
+  try {
+    listeners.forEach(listener => {
+      try {
+        listener(snapshot);
+      } catch {
+        // 监听方出错不能影响同步本身
+      }
+    });
+  } finally {
+    emitDepth -= 1;
+  }
 }
 
 function setStatus(patch) {
@@ -389,6 +398,9 @@ export function cloudAfterLocalChange() {
   if (!client || !session) return;
   // 云端合并写回本地时不要再排队，否则每同步一次都会触发下一次同步
   if (applyingRemote) return;
+  // 状态广播引起的重绘也不算本地改动：同步状态一变，账号与同步页会重绘，
+  // 重绘里的 persist 如果又排队同步，页面就会在「正在同步/已同步」之间反复闪烁
+  if (emitDepth > 0) return;
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
