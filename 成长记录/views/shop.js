@@ -1,5 +1,5 @@
-import { REWARDS } from '../data.js?v=20261001c';
-import { formatPoints } from './shared.js?v=20261001c';
+import { REWARDS } from '../data.js?v=20261001d';
+import { formatPoints } from './shared.js?v=20261001d';
 
 function escapeHtml(value) {
   return String(value ?? '')

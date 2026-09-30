@@ -1,5 +1,5 @@
-import { DEDUCT_RULES, POINT_RULES } from '../data.js?v=20261001c';
-import { formatPoints, iconSvg } from './shared.js?v=20261001c';
+import { DEDUCT_RULES, POINT_RULES } from '../data.js?v=20261001d';
+import { formatPoints, iconSvg } from './shared.js?v=20261001d';
 
 function sortRules(rules, savedOrder, mode) {
   if (mode === 'asc') return [...rules].sort((left, right) => left.points - right.points);
