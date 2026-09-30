@@ -13,7 +13,7 @@
 //    这类数据冲突代价低，配合数组按 id 求并集，双方的新增都能保住。
 
 // 注意：这里的版本号后缀必须和 app.js 里导入 store.js 的写法完全一致。
-// ES 模块按完整 URL 去重，'./store.js' 和 './store.js?v=20260930k' 会被当成两个模块分别实例化，
+// ES 模块按完整 URL 去重，'./store.js' 和 './store.js?v=20261001a' 会被当成两个模块分别实例化，
 // 那样待同步队列就会出现「写进 A 份、读的是 B 份」的错乱。
 import {
   cloudMeta,
@@ -23,7 +23,7 @@ import {
   cloudQueueList,
   cloudQueuePush,
   newOpId
-} from './store.js?v=20260930k';
+} from './store.js?v=20261001a';
 
 // 两个 CDN 互为备用：国内访问 jsDelivr 偶尔不稳定，失败时换 unpkg 再试一次
 const SDK_SOURCES = [

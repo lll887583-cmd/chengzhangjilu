@@ -1,4 +1,4 @@
-import { DEFAULT_WORD_ITEMS, defaultState } from './data.js?v=20260930k';
+import { DEFAULT_WORD_ITEMS, defaultState } from './data.js?v=20261001a';
 
 const LEGACY_STORAGE_KEY = 'growth-record-demo';
 const BACKUP_SCHEMA_VERSION = 1;
@@ -124,7 +124,8 @@ export function normalizeState(state) {
   }
   state.mySection ??= null;
   state.pointsSection ||= 'earn';
-  state.shopSection ||= 'exchange';
+  // 积分抽奖已下线，商城只保留积分兑换
+  state.shopSection = 'exchange';
   state.planningSection ||= 'active';
   state.pointsSort = ['asc', 'desc', 'latest'].includes(state.pointsSort) ? state.pointsSort : 'latest';
   state.shopSort = ['asc', 'desc', 'latest'].includes(state.shopSort) ? state.shopSort : 'asc';

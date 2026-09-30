@@ -1,9 +1,9 @@
-import { ADDITION_MODES, DEDUCT_RULES, LOTTERY, POINT_RULES, REWARDS } from './data.js?v=20260930k';
-import { SIDEBAR_ICONS } from './icons.js?v=20260930k';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20260930k';
-import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20260930k';
-import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20260930k';
-import { formatPoints, iconSvg } from './views/shared.js?v=20260930k';
+import { ADDITION_MODES, DEDUCT_RULES, POINT_RULES, REWARDS } from './data.js?v=20261001a';
+import { SIDEBAR_ICONS } from './icons.js?v=20261001a';
+import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20261001a';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20261001a';
+import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20261001a';
+import { formatPoints, iconSvg } from './views/shared.js?v=20261001a';
 
 // Interaction controller for the static demo.
 // Data config lives in data.js; HTML templates live in views.js; persistence lives in store.js.
@@ -435,10 +435,10 @@ function renderHeaderSwitch(tab) {
       { value: 'earn', label: '加分' },
       { value: 'deduct', label: '减分' }
     ], state.pointsSection || 'earn', 'points-section', 'section-switch--header')}${pointsSortButton()}${headerAddButton('data-open-custom-rule="shared"')}`,
+    // 积分抽奖已下线，只保留积分兑换；单个标签保持居中，排序/新增常驻
     shop: `${sectionSwitch([
-      { value: 'exchange', label: '积分兑换' },
-      { value: 'lottery', label: '积分抽奖' }
-    ], state.shopSection || 'exchange', 'shop-section', 'section-switch--header')}${(state.shopSection || 'exchange') === 'exchange' ? `${shopSortButton()}${headerAddButton('data-open-shop-item', '新增兑换项目')}` : ''}`,
+      { value: 'exchange', label: '积分兑换' }
+    ], 'exchange', 'shop-section', 'section-switch--header')}${shopSortButton()}${headerAddButton('data-open-shop-item', '新增兑换项目')}`,
     planning: `${sectionSwitch([
       { value: 'active', label: '任务中' },
       { value: 'done', label: '已完成' }
@@ -502,35 +502,6 @@ function dateKey(time = Date.now()) {
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
-}
-
-function isBoostEligibleRecord(record) {
-  const category = record?.category || '';
-  return !['shop', 'system', 'pet'].includes(category)
-    && record?.source !== 'lottery-boost';
-}
-
-function getDailyNetPoints(targetDateKey = dateKey()) {
-  return (state.records || []).reduce((sum, record) => (
-    dateKey(record.time) === targetDateKey && isBoostEligibleRecord(record)
-      ? sum + (record.delta || 0)
-      : sum
-  ), 0);
-}
-
-function getEffectiveDailyNetPoints(targetDateKey = dateKey()) {
-  return Math.max(0, getDailyNetPoints(targetDateKey));
-}
-
-function applyInstantDailyPointBoost(multiplier) {
-  const totalNetPoints = getEffectiveDailyNetPoints(dateKey());
-  const bonus = totalNetPoints * (multiplier - 1);
-  state.points += bonus;
-    addRecord(state, `今日净积分${multiplier}倍卡生效，立刻奖励 ${formatPoints(bonus)} 积分`, bonus, {
-    category: 'points',
-    source: 'lottery-boost'
-  });
-  return { multiplier, bonus };
 }
 
 function awardPoints(points, recordText, meta, toastMessage, renderTab) {
@@ -1493,48 +1464,6 @@ function writeOffReward(exchangeId) {
   render('my');
 }
 
-function drawLottery() {
-  if (!spendPoints(10)) return;
-  const total = LOTTERY.reduce((sum, item) => sum + item.weight, 0);
-  let pick = Math.random() * total;
-  const reward = LOTTERY.find(item => (pick -= item.weight) <= 0) || LOTTERY[0];
-  const time = Date.now();
-
-  if (reward.type === 'points' && reward.points) {
-    state.points += reward.points;
-  } else if (reward.type === 'reward') {
-    const prizeId = `lottery-${reward.name.replace(/\s+/g, '-')}`;
-    state.exchangedRewards.unshift({
-      id: prizeId,
-      icon: reward.icon,
-      name: reward.name,
-      cost: 0,
-      source: 'lottery',
-      exchangeId: `${prizeId}-${time}`,
-      time,
-      redeemedAt: null
-    });
-  }
-
-  addRecord(state, `积分抽奖：${reward.name}`, (reward.type === 'points' ? reward.points : 0) - 10, { category: 'shop' });
-
-  let toastMessage = `抽到了：${reward.name}`;
-  if (reward.type === 'points' && reward.points) {
-    toastMessage = `${toastMessage}，立刻加 ${reward.points} 积分。`;
-  } else if (reward.type === 'reward') {
-    toastMessage = `${toastMessage}，已放入我的兑换。`;
-  } else if (reward.type === 'boost') {
-    const boostResult = applyInstantDailyPointBoost(reward.multiplier);
-    toastMessage = boostResult.multiplier === 2
-      ? `哇，抽到双倍卡啦！按你当前的净得分，立刻多奖励 ${boostResult.bonus} 分！`
-      : `哇，抽到三倍卡啦！按你当前的净得分，立刻多奖励 ${boostResult.bonus} 分！`;
-  }
-
-  showToast(toastMessage);
-  persist();
-  render('shop');
-}
-
 function render(tab = state.selectedTab) {
   state.selectedTab = tab;
   persist();
@@ -2175,7 +2104,6 @@ function addPlan(form) {
 }
 
 const actions = {
-  lottery: drawLottery,
   home: goHome,
   'open-records': openRecordsDetail,
   'open-my': openMy,
