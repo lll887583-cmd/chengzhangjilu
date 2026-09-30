@@ -293,6 +293,13 @@ http://localhost:5173/成长记录/
   会被当成两个模块各自实例化，待同步队列就会出现「写进 A 份、读的是 B 份」的错乱。
   改 `store.js` / `cloud.js` 时，记得把 `app.js`、`cloud.js`、`views.js`、`views/my.js` 里的版本号一起刷新。
 - **改了 app.js 或样式，要同步刷新 `index.html` 和 `styles.css` 里的 `?v=`**，否则设备上还是旧版。
+- **「我的」必须算作合法页面**（`UI_TABS = [...NAV_TABS, 'my']`）。`my` 不在侧边栏 `NAV_ITEMS` 里，
+  如果只用 `isNavTab` 校验 `state.selectedTab`，`render('my')` 内部的 `persist()` 会把
+  `selectedTab` 悄悄改写成 `points`；此后任何 `render(state.selectedTab)`（宠物互动、
+  或云端同步写回后的重绘）都会把用户从「我的」弹回「记录-加分」。加新页面时注意同步这份名单。
+- **云端写回本地时，界面状态（`selectedTab` / `mySection` / `pointsSection` 等）必须保留本机的**。
+  `cloud.js` 的 `contentOf` 会把这些键排除在快照之外，`app.js` 的 `applyState` 再用
+  `pickViewState` 兜一层，两边都不能省。
 
 ### 怎么改云端相关的东西
 

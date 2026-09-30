@@ -103,8 +103,16 @@ const DRAWER_EXTRA_ITEMS = [
 
 const NAV_TABS = NAV_ITEMS.map(item => item.value);
 
+// 「我的」不在侧边栏里，但它是合法的页面（由头像/抽屉入口打开）。
+// 校验可停留页面时必须把它算进去，否则切到「我的」后会被当成非法页签回退到「记录」。
+const UI_TABS = [...NAV_TABS, 'my'];
+
 function isNavTab(tab) {
   return NAV_TABS.includes(tab);
+}
+
+function isUiTab(tab) {
+  return UI_TABS.includes(tab);
 }
 
 function navTone(value) {
@@ -165,9 +173,34 @@ function syncShellVisibility() {
 }
 
 function normalizeUiState() {
-  if (!isNavTab(state.selectedTab)) {
+  if (!isUiTab(state.selectedTab)) {
     state.selectedTab = 'points';
   }
+}
+
+// 只跟「这台设备当前看到哪一页」有关的字段：不参与云端同步，也不能被云端数据覆盖。
+// 否则同步回来的那一刻，正在看的页面会被拉到别的页去（例如回到「记录-加分」）。
+const VIEW_ONLY_KEYS = [
+  'selectedTab',
+  'mySection',
+  'pointsSection',
+  'shopSection',
+  'planningSection',
+  'petSection',
+  'pointsBoardView',
+  'pointsSort',
+  'calendarMonth',
+  'additionGame',
+  'planningDraftType',
+  'customRuleDraftType',
+  'previewPet'
+];
+
+function pickViewState(source) {
+  return VIEW_ONLY_KEYS.reduce((acc, key) => {
+    if (source && key in source) acc[key] = source[key];
+    return acc;
+  }, {});
 }
 
 function persist() {
@@ -2674,9 +2707,12 @@ syncDrawerForViewport();
 cloudAttachHost({
   getState: () => state,
   applyState: merged => {
+    // 云端回来的内容里不含界面状态（那是每台设备自己的事），
+    // 合进来之前先把本机正在看的页面记下来，避免同步完跳页。
+    const view = pickViewState(state);
     // 从云端合并回来的积分不是本机新挣的，先打基线再落盘，避免被记成一条新流水
     markPointsBaseline(merged.points);
-    state = merged;
+    state = { ...merged, ...view };
     persist();
     render(state.selectedTab || 'points');
   }
