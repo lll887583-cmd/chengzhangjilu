@@ -1680,7 +1680,7 @@
   padding-left: 22px;
   font-size: 14px;
   line-height: 1.55;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--on-surface-variant);
 }
 .goal-card li::before {
