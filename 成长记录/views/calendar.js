@@ -1,4 +1,4 @@
-import { POINT_RULES } from '../data.js?v=20261001a';
+import { POINT_RULES } from '../data.js?v=20261001b';
 
 const STUDY_RULE_NAMES = POINT_RULES
   .filter(rule => rule[3] === 'study' || ['学习汉字', '学习数学', '完成学校作业', '打卡英语', '练字'].includes(rule[0]))

@@ -1,5 +1,5 @@
-import { REWARDS } from '../data.js?v=20261001a';
-import { formatPoints } from './shared.js?v=20261001a';
+import { REWARDS } from '../data.js?v=20261001b';
+import { formatPoints } from './shared.js?v=20261001b';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -57,6 +57,16 @@ function rewardCard(reward) {
             <div class="rule-title-row"><h3>${name}</h3></div>
             <button class="btn secondary" data-exchange="${escapeHtml(reward.id)}">兑换</button>
           </article>`;
+}
+
+function exchangePanel(state) {
+  const rewards = getShopRewards(state);
+  return `
+      <section class="shop-panel">
+        ${rewards.length
+          ? `<div class="rule-list adaptive">${rewards.map(rewardCard).join('')}</div>`
+          : '<p class="shop-empty">还没有兑换项目，点右上角的 ➕ 添加一个吧。</p>'}
+      </section>`;
 }
 
 // 积分抽奖已下线，商城只保留积分兑换
