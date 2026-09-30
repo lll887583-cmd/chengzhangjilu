@@ -9,4 +9,4 @@ export { numbersView } from './views/numbers.js?v=20260531a';
 export { additionView, lettersView, pinyinView, wordsView } from './views/learning.js?v=20260826m';
 export { shopView } from './views/shop.js?v=20260826k';
 export { goalsView } from './views/goals.js?v=20260901a';
-export { myView } from './views/my.js?v=20260930b';
+export { myView } from './views/my.js?v=20260930c';
