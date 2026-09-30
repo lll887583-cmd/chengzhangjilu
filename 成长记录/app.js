@@ -87,8 +87,9 @@ const LEARNING_ITEMS = [
 const NAV_ITEMS = [
   { value: 'points', label: '记录', ...SIDEBAR_ICONS.points },
   ...LEARNING_ITEMS,
-  { value: 'planning', label: '任务', ...SIDEBAR_ICONS.planning },
-  { value: 'calendar', label: '日历', ...SIDEBAR_ICONS.calendar },
+  // 任务和日历暂时隐藏，功能保留，需要时取消注释即可恢复
+  // { value: 'planning', label: '任务', ...SIDEBAR_ICONS.planning },
+  // { value: 'calendar', label: '日历', ...SIDEBAR_ICONS.calendar },
   { value: 'shop', label: '商城', ...SIDEBAR_ICONS.shop },
   { value: 'goals', label: '目标', viewBox: '0 0 24 24', icon: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>' }
 ];
