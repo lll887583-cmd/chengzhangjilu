@@ -7,5 +7,5 @@ export { literacyView } from './views/literacy.js?v=20261001c';
 export { numbersView } from './views/numbers.js?v=20261001c';
 export { additionView, lettersView, pinyinView, wordsView } from './views/learning.js?v=20261001c';
 export { getShopRewards, shopView } from './views/shop.js?v=20261001c';
-export { goalsView } from './views/goals.js?v=20261001d';
+export { goalsView } from './views/goals.js?v=20261001e';
 export { myView } from './views/my.js?v=20261001c';

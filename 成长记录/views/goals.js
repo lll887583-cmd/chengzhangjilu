@@ -31,12 +31,6 @@ const GOAL_SECTIONS = [
 export function goalsView() {
   return `
     <section class="goals-page">
-      <div class="section-title-card">
-        <div>
-          <h2>幼小衔接目标</h2>
-          <p>一起积累能力，轻松做好入学准备。</p>
-        </div>
-      </div>
       <div class="goals-grid">
         ${GOAL_SECTIONS.map(section => `
           <article class="card goal-card">
