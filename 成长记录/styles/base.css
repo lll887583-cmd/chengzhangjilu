@@ -66,6 +66,14 @@ body {
   overflow-x: hidden;
   overscroll-behavior-x: none;
 }
+/* overflow-x: hidden 会把滚动容器搬到 body 上，导致子元素 position: sticky 失效。
+   支持 clip 的浏览器里改用 clip：同样拦住横向滑动，但不产生滚动容器，吸附型元素才能正常工作。 */
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
+}
 [hidden] { display: none !important; }
 
 body {

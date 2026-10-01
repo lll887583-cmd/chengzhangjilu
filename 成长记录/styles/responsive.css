@@ -248,3 +248,109 @@
     font-size: 20px;
   }
 }
+
+/* ---------- 移动端：顶部操作条吸附 + 卡片与按钮更紧凑 ---------- */
+@media (max-width: 820px) {
+  .content-panel {
+    --panel-pad: 14px;
+    padding: var(--panel-pad);
+    gap: 14px;
+    border-radius: 0;
+  }
+
+  /* 「记录」「商城」等页面顶部的新增/排序操作条：吸附在顶栏下方，白底整条，和顶栏连成一体 */
+  .header-switch:not(:empty) {
+    position: sticky;
+    top: var(--topbar-height);
+    z-index: 60;
+    min-height: 60px;
+    margin: calc(var(--panel-pad) * -1) calc(var(--panel-pad) * -1) 0;
+    padding: 8px var(--panel-pad);
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 10px 16px -12px rgba(17, 24, 39, .3);
+  }
+  .header-switch .section-switch--header button { min-height: 40px; font-size: 18px; }
+  .header-add-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+  }
+  .header-add-button svg { width: 26px; height: 26px; }
+  .header-switch .points-sort-control { right: 54px; }
+  .header-switch .points-sort-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+  }
+  .header-switch .points-sort-button svg { width: 23px; height: 23px; }
+  .status-badge,
+  .calendar-month-badge { font-size: 18px; }
+
+  .card { padding: 16px; }
+  .btn {
+    min-height: 46px;
+    padding: 10px 16px;
+    font-size: 15px;
+    border-radius: 14px;
+  }
+  .actions { margin-top: 12px; }
+  .section-title-card { padding: 16px 18px; }
+  .my-entry-card {
+    min-height: 190px;
+    gap: 12px;
+    padding: 18px;
+  }
+  .my-entry-card strong { font-size: 20px; }
+  .stat-card {
+    min-height: 96px;
+    gap: 10px;
+    padding: 12px;
+  }
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+  .stat-icon svg { width: 26px; height: 26px; }
+  .stat-card strong { font-size: 20px; line-height: 26px; }
+  .reward-card {
+    min-height: auto;
+    padding: 16px 18px;
+    gap: 12px;
+  }
+  .reward-card h3 {
+    min-height: auto;
+    padding-right: 70px;
+    font-size: 18px;
+  }
+  .reward-list,
+  .records-list,
+  .redeemed-list { gap: 10px; }
+}
+
+@media (max-width: 640px) {
+  .content-panel { --panel-pad: 12px; }
+  .card,
+  .goal-card { padding: 14px; }
+  .record-card,
+  .reward-card,
+  .rule-card,
+  .redeemed-card { padding: 14px; }
+  .btn {
+    min-height: 44px;
+    padding: 9px 14px;
+    font-size: 15px;
+  }
+  .rule-list.adaptive .rule-card { min-height: 150px; }
+  .points-summary { width: 108px; }
+  .points-summary strong { font-size: 34px; }
+  .goal-card h3 { font-size: 17px; }
+  .goal-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
+  .goal-icon svg { width: 20px; height: 20px; }
+  .goal-card ul { gap: 8px; }
+}
