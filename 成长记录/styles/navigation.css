@@ -456,7 +456,9 @@
 .nav-drawer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  /* 高于顶栏(z-index:100)和吸顶操作条(z-index:60)，
+     否则移动端抽屉会被它们压在下面 */
+  z-index: 200;
   background: rgba(15, 23, 42, 0.36);
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -471,7 +473,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  z-index: 31;
+  z-index: 201;
   width: min(82vw, 340px);
   padding: 20px 18px 24px;
   display: grid;

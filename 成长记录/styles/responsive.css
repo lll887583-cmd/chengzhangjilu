@@ -46,7 +46,8 @@
   .stat-row.compact { grid-template-columns: 1fr; }
   .topbar { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
   .header-switch {
-    width: 100%;
+    /* 不设 width:100%：下方 820px 吸附规则用负 margin 撑满全宽，
+       叠加 width:100% 会导致「左边贴边、右边留缝」 */
     min-height: 72px;
     justify-content: center;
     padding: 0;
