@@ -59,12 +59,14 @@
   }
   .header-switch .section-switch--header {
     position: absolute;
-    left: 18px;
+    /* 水平居中，和商城「积分兑换」的居中标题对齐；同时保持水平垂直双向居中 */
+    left: 50%;
     right: auto;
+    transform: translate(-50%, -50%);
     width: max-content;
     grid-template-columns: repeat(2, max-content);
     gap: 10px;
-    justify-self: start;
+    justify-self: center;
   }
   .header-switch .points-sort-control {
     position: absolute;
@@ -288,7 +290,8 @@
   }
   .header-switch .points-sort-button svg { width: 23px; height: 23px; }
   .status-badge,
-  .calendar-month-badge { font-size: 18px; }
+  .calendar-month-badge,
+  .shop-section-label { font-size: 18px; }
 
   /* 记录/商城卡片（手机端）：按钮缩小放到标题右侧，与文案顶对齐；无描述时不产生空行 */
   .rule-list.adaptive .rule-card {
