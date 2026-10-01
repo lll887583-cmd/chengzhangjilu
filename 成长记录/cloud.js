@@ -13,7 +13,7 @@
 //    这类数据冲突代价低，配合数组按 id 求并集，双方的新增都能保住。
 
 // 注意：这里的版本号后缀必须和 app.js 里导入 store.js 的写法完全一致。
-// ES 模块按完整 URL 去重，'./store.js' 和 './store.js?v=20261001e' 会被当成两个模块分别实例化，
+// ES 模块按完整 URL 去重，'./store.js' 和 './store.js?v=20261001f' 会被当成两个模块分别实例化，
 // 那样待同步队列就会出现「写进 A 份、读的是 B 份」的错乱。
 import {
   cloudMeta,
@@ -23,7 +23,7 @@ import {
   cloudQueueList,
   cloudQueuePush,
   newOpId
-} from './store.js?v=20261001e';
+} from './store.js?v=20261001f';
 
 // 两个 CDN 互为备用：国内访问 jsDelivr 偶尔不稳定，失败时换 unpkg 再试一次
 const SDK_SOURCES = [
@@ -92,6 +92,9 @@ let status = {
   quiet: false,
   message: '',
   error: '',
+  // 'session-expired' = 被服务端收回会话（不是用户自己点的退出）：
+  // 界面据此优先显示「为什么掉线」，而不是「刚退出的是谁」
+  reason: '',
   lastSyncedAt: 0,
   pendingCount: 0
 };
@@ -99,6 +102,11 @@ let listeners = [];
 let debounceTimer = null;
 let inflight = null;
 let intervalTimer = null;
+// 「登录状态暂时读不到」的重试（网络抖动专用，不代表会话失效）
+let sessionRecoveryTimer = null;
+let sessionRecoveryAttempts = 0;
+// 区分「用户主动退出」和「被服务端收回」：只有前者才显示「已退出同步账号」
+let signOutIntent = false;
 // 标记「此刻正在把云端结果写回本地」。
 // 写回会触发一次 saveState → cloudAfterLocalChange，如果不拦一下就会变成同步死循环。
 let applyingRemote = false;
@@ -148,6 +156,7 @@ export function cloudStateText(current = cloudStatus()) {
 export function cloudOverviewMetaText(current = cloudStatus()) {
   if (current.error) return '同步异常';
   if (current.mode === 'ready') return '已开启同步';
+  if (current.mode === 'recovering') return '登录恢复中';
   if (current.mode === 'local-only') return '当前地址不可用';
   if (current.mode === 'error') return '暂不可用';
   return '未开启';
@@ -240,6 +249,43 @@ function loadSdk() {
 
 /* ---------- 初始化 ---------- */
 
+// 「登录状态读不到」分两种，绝不能混为一谈：
+//   1. 服务端明确拒绝（invalid_grant / 401）→ 会话真的失效了，才算退出登录；
+//   2. 网络抖动、服务端 5xx、请求太频繁 → 会话还在本地，只是这次没读上来。
+// 早先的实现把第 2 种也当成退出登录，于是「切网/断网时刷新页面」看起来就像被踢下线。
+function isSessionGoneError(error) {
+  const kind = error?.kind || '';
+  return kind === 'unauthenticated' || kind === 'invalid_grant';
+}
+
+function clearSessionRecovery() {
+  if (sessionRecoveryTimer) {
+    clearTimeout(sessionRecoveryTimer);
+    sessionRecoveryTimer = null;
+  }
+}
+
+// 读不到会话但又不是真失效：退避重试，界面显示「正在恢复」，而不是弹登录页
+function scheduleSessionRecovery() {
+  if (sessionRecoveryTimer) return;
+  sessionRecoveryAttempts += 1;
+  setStatus({
+    mode: 'recovering',
+    syncing: false,
+    quiet: false,
+    error: '',
+    reason: '',
+    message: '网络不太好，正在恢复登录状态…'
+  });
+  const delay = Math.min(30000, 1500 * sessionRecoveryAttempts);
+  // 顺手把「网络恢复/回到前台」的监听装上，免得只靠定时器干等
+  startAutoSync();
+  sessionRecoveryTimer = setTimeout(() => {
+    sessionRecoveryTimer = null;
+    cloudInit().catch(() => {});
+  }, delay);
+}
+
 export async function cloudInit() {
   if (!cloudIsReleaseHost()) {
     setStatus({
@@ -249,43 +295,91 @@ export async function cloudInit() {
     return cloudStatus();
   }
 
-  try {
-    const sdk = await loadSdk();
-    client = sdk.createWorkBuddyCloud({
-      endpoint: PUBLIC_CONFIG.endpoint,
-      publishableKey: PUBLIC_CONFIG.publishableKey
-    });
-  } catch {
-    setStatus({
-      mode: 'error',
-      message: '同步组件加载失败，积分仍会保存在这台设备上'
-    });
-    return cloudStatus();
+  // 客户端只创建一次：重复创建会得到多个会话管理器，
+  // 它们各自拿着同一个 refreshToken 去刷新，容易互相把对方的令牌顶掉。
+  if (!client) {
+    try {
+      const sdk = await loadSdk();
+      client = sdk.createWorkBuddyCloud({
+        endpoint: PUBLIC_CONFIG.endpoint,
+        publishableKey: PUBLIC_CONFIG.publishableKey
+      });
+    } catch {
+      setStatus({
+        mode: 'error',
+        message: '同步组件加载失败，积分仍会保存在这台设备上'
+      });
+      return cloudStatus();
+    }
+
+    try {
+      client.auth.onAuthStateChange((event, nextSession) => {
+        session = nextSession || null;
+        if (session) {
+          sessionRecoveryAttempts = 0;
+          clearSessionRecovery();
+          if (status.mode !== 'ready') {
+            setStatus({ mode: 'ready', email: session?.user?.email || status.email || '', syncing: false, quiet: false, error: '', reason: '', message: '' });
+          }
+          return;
+        }
+        sessionRecoveryAttempts = 0;
+        clearSessionRecovery();
+        lastSignedOutEmail = status.email || lastSignedOutEmail;
+        if (signOutIntent) {
+          // 用户自己点的退出
+          signOutIntent = false;
+          setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', reason: '', message: '已退出同步账号' });
+          return;
+        }
+        // 自动掉线：说清原因，别让人以为是自己点错了
+        setStatus({
+          mode: 'signed-out',
+          email: '',
+          syncing: false,
+          quiet: false,
+          error: '',
+          reason: 'session-expired',
+          message: `${status.email || '账号'}的登录状态已失效（可能是账号在另一台设备重新登录，或会话到期）。重新登录即可继续同步，本机积分不会丢。`
+        });
+      });
+    } catch {
+      // 监听装不上不影响同步本身
+    }
   }
 
+  await restoreSession();
+  return cloudStatus();
+}
+
+async function restoreSession() {
+  let readError = null;
   try {
-    client.auth.onAuthStateChange((event, nextSession) => {
-      session = nextSession || null;
-      if (!session) {
-        lastSignedOutEmail = status.email || lastSignedOutEmail;
-        setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', message: '已退出同步账号' });
-      }
-    });
-    const { data } = await client.auth.getSession();
+    const { data, error } = await client.auth.getSession();
     session = data || null;
-  } catch {
+    readError = error || null;
+  } catch (error) {
     session = null;
+    readError = error;
   }
 
   if (session) {
-    setStatus({ mode: 'ready', email: session?.user?.email || '', message: '' });
+    sessionRecoveryAttempts = 0;
+    clearSessionRecovery();
+    setStatus({ mode: 'ready', email: session?.user?.email || status.email || '', syncing: false, quiet: false, error: '', reason: '', message: '' });
     // 首次同步也走静默：界面上只体现「已同步」，不闪「正在同步」
     await cloudSync({ silent: true });
     startAutoSync();
-  } else {
-    setStatus({ mode: 'signed-out', email: '', message: '' });
+    return;
   }
-  return cloudStatus();
+
+  if (readError && !isSessionGoneError(readError)) {
+    scheduleSessionRecovery();
+    return;
+  }
+
+  // 真没登录（或会话已被服务端收回，SIGNED_OUT 里已经写过提示，这里不要覆盖）
+  setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '' });
 }
 
 function startAutoSync() {
@@ -296,7 +390,23 @@ function startAutoSync() {
   }, AUTO_SYNC_INTERVAL_MS);
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && session) cloudSync({ silent: true });
+      if (document.hidden) return;
+      if (session) {
+        cloudSync({ silent: true });
+      } else if (status.mode === 'recovering') {
+        // 回到前台还没连上：立刻再试一次，不用等下一次退避
+        clearSessionRecovery();
+        cloudInit().catch(() => {});
+      }
+    });
+  }
+  // 网络恢复的一刻立刻重试，用户不用手动刷新
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => {
+      if (status.mode === 'recovering' || (!session && status.mode !== 'local-only')) {
+        clearSessionRecovery();
+        cloudInit().catch(() => {});
+      }
     });
   }
 }
@@ -327,7 +437,10 @@ function describeAuthError(error, fallback) {
 // 登录成功后统一处理：记住账号、开始自动同步
 function markSignedIn(email) {
   lastSignedOutEmail = '';
-  setStatus({ mode: 'ready', email: email || status.email || '', syncing: false, quiet: false, error: '', message: '' });
+  signOutIntent = false;
+  sessionRecoveryAttempts = 0;
+  clearSessionRecovery();
+  setStatus({ mode: 'ready', email: email || status.email || '', syncing: false, quiet: false, error: '', reason: '', message: '' });
   startAutoSync();
 }
 
@@ -438,14 +551,18 @@ export async function cloudCompletePasswordReset(email, code, newPassword) {
 export async function cloudSignOut() {
   if (!client) return { ok: true, message: '已退出' };
   lastSignedOutEmail = status.email || '';
+  signOutIntent = true;
+  clearSessionRecovery();
+  sessionRecoveryAttempts = 0;
   try {
     await client.auth.signOut();
   } catch {
     // 退出失败也让本地回到未登录状态
   }
+  signOutIntent = false;
   session = null;
   pendingEmailOtp = null;
-  setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', message: '已退出同步账号' });
+  setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', reason: '', message: '已退出同步账号' });
   return { ok: true, message: '已退出同步账号' };
 }
 
@@ -492,7 +609,7 @@ async function runSync({ silent = false } = {}) {
     // 静默同步：只改内部状态，不通知界面，避免「正在同步」来回闪
     status = { ...status, syncing: true, quiet: true };
   } else {
-    setStatus({ syncing: true, quiet: false, mode: 'ready', message: '', error: '' });
+    setStatus({ syncing: true, quiet: false, mode: 'ready', message: '', error: '', reason: '' });
   }
 
   // 0. 换邮箱账号的判定：同步元数据（首次同步基线、快照时间戳、待同步队列）
@@ -593,7 +710,7 @@ async function runSync({ silent = false } = {}) {
   });
   // 成功收尾：清掉异常标记，界面回到「已同步」。
   // 不再输出「已同步 1 条积分变动」这类流水账，免得状态行来回变。
-  setStatus({ syncing: false, quiet: false, mode: 'ready', message: '', error: '' });
+  setStatus({ syncing: false, quiet: false, mode: 'ready', message: '', error: '', reason: '' });
 }
 
 function toLedgerRow(op) {

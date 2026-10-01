@@ -1,5 +1,5 @@
-import { formatPoints, iconSvg, recordTitle, statCard } from './shared.js?v=20261001e';
-import { cloudIsBusy, cloudLastEmail, cloudLocalBackup, cloudOverviewMetaText, cloudPendingEmail, cloudStateText, cloudStatus, cloudStatusText } from '../cloud.js?v=20261001e';
+import { formatPoints, iconSvg, recordTitle, statCard } from './shared.js?v=20261001f';
+import { cloudIsBusy, cloudLastEmail, cloudLocalBackup, cloudOverviewMetaText, cloudPendingEmail, cloudStateText, cloudStatus, cloudStatusText } from '../cloud.js?v=20261001f';
 
 function myOverviewCard(section, icon, title, summary, meta, metaLive = '') {
   return `
@@ -80,6 +80,15 @@ function cloudSectionBody(status, cloudUi) {
       </div>`;
   }
 
+  // 登录状态暂时读不到（网络抖动）：显示「正在恢复」，不要弹登录页吓人
+  if (status.mode === 'recovering') {
+    return `
+      <div class="empty-card">
+        <strong>正在恢复登录状态</strong>
+        <p>网络似乎不太稳定，正在自动重试。这段时间的积分都保存在这台设备上，恢复后会自动补传。</p>
+      </div>`;
+  }
+
   // 已登录
   if (status.mode === 'ready') {
     const backup = cloudLocalBackup();
@@ -103,11 +112,12 @@ function cloudSectionBody(status, cloudUi) {
 
   // 未登录：四个表单共用同一套字段渲染
   const pendingEmail = cloudPendingEmail();
+  // 掉线/退出后把上次的邮箱预填好，用户只需输密码就能重登
   const emailField = cloudInput('email', '邮箱', {
     type: 'email',
     placeholder: 'parent@example.com',
     autocomplete: 'username',
-    value: pendingEmail
+    value: pendingEmail || cloudLastEmail()
   });
   const codeField = cloudInput('code', '邮箱验证码', {
     placeholder: '邮箱里收到的 6 位数字',
@@ -123,9 +133,14 @@ function cloudSectionBody(status, cloudUi) {
     </div>`;
   // 刚退出过账号：告诉用户是哪个邮箱，以及「继续用」还是「换一个」
   const lastEmail = cloudLastEmail();
-  const signedOutNote = lastEmail
-    ? `<div class="cloud-note">刚退出的是 ${escapeHtml(lastEmail)}。用同一个邮箱登录可以继续同步；换成别的邮箱登录，就按新账号的规则重新初始化。</div>`
-    : (status.message ? `<div class="cloud-note">${escapeHtml(status.message)}</div>` : '');
+  // 被服务端收回会话（不是自己点的退出）：必须把「为什么掉线」说清楚，
+  // 否则会被下面那条「刚退出的是 xxx」盖住，让人一头雾水。
+  const sessionExpired = status.reason === 'session-expired';
+  const signedOutNote = sessionExpired
+    ? `<div class="cloud-note">${escapeHtml(status.message || '登录状态已失效，重新登录即可继续同步。')}</div>`
+    : (lastEmail
+      ? `<div class="cloud-note">刚退出的是 ${escapeHtml(lastEmail)}。用同一个邮箱登录可以继续同步；换成别的邮箱登录，就按新账号的规则重新初始化。</div>`
+      : (status.message ? `<div class="cloud-note">${escapeHtml(status.message)}</div>` : ''));
   const intro = `
     ${signedOutNote}
     <div class="cloud-intro">

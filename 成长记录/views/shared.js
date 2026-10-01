@@ -1,4 +1,4 @@
-import { iconSvg } from '../icons.js?v=20261001e';
+import { iconSvg } from '../icons.js?v=20261001f';
 
 export function sectionSwitch(items, activeValue, dataName, extraClass = '') {
   const className = ['section-switch', extraClass].filter(Boolean).join(' ');
