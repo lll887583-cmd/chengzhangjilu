@@ -59,7 +59,7 @@
   }
   .header-switch .section-switch--header {
     position: absolute;
-    left: 0;
+    left: 18px;
     right: auto;
     width: max-content;
     grid-template-columns: repeat(2, max-content);
@@ -276,9 +276,11 @@
     width: 44px;
     height: 44px;
     border-radius: 14px;
+    /* 绝对定位 right:0 会无视 padding 贴到通栏条边缘，与第一层顶栏(18px)对齐 */
+    right: 18px;
   }
   .header-add-button svg { width: 26px; height: 26px; }
-  .header-switch .points-sort-control { right: 54px; }
+  .header-switch .points-sort-control { right: 72px; }
   .header-switch .points-sort-button {
     width: 44px;
     height: 44px;
