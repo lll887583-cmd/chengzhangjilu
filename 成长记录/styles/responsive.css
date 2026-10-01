@@ -290,6 +290,27 @@
   .status-badge,
   .calendar-month-badge { font-size: 18px; }
 
+  /* 记录/商城卡片（手机端）：按钮缩小放到标题右侧，与文案顶对齐；无描述时不产生空行 */
+  .rule-list.adaptive .rule-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 12px;
+    row-gap: 10px;
+    min-height: 0;
+  }
+  .rule-list.adaptive .rule-card .rule-score { grid-area: 1 / 1; }
+  .rule-list.adaptive .rule-card .rule-title-row { grid-area: 2 / 1; }
+  .rule-list.adaptive .rule-card p { grid-column: 1; }
+  .rule-list.adaptive .rule-card .btn {
+    grid-area: 2 / 2;
+    width: auto;
+    margin: 0;
+    align-self: start;
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+
   .card { padding: 16px; }
   .btn {
     min-height: 46px;
@@ -345,7 +366,6 @@
     padding: 9px 14px;
     font-size: 15px;
   }
-  .rule-list.adaptive .rule-card { min-height: 150px; }
   .points-summary { width: 108px; }
   .points-summary strong { font-size: 34px; }
   .goal-card h3 { font-size: 17px; }
