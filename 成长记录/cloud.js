@@ -105,8 +105,13 @@ let intervalTimer = null;
 // 「登录状态暂时读不到」的重试（网络抖动专用，不代表会话失效）
 let sessionRecoveryTimer = null;
 let sessionRecoveryAttempts = 0;
-// 区分「用户主动退出」和「被服务端收回」：只有前者才显示「已退出同步账号」
+// 用户主动退出的标记不小心会串到下一次自动掉线，所以单独记一个。
 let signOutIntent = false;
+// 「这台设备上曾经真的登录成功过」。
+// SDK 在初始化且本地没有会话时也会触发一次 SIGNED_OUT，那是「从没登录过」，不是掉线；
+// 不区分的话，一台全新设备一打开就会看到「登录状态已失效」，很容易被误读成
+// 「账号在另一台设备登录，把我挤下来了」——实测同一账号可以在多台设备同时在线。
+let hadSessionHere = false;
 // 标记「此刻正在把云端结果写回本地」。
 // 写回会触发一次 saveState → cloudAfterLocalChange，如果不拦一下就会变成同步死循环。
 let applyingRemote = false;
@@ -316,6 +321,7 @@ export async function cloudInit() {
       client.auth.onAuthStateChange((event, nextSession) => {
         session = nextSession || null;
         if (session) {
+          hadSessionHere = true;
           sessionRecoveryAttempts = 0;
           clearSessionRecovery();
           if (status.mode !== 'ready') {
@@ -332,7 +338,15 @@ export async function cloudInit() {
           setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', reason: '', message: '已退出同步账号' });
           return;
         }
-        // 自动掉线：说清原因，别让人以为是自己点错了
+        // 自动掉线：先确认这台设备原本是登录着的，否则只是「本地本来就没有会话」
+        const wasSignedInHere = hadSessionHere || status.mode === 'ready';
+        hadSessionHere = false;
+        if (!wasSignedInHere) {
+          setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', reason: '', message: '' });
+          return;
+        }
+        // 确实是从登录状态被收回了：说清原因，别让人以为是自己点错了。
+        // 注意不要写成「账号在另一台设备登录」——同一账号支持多台设备同时在线，那样写会误导。
         setStatus({
           mode: 'signed-out',
           email: '',
@@ -340,7 +354,7 @@ export async function cloudInit() {
           quiet: false,
           error: '',
           reason: 'session-expired',
-          message: `${status.email || '账号'}的登录状态已失效（可能是账号在另一台设备重新登录，或会话到期）。重新登录即可继续同步，本机积分不会丢。`
+          message: `${status.email || '账号'}的登录状态已到期，重新登录即可继续同步，本机积分不会丢。`
         });
       });
     } catch {
@@ -364,6 +378,7 @@ async function restoreSession() {
   }
 
   if (session) {
+    hadSessionHere = true;
     sessionRecoveryAttempts = 0;
     clearSessionRecovery();
     setStatus({ mode: 'ready', email: session?.user?.email || status.email || '', syncing: false, quiet: false, error: '', reason: '', message: '' });
@@ -379,7 +394,7 @@ async function restoreSession() {
   }
 
   // 真没登录（或会话已被服务端收回，SIGNED_OUT 里已经写过提示，这里不要覆盖）
-  setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '' });
+  setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', reason: '', message: '' });
 }
 
 function startAutoSync() {
@@ -438,6 +453,7 @@ function describeAuthError(error, fallback) {
 function markSignedIn(email) {
   lastSignedOutEmail = '';
   signOutIntent = false;
+  hadSessionHere = true;
   sessionRecoveryAttempts = 0;
   clearSessionRecovery();
   setStatus({ mode: 'ready', email: email || status.email || '', syncing: false, quiet: false, error: '', reason: '', message: '' });
@@ -560,6 +576,7 @@ export async function cloudSignOut() {
     // 退出失败也让本地回到未登录状态
   }
   signOutIntent = false;
+  hadSessionHere = false;
   session = null;
   pendingEmailOtp = null;
   setStatus({ mode: 'signed-out', email: '', syncing: false, quiet: false, error: '', reason: '', message: '已退出同步账号' });
