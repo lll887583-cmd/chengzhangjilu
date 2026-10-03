@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@700&family=Nunito+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20261003c" />
+  <link rel="stylesheet" href="./styles.css?v=20261003e" />
 </head>
 <body>
   <div class="app-shell">
@@ -64,6 +64,38 @@
   <div id="toast" class="toast" role="status" aria-live="assertive" aria-atomic="true"></div>
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
 
-  <script type="module" src="./app.js?v=20261003d"></script>
+  <div id="demoHostBanner" class="demo-host-banner" hidden>
+    <div class="demo-host-banner-text">
+      这是只读演示版：不能登录、不跨设备同步，积分只存在这台设备上。日常请用正式版。
+      <a href="https://growth-record-53859.app.workbuddy.host/" target="_blank" rel="noreferrer">前往正式版</a>
+    </div>
+    <button class="demo-host-banner-close" type="button" aria-label="关闭提示">×</button>
+  </div>
+
+  <script>
+    // 只有 GitHub Pages 那份副本才显示提示条。
+    // 云端服务会校验访问来源域名，那个域名下本来就登不了录，
+    // 不写清楚的话，家人很容易把演示地址当成日常用的那一个收藏走。
+    (function () {
+      try {
+        if (!/(^|\.)github\.io$/i.test(location.hostname)) return;
+        var banner = document.getElementById('demoHostBanner');
+        if (!banner) return;
+        banner.hidden = false;
+        document.documentElement.classList.add('has-demo-banner');
+        var close = banner.querySelector('.demo-host-banner-close');
+        if (close) {
+          close.addEventListener('click', function () {
+            banner.remove();
+            document.documentElement.classList.remove('has-demo-banner');
+          });
+        }
+      } catch (error) {
+        // 提示条出问题绝不能影响页面本身
+      }
+    })();
+  </script>
+
+  <script type="module" src="./app.js?v=20261003e"></script>
 </body>
 </html>

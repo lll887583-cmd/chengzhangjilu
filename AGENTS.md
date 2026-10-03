@@ -4,11 +4,13 @@
 
 ## 1. 项目概览
 
-- 仓库根目录：`/Users/macbookpro/Documents/Daily`
+- 仓库根目录：`/Users/macbookpro/Documents/Daily`（`git commit` / `git push` 在这一层执行）
 - 实际项目目录：`/Users/macbookpro/Documents/Daily/成长记录`
-- 项目类型：纯前端静态站点，适合 iPad 使用的儿童成长记录 / 积分激励 / 学习练习 Demo
-- 线上发布：GitHub Pages
-- 当前发布方式：推送到 `main` 后，由 GitHub Actions 自动发布 `成长记录/` 目录，不再手动维护 `gh-pages`
+- 项目类型：纯前端静态站点（`index.html + ES Modules + CSS`），适合 iPad / 手机使用的儿童成长记录应用
+- **正式线上地址（日常给设备用）**：`https://growth-record-53859.app.workbuddy.host/`
+- **正式版发布方式：手动部署**（WorkBuddy 的发布能力，`domainPrefix=growth-record`）。
+  **推送到 `main` 不等于上线**，只推不动的话线上文件一个字节都不会变。
+- 另有一个只读演示副本会自动发到 GitHub Pages，见第 9 节
 
 ## 2. 当前核心功能
 
@@ -18,15 +20,15 @@
 - 学习模块：数字、加法、拼音、汉字、英文字母、英文单词
 - 任务模块：进行中 / 已完成任务
 - 日历模块：按月查看
-- 商城模块：积分兑换 + 积分抽奖
+- 商城模块：积分兑换（**积分抽奖已于 2026-09-30 整体下线，不要再引用或恢复相关入口**）
 - 我的模块：导出/导入数据、兑换记录、积分明细、账号与同步等
 - （宠物体系已于 2026-09-30 整体下线，历史代码勿再引用）
 
 ## 3. 技术形态
 
-- 无框架原生前端：`index.html + ES Modules + CSS`
-- 不依赖后端
-- 数据默认存储在浏览器 `localStorage`
+- 无框架原生前端：`index.html + ES Modules + CSS`，不要引入构建链
+- 自己不写后端；跨设备同步依赖云服务 SDK（`cloud.js`，见第 16 节）
+- 数据默认存储在浏览器 `localStorage`；登录账号后才走云端同步
 - 支持导出 / 导入 JSON 备份
 
 不要把它误判为 React / Vue / Next 项目，也不要引入构建链，除非用户明确要求重构。
@@ -150,26 +152,60 @@
 
 ## 9. 发布与分支约定
 
-当前期望工作流：
+**两条发布通道并存，别搞混：**
 
-1. 修改 `成长记录/` 内代码
-2. 提交并推送到 `main`
-3. GitHub Actions 自动发布 GitHub Pages
+### A. 正式版（家人日常使用的那个地址）
 
-说明：
+地址：`https://growth-record-53859.app.workbuddy.host/`
 
-- `gh-pages` 不再作为日常手动发布分支使用
-- 如果发布异常，先检查 `.github/workflows/deploy-pages.yml`
-- GitHub Pages 应设置为 `GitHub Actions` 作为发布来源
+1. 修改 `成长记录/` 内代码（改了 JS / CSS 记得刷新 `?v=`，见第 9.1 节）
+2. `node scripts/check.mjs` 跑一遍静态自检
+3. 让用户 / 助手执行**手动部署**（不是 push）
+4. 发布后逐个比对本地与线上文件哈希，确认真的换了
+
+**只 commit + push，线上不会有任何变化。** 汇报时不要写「已上线」，除非真的跑过部署。
+
+### B. 演示副本（GitHub Pages）
+
+地址：`https://lll887583-cmd.github.io/chengzhangjilu/`
+
+推送到 `main` 后由 `.github/workflows/deploy-pages.yml` 自动发布。**这份不能登录、不同步，
+数据纯本机**，页面会自动挂一条底部说明条指向正式版（`index.html` 里的 `demoHostBanner`）。
+
+### 关于 `gh-pages` 分支
+
+历史遗留，早已不是发布源，不要往上面提交，也不要改回手动维护它。
+
+## 9.1 缓存版本号（`?v=`）
+
+没有构建工具，“更新”全靠 URL 上的 `?v=`：
+
+- `index.html`：`styles.css?v=xxx`、`app.js?v=xxx`
+- `styles.css`：每个 `@import` 的子样式都带自己的 `?v=`
+- `app.js` / `views.js` / `views/my.js`：互相 import 时同样带 `?v=`
+
+**同一文件在所有引用处必须同版本。** ES 模块按完整 URL 去重，同模块两个版本会各自实例化，
+`store.js` 的待同步队列就会「写进 A 份、读的是 B 份」。这条由 `scripts/check.mjs` 兜底。
 
 ## 10. 发布故障排查
 
-如果出现“代码已经推到 `main`，但线上没更新”，按这个顺序排查：
+### 正式版改完了线上没变
 
-1. 先看 `/Users/macbookpro/Documents/Daily/.github/workflows/deploy-pages.yml` 是否还在
-2. 去 GitHub 仓库 `Settings > Pages`，确认发布来源是 `GitHub Actions`
-3. 去 GitHub 仓库 `Actions`，确认最新一次 Pages workflow 是否成功
-4. 确认这次改动是不是已经真的推送到了远端 `main`
+1. 有没有真的执行部署（只 push 不算）
+2. JS / CSS 改了但 `?v=` 没刷 → 设备拿到旧缓存，一行 sha256 比对就能确认
+3. 部署后比对哈希，确认线上各文件与本地一致
+
+### 演示副本（Pages）没更新
+
+1. `/Users/macbookpro/Documents/Daily/.github/workflows/deploy-pages.yml` 是否还在
+2. GitHub 仓库 `Settings > Pages` 的发布来源是否为 `GitHub Actions`
+3. GitHub 仓库 `Actions` 里最新一次 workflow 是否成功
+4. 这次改动是不是真的推到了远端 `main`
+
+### 同一账号在两台设备看到的数据不一样
+
+先看是不是有人用的是演示副本（第 9 节 B）。确认两台都在正式域名、且都登录了同一个邮箱之后，
+再看第 16 节「跨设备合并的已知边界」。
 
 ## 11. 本地预览
 
@@ -210,9 +246,11 @@ http://localhost:5173/成长记录/
 
 这个项目默认做“轻量验证”，不要无关放大验证范围：
 
+- 改完必跑：`node scripts/check.mjs "/Users/macbookpro/Documents/Daily/成长记录"`（几秒钟，静态检查）
+- 涉及 `store.js` / `cloud.js` / `data.js` 的改动，更要跑
 - 小改动优先本地打开对应页面做目视检查
+- 涉及视觉与移动端表现时，用真实浏览器在移动视口（390×844）下看，不要凭直觉判断
 - 默认不要求跑全局测试、构建链或大范围回归
-- 如果只是改规则、文案、奖池、卡片结构，优先验证对应页面和交互
 - 只有当需求明确涉及发布、存储兼容、导入导出时，才做对应专项检查
 
 ## 13. 修改原则
@@ -229,18 +267,23 @@ http://localhost:5173/成长记录/
 
 - 不要随意修改 `localStorage` 使用的存储键和数据结构
 - 不要随意改备份 schema 或删除导入兼容逻辑
-- 不要未经确认把当前 `main -> GitHub Actions -> Pages` 流程改回手动维护 `gh-pages`
 - 不要把静态项目强行改成依赖构建工具或后端的项目
 - 不要因为单个页面需求去重写整个导航、状态层或存储层
+- **不要把「推到 `main`」当成线上发布**，正式版只能手动部署（第 9 节）
+- 不要删掉 GitHub Pages 那条自动发布线的同时又不更新本文第 9 节，否则下一个人会以为只剩一个地址
 
 ## 15. 最近业务备注
 
 以下信息属于“阶段性业务状态”，后续可能变化，修改前以代码现状为准：
 
-- 截至 2026-06-13：抽奖奖池中的“看电视”项目已去掉
+- 截至 2026-06-13：抽奖奖池中的“看电视”项目已去掉（抽奖功能本身已于 2026-09-30 下线）
 - 截至 2026-06-13：兑换区仍保留“看 40 分钟电视”商品
 - 截至 2026-06-13：Pages 自动发布工作流已加入仓库
 - 截至 2026-09-30：导航中的“任务”“日历”入口已隐藏（仅注释 `NAV_ITEMS` 对应两项），视图、数据与交互逻辑全部保留，随时可恢复
+- 截至 2026-10-03：正式发布地址改为 `growth-record-53859.app.workbuddy.host`（手动部署），GitHub Pages 退化为只读演示副本
+- 截至 2026-10-03：云端合并补齐了「按值求并集」一档（`hiddenPointRuleIds` / `hiddenRewardIds` / 排序列表），
+  学习页三兄弟的单选项改为不同步；同一账号支持多设备同时在线，不存在的“只能一台设备”的限制已从文案里去掉
+- 截至 2026-10-03：仓库新增 `成长记录/scripts/check.mjs`（模块图 / 版本号 / 字段归类 / PWA 配色静态自检）
 
 后续如用户继续调整奖励/抽奖，请先区分：
 
@@ -261,6 +304,9 @@ http://localhost:5173/成长记录/
 **登录只在正式地址可用。** 云端服务会校验访问来源域名，GitHub Pages 属于另一个域名，
 在新地址的 app 里会显示「当前地址不支持账号同步」，但其余功能完全正常。
 两个地址的数据是各自独立的：GitHub Pages 那份走纯本地存储。
+
+演示副本上会自动挂一条底部说明条（`index.html` 的 `#demoHostBanner`，只在 `*.github.io` 下显示），
+写明“只读、不同步”并给出正式版链接。改这条文案或样式时别把域名判断删了。
 
 ### 数据落在哪里
 
@@ -313,6 +359,29 @@ http://localhost:5173/成长记录/
 - 改同步算法：`成长记录/cloud.js` 的 `runSync`
 - 改表结构或权限：云服务数据库工具（不要用前端代码跑 DDL）
 
+### state 字段的三档归类（往 `data.js` 加字段时必须同步处理）
+
+快照里每个字段在 `cloud.js` 里都必须落到下面某一档，否则跨设备就会互相回滚：
+
+| 档 | 常量 | 含义 | 例子 |
+|---|---|---|---|
+| 不同步 | `DEVICE_LOCAL_KEYS` | 纯本机现场，同步过去只会互相顶掉 | `selectedTab`、`additionGame`、学习页三兄弟的单选项 |
+| 按 id 求并集 | `ARRAY_MERGE_KEYS` | 元素是对象，两边新增都要留住 | `plans`、`customPointRules`、`literacyItems` |
+| 按值求并集 | `SET_UNION_KEYS` | 元素是一串 id（隐藏了什么、怎么排序） | `hiddenPointRuleIds`、`pointRuleOrder` |
+| 其余 | — | 整包覆盖，后写胜 | `streak` 之类的标量 |
+
+漏归类的典型症状：平板上隐藏了某个内置规则 / 调了排序，手机一同步就被推回原样，
+而且只在两端都用过之后才暴露，很难复现。`scripts/check.mjs` 会在提交前把这个漏项报出来。
+
+### 跨设备合并的已知边界（不是 bug，是当前设计的取舍）
+
+- **删除不同步**：并集只能加不能减，所以一台设备删掉的自定义项，另一台同步后会“复活”。
+  根治要加 `deletedIds` 墓碑，改动中等，做之前先跟用户确认。
+- **隐藏了就难以“取消隐藏”**：同理，取消隐藏不会被同步走。
+- **标量字段后写覆盖**：两台设备在同一分钟内改了同一个标量，慢的一端覆盖快的一端。
+  积分走流水，不受这条影响。
+- 真要动这些边界，优先改 `cloud.js` 的 `mergeContent` 和 `syncSnapshot`，不要到 `app.js` 里打补丁。
+
 ### 同步写回不能无条件整页重绘
 
 - `runSync` 结束时只有当合并结果与本机状态**实质不同**（`mergedSameAsLocal`：
@@ -338,6 +407,18 @@ http://localhost:5173/成长记录/
   新账号云端为空 → 用本机数据初始化；新账号云端已有数据 → 采用云端并备份本机。
   不做这一步的话，新账号会被当成「已初始化过」，还会把上个账号的待同步流水推给新账号。
 - 判断账号用 `user.id`，退回 `user.email`（`cloud.js` 的 `currentAccountKey`）。
-- 回归测试脚本：`/tmp/wb-smoke/smoke2.mjs`（把项目拷到 /tmp 去掉 `?v=` 后跑，模拟云端 SDK 驱动
-  登录/同步/退出/换账号/断网全流程，27 项断言）。
+
+### 自检脚本
+
+仓库里有 `成长记录/scripts/check.mjs`，几秒钟的静态检查，改完就跑：
+
+```bash
+node scripts/check.mjs "/Users/macbookpro/Documents/Daily/成长记录"
+```
+
+覆盖：模块图（引用了不存在的文件 / 导出会直接白屏）、`?v=` 版本号一致性、
+state 数组字段是否都归类到同步策略（见上文「三档归类」）、PWA 配色一致性。
+
+> 注：早期文档里提到的 `/tmp/wb-smoke/smoke2.mjs` 早已不在（写在临时目录里没法复现）。
+> 需要端到端跑「登录 / 同步 / 换账号」全流程时，用真实浏览器驱动，别再依赖 `/tmp` 下的脚本。
 

@@ -492,3 +492,55 @@ body.modal-open {
   transform: translateY(3px);
   box-shadow: 0 0 0 #d8dde4;
 }
+
+/* GitHub Pages 那份只读副本的说明条。
+   云端服务按域名校验来源，那个域名下本来就登不了录、数据纯本地，
+   不标注清楚很容易被当成日常用的那一份。正式域名下这段永远不会显示。 */
+.demo-host-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 -2px 12px rgba(15, 23, 42, .10);
+}
+.demo-host-banner[hidden] { display: none; }
+/* 弹窗打开时让位，别压在遮罩上面 */
+html.modal-open .demo-host-banner { display: none; }
+.demo-host-banner-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #475569;
+}
+.demo-host-banner-text a {
+  display: inline-block;
+  margin-left: 4px;
+  color: #1d4ed8;
+  font-weight: 800;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.demo-host-banner-close {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+/* 给说明条留出空间，别挡住页面最后一张卡片 */
+html.has-demo-banner .app-shell { padding-bottom: 76px; }

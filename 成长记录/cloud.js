@@ -66,7 +66,13 @@ const DEVICE_LOCAL_KEYS = new Set([
   'calendarMonth',
   'additionGame',
   'planningDraftType',
-  'customRuleDraftType'
+  'customRuleDraftType',
+  // 学习页三兄弟（数字 / 拼音 / 字母）：存的是「这会儿孩子点开了哪一块」，
+  // 是典型的设备现场，和 additionGame 一回事。同步过去只会互相顶掉，
+  // 而且 normalizeState 会把它们截成最多一个元素，求并集也没意义。
+  'numberBoardSelections',
+  'pinyinSelections',
+  'letterSelections'
 ]);
 
 // 同步时按 id 求并集的列表字段：两边新增的内容都能留住
@@ -80,6 +86,17 @@ const ARRAY_MERGE_KEYS = {
   // 商城自定义兑换项目：和「加减分」自定义项目一样，按 id 求并集，两端新增的都能留住
   customShopRewards: 'id'
 };
+
+// 同步时按「值」求并集的字段：元素不是对象，是一串 id（隐藏了哪些内置项、列表顺序）。
+// 之所以单独列一档：它们表达的是「隐藏 / 排序」这类偏好，两边各藏几条都应该生效，
+// 走整包覆盖的话，iPad 上隐藏的内置项会被手机的旧快照原样推回来。
+const SET_UNION_KEYS = [
+  'hiddenPointRuleIds',
+  'hiddenDeductRuleIds',
+  'hiddenRewardIds',
+  'pointRuleOrder',
+  'deductRuleOrder'
+];
 
 let client = null;
 let sdkPromise = null;
@@ -883,6 +900,14 @@ function mergeContent(local, remote) {
       if (!table.has(id)) table.set(id, item);
     });
     merged[key] = Array.from(table.values());
+  });
+  // 集合型字段：以云端的顺序为底，把本机多出来的值补在后面。
+  // 两边只是「同一个队列的两种排列」时（列表排序就是这样），结果就是最近推上去的那个顺序；
+  // 两边各隐藏了一部分时，结果就是两边全部隐藏。
+  SET_UNION_KEYS.forEach(key => {
+    const localItems = Array.isArray(local?.[key]) ? local[key] : [];
+    const remoteItems = Array.isArray(remote?.[key]) ? remote[key] : [];
+    merged[key] = Array.from(new Set([...remoteItems, ...localItems]));
   });
 
   return merged;
