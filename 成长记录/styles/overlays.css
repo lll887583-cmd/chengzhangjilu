@@ -3,7 +3,8 @@
   position: fixed;
   left: 50%;
   bottom: 112px;
-  z-index: 30;
+  /* 高于弹窗：弹窗打开时「已保存」这类提示同样要看得见 */
+  z-index: 400;
   transform: translate(-50%, 18px);
   max-width: min(680px, calc(100% - 32px));
   padding: 24px 42px;
@@ -25,14 +26,45 @@
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: var(--space-md);
+  /* 最高层：必须盖住顶栏(100)、移动端吸顶操作条(60)与抽屉遮罩(200/201)，
+     否则弹窗会被顶栏压住、遮罩只压暗一半页面 */
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  /* 只允许竖向滚：卡片比可视区高时由遮罩层自己滚（配合 .modal-card 的 margin:auto，
+     卡片顶部不会被居中裁掉也能滚到）。横向必须彻底禁掉，否则手机上能把整张卡片滑走。
+     hidden 是老浏览器回退，支持 clip 的浏览器用 clip——连 JS/浏览器自动滚都滚不动 */
+  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: auto;
+  /* 触摸只允许竖向平移（横向滑动直接吃掉，连 iOS 的边缘返回手势也不触发） */
+  touch-action: pan-y pinch-zoom;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   background: rgba(47, 49, 49, 0.45);
 }
 .modal.hidden { display: none; }
+/* 弹窗打开时锁住背后的页面：与 app.js 的 openModalLayer()/closeModal() 配对。
+   iOS Safari 对 body 上的 overflow:hidden 支持不稳定，所以由 JS 额外把 body 固定住，
+   这里同时给 html/body 加 overflow:hidden 兜住桌面端与滚动链 */
+html.modal-open,
+body.modal-open {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+body.modal-open {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
 .modal-card {
+  /* flex 居中 + margin:auto：内容超高时顶部不会被裁掉 */
+  margin: auto;
+  /* 让 .modal-close 相对卡片定位，而不是贴到整个屏幕右上角 */
+  position: relative;
   width: min(560px, 100%);
   padding: var(--space-md);
   border: 2px solid var(--outline);
@@ -186,7 +218,9 @@
   font-size: 14px;
   font-weight: 800;
 }
-.custom-rule-field input {
+/* 排除隐藏的 radio：它虽然 opacity:0 / absolute 不占布局，但一旦被这里撑成 100% 宽，
+   就会伸到卡片外面，给遮罩层制造横向溢出，手机上能把整张卡片左右滑走 */
+.custom-rule-field input:not([type="radio"]) {
   min-height: 56px;
   width: 100%;
   padding: 0 16px;
@@ -198,10 +232,17 @@
   font-size: 16px;
   font-weight: 700;
 }
-.custom-rule-field input:focus {
+.custom-rule-field input:not([type="radio"]):focus {
   outline: none;
   border-color: #667085;
   box-shadow: 0 4px 0 var(--surface-dim);
+}
+/* 视觉隐藏的单选/复选：尺寸归零，别再撑出任何横向溢出 */
+.custom-rule-field input[type="radio"],
+.inline-radio-option input[type="radio"] {
+  width: 20px;
+  min-height: 0;
+  padding: 0;
 }
 .modal-card input::placeholder,
 .modal-card textarea::placeholder {
@@ -315,7 +356,9 @@
 }
 .literacy-preview-modal {
   position: relative;
-  width: min(340px, calc(100vw - 40px));
+  /* 用 100%（遮罩层内容区宽度）而不是 100vw：100vw 会比左右 24px 内边距加起来还宽，
+     在窄屏上撑出横向滚动，卡片就能被左右滑走 */
+  width: min(340px, 100%);
   min-height: 340px;
   display: grid;
   place-items: center;
@@ -325,7 +368,7 @@
   user-select: none;
 }
 .word-preview-modal {
-  width: min(760px, calc(100vw - 56px));
+  width: min(760px, 100%);
   min-height: 280px;
   padding: 40px 36px;
 }

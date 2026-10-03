@@ -203,11 +203,13 @@
     width: 32px;
     height: 32px;
   }
+  /* 箭头挪进卡片内：原本 -44px 是伸到卡片外面，窄屏上会被挤出屏幕（既看不见，
+     又给遮罩层制造横向溢出，整张卡片能被左右滑走） */
   .literacy-preview-arrow-left {
-    left: -44px;
+    left: 8px;
   }
   .literacy-preview-arrow-right {
-    right: -44px;
+    right: 8px;
   }
   .literacy-preview-arrow svg {
     width: 14px;

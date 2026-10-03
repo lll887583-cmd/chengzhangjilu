@@ -321,7 +321,7 @@ async function submitCloudForm(form) {
 
 function showCloudSignOutConfirm() {
   const email = cloudStatus().email;
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <div class="modal-card">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
@@ -927,7 +927,7 @@ function showCustomRuleModal(ruleType, errorMessage = '', editId = '') {
   const editingRule = editId ? rules.find(rule => rule.id === editId) : null;
   const draftRuleType = editingRule?.planType === 'longTerm' || state.customRuleDraftType === 'longTerm' ? 'longTerm' : 'single';
   const draftRuleTypeLabel = draftRuleType === 'longTerm' ? '长期' : '单次';
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <form class="modal-card custom-rule-modal" data-custom-rule-form="${ruleType}" data-custom-rule-edit="${editId}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
@@ -1034,7 +1034,7 @@ function showLiteracyPreviewModal(itemId) {
   const safeText = escapeHtml(item.text);
   const previewFontSize = wordPreviewFontSize(item.text);
   const total = items.length;
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <div class="modal-card literacy-preview-modal" role="dialog" aria-label="字卡详情" data-literacy-preview-active="${item.id}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
@@ -1072,7 +1072,7 @@ function showLiteracyModal(itemId, errorMessage = '') {
   if (!item) return;
   const activeColor = normalizeLiteracyColor(item.color);
   const safeText = escapeHtml(item.text);
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <form class="modal-card literacy-modal" data-literacy-edit-form="${item.id}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
@@ -1107,7 +1107,7 @@ function showLiteracyModal(itemId, errorMessage = '') {
 
 function showCreateLiteracyModal(errorMessage = '', currentValue = '') {
   const safeText = escapeHtml(currentValue);
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <form class="modal-card literacy-modal" data-literacy-create-form>
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
@@ -1206,7 +1206,7 @@ function showWordPreviewModal(itemId) {
   const safeTranslation = escapeHtml(String(item.translation || '').trim());
   const previewFontSize = wordPreviewFontSize(item.text);
   const total = items.length;
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <div class="modal-card literacy-preview-modal word-preview-modal" role="dialog" aria-label="单词卡详情" data-word-preview-active="${item.id}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
@@ -1238,7 +1238,7 @@ function showWordModal(itemId, errorMessage = '') {
   const activeColor = normalizeLiteracyColor(item.color);
   const safeText = escapeHtml(item.text);
   const safeTranslation = escapeHtml(String(item.translation || '').trim());
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <form class="modal-card literacy-modal" data-word-edit-form="${item.id}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
@@ -1278,7 +1278,7 @@ function showWordModal(itemId, errorMessage = '') {
 function showCreateWordModal(errorMessage = '', currentValue = '', currentColor = 'red', currentTranslation = '') {
   const safeText = escapeHtml(currentValue);
   const safeTranslation = escapeHtml(currentTranslation);
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <form class="modal-card literacy-modal" data-word-create-form>
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
@@ -1414,7 +1414,7 @@ function showWriteOffModal(errorMessage = '') {
     return;
   }
   const { a, b, op } = pendingWriteOff.challenge;
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <form class="modal-card math-verify-card" data-write-off-form>
       <h2>核销验证</h2>
@@ -1483,9 +1483,34 @@ function render(tab = state.selectedTab) {
   requestAnimationFrame(() => appShell.classList.remove('skip-render-animation'));
 }
 
+// 弹窗遮罩层：负责把弹窗提到最高层并锁住背后的页面滚动。
+// iOS Safari 对 body 上的 overflow: hidden 支持不稳定，所以额外把 body 固定住，
+// 关闭时按记录的滚动位置还原，避免「关掉弹窗后页面跳回顶部」。
+let modalLockedScrollY = 0;
+
+function openModalLayer() {
+  if (modal.classList.contains('hidden')) {
+    modalLockedScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.top = `-${modalLockedScrollY}px`;
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+  }
+  modal.classList.remove('hidden');
+}
+
+function releaseModalLayer() {
+  modal.classList.add('hidden');
+  if (!document.body.classList.contains('modal-open')) return;
+  document.documentElement.classList.remove('modal-open');
+  document.body.classList.remove('modal-open');
+  document.body.style.top = '';
+  window.scrollTo(0, modalLockedScrollY);
+  modalLockedScrollY = 0;
+}
+
 function closeModal() {
   pendingWriteOff = null;
-  modal.classList.add('hidden');
+  releaseModalLayer();
   modal.innerHTML = '';
 }
 
@@ -1560,14 +1585,14 @@ function showRevertConfirm(recordId) {
   const record = state.records.find(item => String(item.id || item.time) === String(recordId));
   if (!record) return;
   pendingRevertRecord = record;
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `<div class="modal-card"><button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button><h2>确认撤回这次操作？</h2><p>撤回后，积分会恢复到操作前。</p><div class="actions"><button class="btn danger-soft" type="button" data-revert-confirm>是，继续</button><button class="btn ghost" type="button" data-action="close-modal">取消</button></div></div>`;
 }
 
 function showRevertQuestion(errorMessage = '') {
   const challenge = createMathChallenge();
   pendingRevertRecord.questionAnswer = challenge.answer;
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `<form class="modal-card math-verify-card" data-revert-form><h2>撤回验证</h2><p class="big-copy">答对 10 以内加减法后，才可以撤回这次积分操作。</p><label class="math-question"><span>${challenge.a} ${challenge.op} ${challenge.b} = ?</span><input name="answer" type="number" inputmode="numeric" autocomplete="off" placeholder="答案" aria-label="请输入答案" required></label>${errorMessage ? `<p class="math-error">${errorMessage}</p>` : '<p class="math-hint">答错也没关系，可以继续尝试。</p>'}<div class="actions"><button class="btn secondary" type="submit">提交答案</button><button class="btn ghost" type="button" data-action="close-modal">稍后再撤回</button></div></form>`;
 }
 
@@ -1587,7 +1612,7 @@ function closePlanTypeMenus() {
 function showPlanModal() {
   const draftPlanType = state.planningDraftType === 'longTerm' ? 'longTerm' : 'single';
   const draftPlanTypeLabel = draftPlanType === 'longTerm' ? '长期' : '单次';
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <form class="modal-card plan-modal" data-plan-form>
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
@@ -1873,7 +1898,7 @@ function showShopItemModal(editId = '', errorMessage = '') {
   const editingItem = editId
     ? (state.customShopRewards || []).find(item => item.id === editId)
     : null;
-  modal.classList.remove('hidden');
+  openModalLayer();
   modal.innerHTML = `
     <form class="modal-card custom-rule-modal" data-shop-item-form data-shop-item-edit="${editId}">
       <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭">×</button>
