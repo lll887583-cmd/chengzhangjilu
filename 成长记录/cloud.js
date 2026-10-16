@@ -13,7 +13,7 @@
 //    这类数据冲突代价低，配合数组按 id 求并集，双方的新增都能保住。
 
 // 注意：这里的版本号后缀必须和 app.js 里导入 store.js 的写法完全一致。
-// ES 模块按完整 URL 去重，'./store.js' 和 './store.js?v=20261001f' 会被当成两个模块分别实例化，
+// ES 模块按完整 URL 去重，'./store.js' 和 './store.js?v=20261016a' 会被当成两个模块分别实例化，
 // 那样待同步队列就会出现「写进 A 份、读的是 B 份」的错乱。
 import {
   cloudMeta,
@@ -22,8 +22,9 @@ import {
   cloudQueueDropIds,
   cloudQueueList,
   cloudQueuePush,
+  MIN_POINTS,
   newOpId
-} from './store.js?v=20261001f';
+} from './store.js?v=20261016a';
 
 // 两个 CDN 互为备用：国内访问 jsDelivr 偶尔不稳定，失败时换 unpkg 再试一次
 const SDK_SOURCES = [
@@ -721,7 +722,9 @@ async function runSync({ silent = false } = {}) {
   // 5. 合并结果
   const merged = { ...state };
   Object.assign(merged, snapshotResult.content);
-  merged.points = cloudPoints;
+  // 积分下限（-150）在这里再兜一次：流水是各台设备分别记账的，
+  // 两台都在下限附近扣分时，求和结果可能低于下限。
+  merged.points = Math.max(MIN_POINTS, cloudPoints);
   merged.records = recordsFromOps(allOps);
   merged.selectedTab = state.selectedTab;
   merged.mySection = state.mySection;

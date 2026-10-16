@@ -129,6 +129,9 @@ http://localhost:5173/
 - 改状态结构时，除了默认 state，还要同步检查 `normalizeState`
 - 改导入导出结构时，要一起检查 `buildBackupPayload` 和 `importPersistedState`
 - 如果只是规则、奖池、文案、卡片结构变化，优先改配置和视图，不要过度改底层
+- **改积分一律走 `store.js` 的 `applyPointsDelta(state, delta)`**，别直接写
+  `state.points -= x`：负分下限（`MIN_POINTS = -150`，只做在数据层、不上界面）只在这一个入口兜住。
+  `scripts/check.mjs` 会把绕过它的写法报出来
 
 ## 发布说明
 
@@ -176,8 +179,9 @@ done
 node scripts/check.mjs "/Users/macbookpro/Documents/Daily/成长记录"
 ```
 
-查四件事：引用的模块文件 / 导出是否还在、`?v=` 版本是否一致、`data.js` 里的数组字段是否
-都归类到了 `cloud.js` 的同步策略、PWA 配色是否统一。改动 `data.js` / `store.js` / `cloud.js` /
+查五件事：引用的模块文件 / 导出是否还在、`?v=` 版本是否一致、`data.js` 里的数组字段是否
+都归类到了 `cloud.js` 的同步策略、PWA 配色是否统一、改积分的地方是否都走了
+`applyPointsDelta`（绕过它负分下限就失效）。改动 `data.js` / `store.js` / `cloud.js` /
 `index.html` 之后建议跑一遍。
 
 ## 当前存储说明
@@ -187,6 +191,9 @@ node scripts/check.mjs "/Users/macbookpro/Documents/Daily/成长记录"
 - 登录同步账号后，积分与任务等状态会在多台设备之间同步
 - 更换浏览器、清空站点数据后会回到本地初始状态
 - “导出数据”会下载当前本地数据的 JSON 备份文件，可通过“导入数据”恢复
+- 积分有下限 **-150**（`store.js` 的 `MIN_POINTS`）：扣到这个数就不再往下扣，
+  界面上不展示这条规则，只在触发的这次操作里弹提示。加分、撤回、兑换、游戏奖励
+  全部经 `applyPointsDelta` 走同一个下限
 
 ## 已知边界（还没解决）
 

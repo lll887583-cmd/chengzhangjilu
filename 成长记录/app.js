@@ -1,8 +1,8 @@
 import { ADDITION_MODES, DEDUCT_RULES, POINT_RULES, REWARDS } from './data.js?v=20261001f';
 import { SIDEBAR_ICONS } from './icons.js?v=20261001f';
-import { addRecord, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, resetState, saveState, spend } from './store.js?v=20261001f';
-import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20261003e';
-import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20261003e';
+import { addRecord, applyPointsDelta, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, MIN_POINTS, resetState, saveState, spend } from './store.js?v=20261016a';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20261016a';
+import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20261016a';
 import { formatPoints, iconSvg } from './views/shared.js?v=20261001f';
 
 // Interaction controller for the static demo.
@@ -503,7 +503,8 @@ function dateKey(time = Date.now()) {
 }
 
 function awardPoints(points, recordText, meta, toastMessage, renderTab) {
-  state.points += points;
+  // 积分改动一律经 store.js 的 applyPointsDelta，保证负分下限在任何路径上都生效
+  applyPointsDelta(state, points);
   addRecord(state, recordText, points, meta);
   showToast(toastMessage);
   persist();
@@ -633,7 +634,7 @@ function finishAdditionGame(reason = 'complete') {
   game.currentSelection = null;
   game.awardedPoints = calculateAdditionReward(game);
   const mode = getAdditionMode(game.mode);
-  state.points += game.awardedPoints;
+  applyPointsDelta(state, game.awardedPoints);
   addRecord(state, additionResultText(game, mode), game.awardedPoints, {
     category: 'study',
     source: 'addition'
@@ -881,11 +882,26 @@ function earnPoints(ruleIndex) {
   );
 }
 
+// 减分统一走这里。积分有下限（store.js 的 MIN_POINTS，-150），扣不满时：
+// 流水的分数按「实际扣掉的量」记，并弹提示说明为什么没扣满 —— 下限本身不上界面。
+// 返回实际扣掉的分数（0 表示已经到了下限，这次没扣）。
+function applyDeduct(amount, buildText, meta) {
+  const requested = Math.max(0, Math.round(Number(amount) || 0));
+  const applied = -applyPointsDelta(state, -requested);
+  if (!applied) {
+    showToast(`积分已经到最低 ${formatPoints(MIN_POINTS)} 了，这次就不扣了。`);
+    return 0;
+  }
+  addRecord(state, buildText(applied), -applied, meta);
+  showToast(applied === requested
+    ? `已减分 ${formatPoints(applied)} 积分。`
+    : `积分最低到 ${formatPoints(MIN_POINTS)}，本次只扣了 ${formatPoints(applied)} 积分。`);
+  return applied;
+}
+
 function deductPoints(ruleIndex) {
   const [name, points] = DEDUCT_RULES[ruleIndex];
-  state.points -= points;
-  addRecord(state, `${name}，减分 ${formatPoints(points)} 积分`, -points, { category: 'deduct' });
-  showToast(`已减分 ${formatPoints(points)} 积分。`);
+  applyDeduct(points, actual => `${name}，减分 ${formatPoints(actual)} 积分`, { category: 'deduct' });
   persist();
   render('points');
 }
@@ -910,9 +926,10 @@ function earnCustomPoints(ruleId) {
 function deductCustomPoints(ruleId) {
   const rule = (state.customDeductRules || []).find(item => item.id === ruleId);
   if (!rule) return;
-  state.points -= rule.points;
-  addRecord(state, `${rule.title}，减分 ${formatPoints(rule.points)} 积分`, -rule.points, { category: 'deduct', source: 'custom-deduct-rule' });
-  showToast(`已减分 ${formatPoints(rule.points)} 积分。`);
+  applyDeduct(rule.points, actual => `${rule.title}，减分 ${formatPoints(actual)} 积分`, {
+    category: 'deduct',
+    source: 'custom-deduct-rule'
+  });
   if (rule.planType !== 'longTerm') {
     state.customDeductRules = state.customDeductRules.filter(item => item.id !== ruleId);
   }
@@ -2484,7 +2501,15 @@ document.addEventListener('submit', event => {
     }
     const index = state.records.indexOf(pendingRevertRecord);
     if (index >= 0) {
-      state.points -= pendingRevertRecord.delta || 0;
+      const requested = Math.round(Number(pendingRevertRecord.delta) || 0);
+      // 撤回同样受负分下限约束（撤回一条加分也会让积分变少）
+      const applied = applyPointsDelta(state, -requested);
+      let toastText = '操作已撤回，积分已回滚。';
+      if (applied !== -requested) {
+        toastText = applied === 0
+          ? `操作已撤回，积分已在最低 ${formatPoints(MIN_POINTS)}，不再回滚积分。`
+          : `操作已撤回，积分最低到 ${formatPoints(MIN_POINTS)}，只回滚了 ${formatPoints(-applied)} 积分。`;
+      }
       // 告诉同步层这次是撤回：云端会记一条互相抵消的流水，两台设备的明细都能对上
       markRevertOp(pendingRevertRecord.id);
       state.records.splice(index, 1);
@@ -2492,7 +2517,7 @@ document.addEventListener('submit', event => {
       closeModal();
       persist();
       render('my');
-      showToast('操作已撤回，积分已回滚。');
+      showToast(toastText);
     }
     return;
   }

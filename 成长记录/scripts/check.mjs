@@ -247,6 +247,45 @@ function checkDeviceLocalKeysAlive() {
   }
 }
 
+/* ---------- 6. 积分下限：所有改积分的地方都必须走 store.js 的 applyPointsDelta ---------- */
+//
+// 积分有下限（store.js 的 MIN_POINTS，当前 -150）：负分扣到下限就不再往下扣。
+// 这条规则只靠 applyPointsDelta 一个入口兜住 —— 谁绕过它直接写 `state.points -= x`，
+// 下限就在那条路径上失效，而且不会报错，只会悄悄把负分扣下去。
+// 这里断言 app.js / store.js 里对 state.points 的写入只出现在允许的位置。
+
+function functionBody(text, name) {
+  const match = text.match(new RegExp(`(?:export\\s+)?(?:function\\s+${name}\\s*\\(|const\\s+${name}\\s*=\\s*function)`));
+  if (!match) return '';
+  const start = match.index;
+  const end = text.indexOf('\n}', start);
+  return text.slice(start, end < 0 ? text.length : end);
+}
+
+function checkPointsFloorChokePoint() {
+  const writeRe = /(?<![.\w])state\.points\s*[-+]?=/g;
+  for (const name of ['app.js', 'store.js']) {
+    const text = readIfExists(name);
+    if (!text) continue;
+    const allowed = functionBody(text, 'applyPointsDelta') + functionBody(text, 'normalizeState');
+    const total = (text.match(writeRe) || []).length;
+    const inside = (allowed.match(writeRe) || []).length;
+    if (total === inside) continue;
+    const lines = text.split('\n');
+    const bad = lines
+      .map((line, index) => ({ line, index: index + 1 }))
+      .filter(({ line }) => /(?<![.\w])state\.points\s*[-+]?=/.test(line))
+      .map(({ line, index }) => `${name}:${index} ${line.trim()}`);
+    problems.push(
+      `${name} 里有绕过积分下限的写法（应改用 store.js 的 applyPointsDelta）：\n    ${bad.join('\n    ')}`
+    );
+  }
+  const storeText = readIfExists('store.js');
+  if (storeText && !/export const MIN_POINTS = -?\d+/.test(storeText)) {
+    problems.push('积分下限：store.js 里找不到 MIN_POINTS 定义，可能被改名了，请同步更新 scripts/check.mjs');
+  }
+}
+
 /* ---------- 执行 ---------- */
 
 checkModuleGraph();
@@ -254,6 +293,7 @@ checkVersionSuffixes();
 checkSnapshotCoverage();
 checkPwaConsistency();
 checkDeviceLocalKeysAlive();
+checkPointsFloorChokePoint();
 
 const jsCount = listFiles(['.js']).length;
 console.log(`自检对象：${ROOT}（${jsCount} 个 JS 文件）`);
@@ -267,4 +307,4 @@ if (problems.length) {
   console.log(`\n发现 ${problems.length} 个问题`);
   process.exit(1);
 }
-console.log('\n全部通过：模块图完整、版本号一致、快照字段已归类、PWA 配色一致');
+console.log('\n全部通过：模块图完整、版本号一致、快照字段已归类、PWA 配色一致、积分写入都走了下限入口');
