@@ -1,8 +1,8 @@
 import { ADDITION_MODES, DEDUCT_RULES, POINT_RULES, REWARDS } from './data.js?v=20261001f';
 import { SIDEBAR_ICONS } from './icons.js?v=20261001f';
-import { addRecord, applyPointsDelta, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, MIN_POINTS, resetState, saveState, spend } from './store.js?v=20261016a';
-import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20261016a';
-import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20261016a';
+import { addRecord, applyPointsDelta, buildBackupPayload, importPersistedState, loadState, markPointsBaseline, markRevertOp, MIN_POINTS, resetState, saveState, spend } from './store.js?v=20261102a';
+import { cloudAfterLocalChange, cloudAttachHost, cloudCompletePasswordReset, cloudInit, cloudIsBusy, cloudOnChange, cloudOverviewMetaText, cloudRequestPasswordReset, cloudSendEmailCode, cloudSignInWithPassword, cloudSignOut, cloudStateText, cloudStatus, cloudStatusText, cloudSync, cloudVerifyEmailCode } from './cloud.js?v=20261102a';
+import { additionView, calendarView, getShopRewards, goalsView, lettersView, literacyView, myView, numbersView, planningView, pointsView, pinyinView, sectionSwitch, shopView, wordsView } from './views.js?v=20261102a';
 import { formatPoints, iconSvg } from './views/shared.js?v=20261001f';
 
 // Interaction controller for the static demo.
@@ -882,7 +882,7 @@ function earnPoints(ruleIndex) {
   );
 }
 
-// 减分统一走这里。积分有下限（store.js 的 MIN_POINTS，-150），扣不满时：
+// 减分统一走这里。积分有下限（store.js 的 MIN_POINTS），扣不满时：
 // 流水的分数按「实际扣掉的量」记，并弹提示说明为什么没扣满 —— 下限本身不上界面。
 // 返回实际扣掉的分数（0 表示已经到了下限，这次没扣）。
 function applyDeduct(amount, buildText, meta) {

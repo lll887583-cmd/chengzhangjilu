@@ -130,7 +130,7 @@ http://localhost:5173/
 - 改导入导出结构时，要一起检查 `buildBackupPayload` 和 `importPersistedState`
 - 如果只是规则、奖池、文案、卡片结构变化，优先改配置和视图，不要过度改底层
 - **改积分一律走 `store.js` 的 `applyPointsDelta(state, delta)`**，别直接写
-  `state.points -= x`：负分下限（`MIN_POINTS = -150`，只做在数据层、不上界面）只在这一个入口兜住。
+  `state.points -= x`：负分下限（`MIN_POINTS`，当前 -50，只做在数据层、不上界面）只在这一个入口兜住。
   `scripts/check.mjs` 会把绕过它的写法报出来
 
 ## 发布说明
@@ -191,7 +191,7 @@ node scripts/check.mjs "/Users/macbookpro/Documents/Daily/成长记录"
 - 登录同步账号后，积分与任务等状态会在多台设备之间同步
 - 更换浏览器、清空站点数据后会回到本地初始状态
 - “导出数据”会下载当前本地数据的 JSON 备份文件，可通过“导入数据”恢复
-- 积分有下限 **-150**（`store.js` 的 `MIN_POINTS`）：扣到这个数就不再往下扣，
+- 积分有下限 **-50**（`store.js` 的 `MIN_POINTS`，2026-11-02 由 -150 调整）：扣到这个数就不再往下扣，
   界面上不展示这条规则，只在触发的这次操作里弹提示。加分、撤回、兑换、游戏奖励
   全部经 `applyPointsDelta` 走同一个下限
 

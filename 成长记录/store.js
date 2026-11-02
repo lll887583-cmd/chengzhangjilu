@@ -97,9 +97,9 @@ export function addRecord(state, text, delta = 0, meta = {}) {
   state.records = state.records.slice(0, 40);
 }
 
-// 积分下限：负分最多到 -150，再往下扣就不再减少了。
+// 积分下限：负分最多到 -50，再往下扣就不再减少了。
 // 这条规则只在数据层生效，界面上不展示，改数值只需要改这一处。
-export const MIN_POINTS = -150;
+export const MIN_POINTS = -50;
 
 // 改积分的唯一入口。加分、减分、兑换、撤回、游戏奖励全部走它，
 // 这样下限在任何路径上都生效；返回「实际生效的增量」，
@@ -123,7 +123,7 @@ export function spend(state, cost, onFail, failMessage = '积分还不够哦，�
 }
 
 export function normalizeState(state) {
-  // 积分下限（-150）在这里也兜一次：加载、导入备份、云端合并进来的值都可能低于下限
+  // 积分下限（store.js 的 MIN_POINTS）在这里也兜一次：加载、导入备份、云端合并进来的值都可能低于下限
   state.points = Math.max(MIN_POINTS, Math.round(Number(state.points) || 0));
   state.records ||= [];
   state.records = state.records.map(record => ({
